@@ -1,8 +1,7 @@
 # SP5 — Edit flow + unpublish
 
 - **Date:** 2026-06-08
-- **Status:** Implemented + unit/build-verified. **Live edit/unpublish round-trip pending
-  a re-auth** (a chrome-profile reset cleared the session mid-test).
+- **Status:** ✅ Complete — verified live against a real account.
 - **Goal (brief §3, §9.6):** Resolve the "puppy problem" — let writers edit a published
   article and unpublish it.
 
@@ -30,16 +29,17 @@ post; unpublish deletes the document + its post.
 - 37 Vitest tests green (incl. `updatedAt` preserve-publishedAt); `astro check` clean;
   production build green.
 
-## Pending (needs a signed-in session)
+## Live verification (2026-06-08)
 
-1. Edit an existing article → confirm the document updates at the **same rkey**,
-   `updatedAt` is set, `publishedAt`/`bskyPostRef` preserved, content changed, and **no new
-   Bluesky post** is created.
-2. Unpublish → confirm both the document and its Bluesky post are deleted (also clears the
-   accumulated test articles).
+- **Edit:** loaded "Record-key URLs" into the editor, changed the title, Update →
+  document updated at the **same rkey** (`/3mnrkcsdflc24`), `updatedAt` set,
+  `publishedAt` + `bskyPostRef` + content **preserved**, **no new Bluesky post**.
+- **Unpublish:** "Image blob test" → both the `site.standard.document` and its
+  `app.bsky.feed.post` returned 400 (deleted) and it left the list.
 
-The publish path this builds on (SP2) is live-proven; `updateDocument`/`unpublish` use the
-same `agent.com.atproto.repo.*` surface (`putRecord`/`deleteRecord`).
+**Fix during verification:** loading stored content into the editor must rebuild block
+instances with `createBlock` (returned from `onLoad`); serializing raw stored nodes
+produced empty markup (no `isValid`/instance fields). `SkyEditor.toEditorBlocks` does this.
 
 ## Out of scope
 

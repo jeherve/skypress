@@ -1,7 +1,18 @@
 import { useCallback, useState } from 'react';
 import IsolatedBlockEditor from '@automattic/isolated-block-editor';
-import { serialize, type BlockInstance } from '@wordpress/blocks';
+import { createBlock, type BlockInstance } from '@wordpress/blocks';
 import type { BlockNode } from '../lib/blocks/render';
+
+/** Rebuild editor block instances from stored block nodes (for editing, SP5). */
+function toEditorBlocks( nodes: BlockNode[] ): BlockInstance[] {
+	return nodes.map( ( node ) =>
+		createBlock(
+			node.name,
+			{ ...node.attributes },
+			toEditorBlocks( node.innerBlocks ?? [] )
+		)
+	);
+}
 
 // Compiled editor-chrome styles (prebuilt — no Sass needed for these).
 import '@automattic/isolated-block-editor/build-browser/core.css';
@@ -33,12 +44,11 @@ interface SkyEditorProps {
 export default function SkyEditor( { onChange, mediaUpload, initialBlocks }: SkyEditorProps ) {
 	const [ status, setStatus ] = useState< string >( 'Start writing…' );
 
-	// Load existing content (editing): serialize the stored tree to block markup and let
-	// the editor parse it. Core blocks are registered globally by the time this runs.
+	// Load existing content (editing) by rebuilding block instances from the stored tree.
+	// Core blocks are registered globally by the time onLoad runs.
 	const onLoad =
 		initialBlocks && initialBlocks.length > 0
-			? ( parse: ( html: string ) => BlockInstance[] ) =>
-					parse( serialize( initialBlocks as unknown as BlockInstance[] ) )
+			? () => toEditorBlocks( initialBlocks )
 			: undefined;
 
 	const onSaveBlocks = useCallback(

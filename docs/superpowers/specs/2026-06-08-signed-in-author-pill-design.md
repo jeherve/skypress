@@ -42,8 +42,9 @@ and behaves consistently.
 - **Loading state:** show only the button while the session restores; swap the
   pill in when it resolves. No skeleton (most visitors are signed out; a
   skeleton would flash a placeholder at them).
-- **Pill click target:** links to the writer's public author page (`/{handle}`).
-  No dropdown menu.
+- **Pill click target:** links to the writer's public author page
+  (`/@{handle}` — the `/[author]` route requires a leading `@` and resolves by
+  handle). No dropdown menu.
 - **Editor account bar:** avatar + name/handle, plus "View my public page ↗" and
   Sign out.
 - **Implementation approach:** dedicated read-only pill island for the home page
@@ -68,6 +69,10 @@ export interface ViewerProfile {
 // Wraps a single agent.getProfile({ actor: did }). Maps displayName / handle /
 // avatar. Never throws — returns nulls for missing/failed fields, always keeps did.
 export async function fetchViewerProfile(agent, did): Promise<ViewerProfile>;
+
+// Pure display helpers (so the UI fallback logic is unit-tested, not the island):
+export function displayNameFor(p: ViewerProfile): string; // displayName → handle → did
+export function authorPath(handle: string | null): string | null; // "/@{handle}" or null
 ```
 
 Single definition of the signed-in identity, used by both the pill and
@@ -82,7 +87,8 @@ Single definition of the signed-in identity, used by both the pill and
   chrome; the editor remains where auth errors surface).
 - Renders: avatar (initial-letter circle fallback when `avatar` is null),
   display name (fallback chain: displayName → handle → DID), `@handle`, wrapped
-  in `<a href="/{handle}">` to the public author page. Hidden until resolved.
+  in `<a href="/@{handle}">` to the public author page (link omitted when no
+  handle is known). Hidden until resolved.
 - Styled to match the masthead's frosted sky-chip treatment + 8px radius.
 
 ### Changed — `src/lib/auth/AuthProvider.tsx`
@@ -135,14 +141,23 @@ account bar reads them from `useAuth()`.
 
 ## Testing (test-first)
 
-- `profile.test.ts` — `fetchViewerProfile` maps a `getProfile` response; falls
-  back to nulls (keeping `did`) on a thrown/empty response.
-- `AuthorPill` — renders nothing with no session; renders name/handle/avatar +
-  correct `/{handle}` link when a profile resolves; applies the fallback chain
-  when fields are missing. Mocks `createOAuthClient` / `Agent`.
-- `AuthProvider` — asserts `displayName` / `avatar` are exposed from a mocked
-  `getProfile`.
-- Guard: no `@wordpress` import is added to the reading-page (home) bundle.
+This repo has **no React component-test setup** — vitest (jsdom) runs only
+`src/**/*.test.ts` pure-logic tests; there is no `@testing-library`. We follow
+that convention: extract the testable logic into pure helpers and unit-test
+them; keep the React islands thin and verify them manually (`npm run dev`) plus
+type-check (`npm run check`). We do **not** add a component-test framework.
+
+- `profile.test.ts`:
+  - `fetchViewerProfile` maps `displayName` / `handle` / `avatar` from a mocked
+    `agent.getProfile` response.
+  - `fetchViewerProfile` falls back to nulls (keeping `did`) when `getProfile`
+    throws or returns empty fields.
+  - `displayNameFor` returns displayName, else handle, else did.
+  - `authorPath` returns `/@{handle}` for a handle and `null` for `null`.
+- Manual verification (browser): pill appears signed-in / absent signed-out,
+  links to `/@{handle}`; editor bar shows avatar + name/handle + link + Sign out.
+- Guard: no `@wordpress` import is added to the reading-page (home) bundle
+  (the auth chain is already `@wordpress`-free; `AuthorPill` imports only it).
 - No `render.ts` / fidelity changes (no new blocks).
 
 ## Out of scope

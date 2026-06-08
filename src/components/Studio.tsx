@@ -75,7 +75,7 @@ function StudioGate() {
 					<span className="studio__account-actions">
 						{ publicPath && (
 							<a className="studio__viewpage" href={ publicPath }>
-								View my public page ↗
+								View my public page
 							</a>
 						) }
 						<button

@@ -30,22 +30,30 @@ describe( 'buildGetBlobUrl', () => {
 } );
 
 describe( 'attachBlobRefs', () => {
-	const lookup = ( url: string ) => ( url === 'blob://uploaded' ? REF : undefined );
+	// The editor previews via a transient object URL (`blob:…`); publish looks that key
+	// up and persists the canonical, portable getBlob URL instead.
+	const CANONICAL =
+		'https://pds.example.com/xrpc/com.atproto.sync.getBlob?did=did%3Aplc%3Aabc&cid=bafycid123';
+	const lookup = ( url: string ) =>
+		url === 'blob:preview-1' ? { ref: REF, url: CANONICAL } : undefined;
 
-	it( 'attaches skypressBlob to an uploaded image, recursing inner blocks', () => {
+	it( 'attaches skypressBlob and rewrites the url to the canonical getBlob URL, recursing inner blocks', () => {
 		const blocks: BlockNode[] = [
-			{ name: 'core/image', attributes: { url: 'blob://uploaded', alt: 'x' }, innerBlocks: [] },
+			{ name: 'core/image', attributes: { url: 'blob:preview-1', alt: 'x' }, innerBlocks: [] },
 			{
 				name: 'core/gallery',
 				attributes: {},
 				innerBlocks: [
-					{ name: 'core/image', attributes: { url: 'blob://uploaded' }, innerBlocks: [] },
+					{ name: 'core/image', attributes: { url: 'blob:preview-1' }, innerBlocks: [] },
 				],
 			},
 		];
 		const out = attachBlobRefs( blocks, lookup );
 		expect( out[ 0 ].attributes?.skypressBlob ).toEqual( REF );
+		expect( out[ 0 ].attributes?.url ).toBe( CANONICAL );
+		expect( out[ 0 ].attributes?.alt ).toBe( 'x' );
 		expect( out[ 1 ].innerBlocks?.[ 0 ].attributes?.skypressBlob ).toEqual( REF );
+		expect( out[ 1 ].innerBlocks?.[ 0 ].attributes?.url ).toBe( CANONICAL );
 	} );
 
 	it( 'leaves external images (no matching upload) untouched', () => {
@@ -54,14 +62,16 @@ describe( 'attachBlobRefs', () => {
 		];
 		const out = attachBlobRefs( blocks, lookup );
 		expect( 'skypressBlob' in ( out[ 0 ].attributes ?? {} ) ).toBe( false );
+		expect( out[ 0 ].attributes?.url ).toBe( 'https://example.com/cat.jpg' );
 	} );
 
 	it( 'does not mutate the input blocks', () => {
 		const blocks: BlockNode[] = [
-			{ name: 'core/image', attributes: { url: 'blob://uploaded' }, innerBlocks: [] },
+			{ name: 'core/image', attributes: { url: 'blob:preview-1' }, innerBlocks: [] },
 		];
 		attachBlobRefs( blocks, lookup );
 		expect( 'skypressBlob' in ( blocks[ 0 ].attributes ?? {} ) ).toBe( false );
+		expect( blocks[ 0 ].attributes?.url ).toBe( 'blob:preview-1' );
 	} );
 } );
 

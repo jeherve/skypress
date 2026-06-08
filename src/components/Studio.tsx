@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { BlockInstance } from '@wordpress/blocks';
 import { AuthProvider } from '../lib/auth/AuthProvider';
 import { useAuth } from '../lib/auth/useAuth';
@@ -6,7 +6,7 @@ import LoginForm from '../lib/auth/LoginForm';
 import SkyEditor from './SkyEditor';
 import PublishPanel from './PublishPanel';
 import MyArticles from './MyArticles';
-import { createMediaUpload, type BlobRegistry } from '../lib/media/mediaUpload';
+import { createMediaUpload, revokeBlobRegistry, type BlobRegistry } from '../lib/media/mediaUpload';
 import { displayNameFor, authorPath } from '../lib/auth/profile';
 import type { MyArticle } from '../lib/publish/publisher';
 
@@ -22,6 +22,9 @@ function StudioGate() {
 	const [ avatarOk, setAvatarOk ] = useState( true );
 	// Shared between mediaUpload (writes blob refs) and publish (reads them).
 	const registry = useRef< BlobRegistry >( new Map() ).current;
+
+	// Release the preview object URLs this session minted when the Studio unmounts.
+	useEffect( () => () => revokeBlobRegistry( registry ), [ registry ] );
 
 	const mediaUpload = useMemo( () => {
 		if ( ! agent || ! did || ! pdsUrl ) {
@@ -40,11 +43,15 @@ function StudioGate() {
 		const viewerName = displayNameFor( { did, handle, displayName, avatar } );
 		const publicPath = authorPath( handle );
 
+		// Switching articles re-mounts the editor, so the current previews leave the DOM —
+		// safe to release the object URLs they held before loading the next article.
 		const startEdit = ( article: MyArticle ) => {
+			revokeBlobRegistry( registry );
 			setEditing( article );
 			setBlocks( article.blocks as unknown as BlockInstance[] );
 		};
 		const startNew = () => {
+			revokeBlobRegistry( registry );
 			setEditing( null );
 			setBlocks( [] );
 		};

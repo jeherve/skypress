@@ -8,7 +8,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 
 <Base
 	title="SkyPress — a writing studio for the open social web"
-	description="A standalone, long-form writing studio for the AT Protocol. Write in blocks; your words are saved to your own server."
+	description="A standalone, long-form writing studio for the AT Protocol. Write in blocks and publish to the open social web, under your own account."
 >
 	<Fragment slot="head">
 		<script is:inline>
@@ -57,15 +57,15 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		<section class="how">
 			<ol class="steps">
 				<li><span class="steps__n">01</span><h2>Sign in, no new account</h2><p>Use the Bluesky / AT&nbsp;Protocol account you already have.</p></li>
-				<li><span class="steps__n">02</span><h2>Write in blocks</h2><p>Rich, long-form writing, built on the Gutenberg editor.</p></li>
-				<li><span class="steps__n">03</span><h2>Keep your words</h2><p>Everything saves to your own server. It’s yours.</p></li>
+				<li><span class="steps__n">02</span><h2>Write in blocks</h2><p>Rich, long-form writing, built with the WordPress block editor.</p></li>
+				<li><span class="steps__n">03</span><h2>Keep your words</h2><p>Your post lives in your AT&nbsp;Protocol account, not locked inside SkyPress.</p></li>
 			</ol>
 			<p class="how__honest">One thing worth knowing: when you publish, SkyPress also posts to Bluesky with a link back, so people can find your piece. We’ll always remind you before you hit publish&nbsp;:)</p>
 		</section>
 
 		<footer class="footer">
-			<span>Your words, your server, the open web.</span>
-			<span class="footer__mark">GPL-2.0 · built on Gutenberg</span>
+			<span>Your words, your account, the open web.</span>
+			<span class="footer__mark">GPL-2.0 · built with the WordPress block editor</span>
 		</footer>
 	</div>
 </Base>
@@ -160,14 +160,18 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 	[data-phase='morning'] .masthead, [data-phase='morning'] .hero,
 	[data-phase='golden'] .masthead, [data-phase='golden'] .hero,
 	[data-phase='dusk'] .masthead, [data-phase='dusk'] .hero {
-		--sky-ink: #f6f0e3;
-		--sky-soft: rgba(246, 240, 227, 0.82);
-		--sky-line: rgba(246, 240, 227, 0.35);
+		--sky-ink: #fbf7ef;
+		--sky-soft: rgba(251, 247, 239, 0.94);
+		--sky-line: rgba(251, 247, 239, 0.55);
+		--sky-chip: rgba(255, 255, 255, 0.12);
+		--sky-shadow: 0 1px 14px rgba(20, 10, 4, 0.4);
 	}
 	[data-phase='midday'] .masthead, [data-phase='midday'] .hero {
 		--sky-ink: #241a10;
-		--sky-soft: rgba(36, 26, 16, 0.72);
-		--sky-line: rgba(36, 26, 16, 0.28);
+		--sky-soft: rgba(36, 26, 16, 0.9);
+		--sky-line: rgba(36, 26, 16, 0.42);
+		--sky-chip: rgba(0, 0, 0, 0.05);
+		--sky-shadow: 0 1px 12px rgba(255, 248, 234, 0.6);
 	}
 
 	/* Logo wordmark (in the Logo component) follows the sky, not the OS theme. */
@@ -176,12 +180,14 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		color: var(--sky-ink);
 	}
 
-	/* Ghost buttons sitting on the sky go translucent so they read at every phase. */
+	/* Ghost buttons sitting on the sky get a frosted chip so they read at every phase. */
 	.masthead .btn--ghost,
 	.hero .btn--ghost {
-		background: transparent;
+		background: var(--sky-chip);
 		color: var(--sky-ink);
 		border-color: var(--sky-line);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
 	}
 	.masthead .btn--ghost:hover,
 	.hero .btn--ghost:hover {
@@ -219,6 +225,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		margin: 0.75rem 0 0;
 		max-width: 14ch;
 		color: var(--sky-ink);
+		text-shadow: var(--sky-shadow);
 	}
 	.hero__title :global(em) {
 		font-style: italic;
@@ -230,6 +237,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		color: var(--sky-soft);
 		max-width: 36ch;
 		margin: 1.25rem 0 0;
+		text-shadow: var(--sky-shadow);
 	}
 	.hero__actions {
 		display: flex;
@@ -242,6 +250,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		color: var(--sky-soft);
 		font-size: 0.95rem;
 		margin-top: 1.5rem;
+		text-shadow: var(--sky-shadow);
 	}
 
 	/* ===== How it works (standard themed surface, below the sky) ===== */

@@ -119,10 +119,11 @@ a:hover {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.5rem;
-	font-family: var(--font-mono);
-	font-size: 0.82rem;
-	letter-spacing: 0.04em;
-	padding: 0.6rem 1.1rem;
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: 0.92rem;
+	letter-spacing: 0;
+	padding: 0.55rem 1.15rem;
 	border-radius: var(--radius-sm);
 	border: 1px solid transparent;
 	cursor: pointer;

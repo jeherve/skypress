@@ -16,8 +16,8 @@ export default function LoginForm() {
 		>
 			<h1 className="login__title">Sign in to write</h1>
 			<p className="login__lede">
-				Use your existing Bluesky / AT Protocol identity. Your work is saved to
-				your own server.
+				Use your existing Bluesky / AT Protocol identity. Your work stays in
+				your own account.
 			</p>
 			<label className="login__label" htmlFor="handle">
 				Your handle, DID, or PDS URL

@@ -88,7 +88,7 @@ Calm, encouraging, plainspoken, a little literary; warm and direct ("your words,
 server"). Honest about what publishing does.
 - **Time-aware greetings:** "Up with the sun", "Golden hour", "Good evening".
 - **Primary buttons:** "Start writing", "Publish", "Update".
-- **Reassurance:** "Your words, your server, the open web."
+- **Reassurance:** "Your words, your account, the open web."
 
 ## Tagline / positioning
 

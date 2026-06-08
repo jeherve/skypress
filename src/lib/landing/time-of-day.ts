@@ -17,32 +17,32 @@ export const PHASES: Record< PhaseKey, Phase > = {
 	night: {
 		greeting: 'Still up?',
 		headlineHtml: 'Write while it’s <em>quiet.</em>',
-		lede: 'A calm place to write long-form, and publish it to your own server on the open web.',
+		lede: 'A calm place to write long-form, and publish it to the open social web.',
 	},
 	dawn: {
 		greeting: 'Up with the sun',
 		headlineHtml: 'Catch the <em>first light.</em>',
-		lede: 'A calm place to write long-form, and publish it to your own server on the open web.',
+		lede: 'A calm place to write long-form, and publish it to the open social web.',
 	},
 	morning: {
 		greeting: 'Good morning',
 		headlineHtml: 'Start the day on the <em>page.</em>',
-		lede: 'A calm place to write long-form, and publish it to your own server on the open web.',
+		lede: 'A calm place to write long-form, and publish it to the open social web.',
 	},
 	midday: {
 		greeting: 'Good afternoon',
 		headlineHtml: 'Write something <em>worth keeping.</em>',
-		lede: 'A calm place to write long-form, and publish it to your own server on the open web.',
+		lede: 'A calm place to write long-form, and publish it to the open social web.',
 	},
 	golden: {
 		greeting: 'Golden hour',
 		headlineHtml: 'Write before the <em>light goes.</em>',
-		lede: 'A calm place to write long-form, and publish it to your own server on the open web.',
+		lede: 'A calm place to write long-form, and publish it to the open social web.',
 	},
 	dusk: {
 		greeting: 'Good evening',
 		headlineHtml: 'Wind down with <em>your words.</em>',
-		lede: 'A calm place to write long-form, and publish it to your own server on the open web.',
+		lede: 'A calm place to write long-form, and publish it to the open social web.',
 	},
 };
 

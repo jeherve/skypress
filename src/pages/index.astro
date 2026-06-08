@@ -10,6 +10,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 <Base
 	title="SkyPress — a writing studio for the open social web"
 	description="A standalone, long-form writing studio for the AT Protocol. Write in blocks and publish to the open social web, under your own account."
+	phase={DEFAULT_PHASE}
 >
 	<Fragment slot="head">
 		<script is:inline>
@@ -29,7 +30,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		</script>
 	</Fragment>
 
-	<div class="page" data-phase={DEFAULT_PHASE}>
+	<div class="page">
 		<div class="sky" aria-hidden="true">
 			<div class="stars"></div>
 			<div class="bloom"></div>
@@ -42,7 +43,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 			<div class="masthead__right">
 				<AuthorPill client:only="react" />
 				<a class="btn btn--ghost" href="/dashboard">Dashboard</a>
-				<a class="btn btn--ghost" href="/editor">Open the studio</a>
+				<a class="btn btn--ghost" href="/editor">Studio</a>
 			</div>
 		</header>
 
@@ -149,30 +150,30 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 	}
 
 	/* Per-phase sky gradient + star visibility + hero text colour */
-	[data-phase='night'] .sky { background: linear-gradient(180deg, #080611, #140f28 50%, #231a38); }
-	[data-phase='night'] .stars { opacity: 1; }
-	[data-phase='dawn'] .sky { background: linear-gradient(180deg, #231533, #7a2f63 42%, #d7613a 78%, #f4a14a); }
-	[data-phase='dawn'] .stars { opacity: 0.5; }
-	[data-phase='morning'] .sky { background: linear-gradient(180deg, #3a2752, #c0567f 34%, #f5934a 70%, #ffd98a); }
-	[data-phase='midday'] .sky { background: linear-gradient(180deg, #e9b977, #f7dca5 45%, #fdf0d6); }
-	[data-phase='golden'] .sky { background: linear-gradient(180deg, #4a2150, #b5417a 30%, #ef7d3a 64%, #f9c25a 92%, #ffe6ab); }
-	[data-phase='dusk'] .sky { background: linear-gradient(180deg, #140f2a, #4a2150 38%, #93324f 70%, #c75a3b); }
-	[data-phase='dusk'] .stars { opacity: 0.5; }
+	:global([data-phase='night']) .sky { background: linear-gradient(180deg, #080611, #140f28 50%, #231a38); }
+	:global([data-phase='night']) .stars { opacity: 1; }
+	:global([data-phase='dawn']) .sky { background: linear-gradient(180deg, #231533, #7a2f63 42%, #d7613a 78%, #f4a14a); }
+	:global([data-phase='dawn']) .stars { opacity: 0.5; }
+	:global([data-phase='morning']) .sky { background: linear-gradient(180deg, #3a2752, #c0567f 34%, #f5934a 70%, #ffd98a); }
+	:global([data-phase='midday']) .sky { background: linear-gradient(180deg, #e9b977, #f7dca5 45%, #fdf0d6); }
+	:global([data-phase='golden']) .sky { background: linear-gradient(180deg, #4a2150, #b5417a 30%, #ef7d3a 64%, #f9c25a 92%, #ffe6ab); }
+	:global([data-phase='dusk']) .sky { background: linear-gradient(180deg, #140f2a, #4a2150 38%, #93324f 70%, #c75a3b); }
+	:global([data-phase='dusk']) .stars { opacity: 0.5; }
 
 	/* The whole sky zone (masthead + hero) is coloured by the phase, independent of the
 	   OS theme: light text on dark skies, ink on the pale midday sky. */
-	[data-phase='night'] .masthead, [data-phase='night'] .hero,
-	[data-phase='dawn'] .masthead, [data-phase='dawn'] .hero,
-	[data-phase='morning'] .masthead, [data-phase='morning'] .hero,
-	[data-phase='golden'] .masthead, [data-phase='golden'] .hero,
-	[data-phase='dusk'] .masthead, [data-phase='dusk'] .hero {
+	:global([data-phase='night']) .masthead, :global([data-phase='night']) .hero,
+	:global([data-phase='dawn']) .masthead, :global([data-phase='dawn']) .hero,
+	:global([data-phase='morning']) .masthead, :global([data-phase='morning']) .hero,
+	:global([data-phase='golden']) .masthead, :global([data-phase='golden']) .hero,
+	:global([data-phase='dusk']) .masthead, :global([data-phase='dusk']) .hero {
 		--sky-ink: #fbf7ef;
 		--sky-soft: rgba(251, 247, 239, 0.94);
 		--sky-line: rgba(251, 247, 239, 0.55);
 		--sky-chip: rgba(255, 255, 255, 0.12);
 		--sky-shadow: 0 1px 14px rgba(20, 10, 4, 0.4);
 	}
-	[data-phase='midday'] .masthead, [data-phase='midday'] .hero {
+	:global([data-phase='midday']) .masthead, :global([data-phase='midday']) .hero {
 		--sky-ink: #241a10;
 		--sky-soft: rgba(36, 26, 16, 0.9);
 		--sky-line: rgba(36, 26, 16, 0.42);

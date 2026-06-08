@@ -1,5 +1,8 @@
 import { useCallback, useState } from 'react';
 import IsolatedBlockEditor from '@automattic/isolated-block-editor';
+// Side-effect import: must run AFTER isolated-block-editor so our editor.MediaUpload
+// filter registers last and replaces the bundled wp.media-based one (see the module).
+import '../lib/media/registerMediaUpload';
 import { createBlock, type BlockInstance } from '@wordpress/blocks';
 import type { BlockNode } from '../lib/blocks/render';
 
@@ -42,7 +45,12 @@ interface SkyEditorProps {
  * reading pages (Decision 0001).
  */
 export default function SkyEditor( { onChange, mediaUpload, initialBlocks }: SkyEditorProps ) {
-	const [ status, setStatus ] = useState< string >( 'Start writing…' );
+	// Empty until the first autosave. The in-editor placeholder already prompts
+	// the writer; this line is reserved for save feedback ("Draft saved · …").
+	// Kept in the DOM as an `aria-live` region so updates are announced; the
+	// `:empty` rule clips it out of view (not `display: none`, which would drop
+	// it from the accessibility tree and suppress the announcement) while idle.
+	const [ status, setStatus ] = useState< string >( '' );
 
 	// Load existing content (editing) by rebuilding block instances from the stored tree.
 	// Core blocks are registered globally by the time onLoad runs.

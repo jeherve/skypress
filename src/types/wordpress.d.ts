@@ -28,3 +28,13 @@ declare module '@wordpress/blocks' {
 declare module '@wordpress/block-library' {
 	export function registerCoreBlocks(): void;
 }
+
+declare module '@wordpress/hooks' {
+	export function addFilter(
+		hookName: string,
+		namespace: string,
+		callback: ( ...args: unknown[] ) => unknown,
+		priority?: number
+	): void;
+	export function applyFilters( hookName: string, value: unknown, ...args: unknown[] ): unknown;
+}

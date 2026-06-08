@@ -19,6 +19,7 @@ function StudioGate() {
 	const [ blocks, setBlocks ] = useState< BlockInstance[] >( [] );
 	const [ editing, setEditing ] = useState< MyArticle | null >( null );
 	const [ refreshKey, setRefreshKey ] = useState( 0 );
+	const [ avatarOk, setAvatarOk ] = useState( true );
 	// Shared between mediaUpload (writes blob refs) and publish (reads them).
 	const registry = useRef< BlobRegistry >( new Map() ).current;
 
@@ -52,8 +53,15 @@ function StudioGate() {
 			<>
 				<div className="studio__account">
 					<span className="studio__identity">
-						{ avatar ? (
-							<img className="studio__avatar" src={ avatar } alt="" width={ 38 } height={ 38 } />
+						{ avatar && avatarOk ? (
+							<img
+								className="studio__avatar"
+								src={ avatar }
+								alt=""
+								width={ 38 }
+								height={ 38 }
+								onError={ () => setAvatarOk( false ) }
+							/>
 						) : (
 							<span className="studio__avatar studio__avatar--fallback" aria-hidden="true">
 								{ viewerName.charAt( 0 ).toUpperCase() }

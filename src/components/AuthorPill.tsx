@@ -11,6 +11,7 @@ import { fetchViewerProfile, displayNameFor, authorPath, type ViewerProfile } fr
  */
 export default function AuthorPill() {
 	const [ profile, setProfile ] = useState< ViewerProfile | null >( null );
+	const [ avatarOk, setAvatarOk ] = useState( true );
 
 	useEffect( () => {
 		let cancelled = false;
@@ -43,8 +44,15 @@ export default function AuthorPill() {
 
 	const inner = (
 		<>
-			{ profile.avatar ? (
-				<img className="authorpill__avatar" src={ profile.avatar } alt="" width={ 30 } height={ 30 } />
+			{ profile.avatar && avatarOk ? (
+				<img
+					className="authorpill__avatar"
+					src={ profile.avatar }
+					alt=""
+					width={ 30 }
+					height={ 30 }
+					onError={ () => setAvatarOk( false ) }
+				/>
 			) : (
 				<span className="authorpill__avatar authorpill__avatar--fallback" aria-hidden="true">
 					{ name.charAt( 0 ).toUpperCase() }

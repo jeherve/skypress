@@ -91,7 +91,7 @@ describe( 'buildRssFeed', () => {
 		expect( xml ).toContain( '<pubDate>Tue, 09 Jun 2026 12:00:00 GMT</pubDate>' );
 	} );
 
-	it( 'uses the item link as the guid by default and marks it non-permalink-safe', () => {
+	it( 'uses the item link as the guid by default and marks it as a permalink', () => {
 		const xml = buildRssFeed( channel, [ item() ] );
 		expect( xml ).toContain(
 			'<guid isPermaLink="true">https://skypress.blog/@alice.test/my-pub/abc123</guid>'

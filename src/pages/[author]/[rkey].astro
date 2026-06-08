@@ -1,0 +1,126 @@
+---
+import Base from '../../layouts/Base.astro';
+import { resolveAuthor } from '../../lib/reader/identity';
+import { getRecord } from '../../lib/reader/records';
+import { resolveBlobImageUrls } from '../../lib/media/blob';
+import { renderBlocks, blocksToText, type BlockNode } from '../../lib/blocks/render';
+import { sanitizeArticleHtml } from '../../lib/reader/sanitize';
+import { canonicalArticleUrl } from '../../lib/publish/records';
+
+// Frontend block styles only — no editor chrome, no JS.
+import '@wordpress/block-library/build-style/common.css';
+import '@wordpress/block-library/build-style/style.css';
+import '@wordpress/block-library/build-style/theme.css';
+
+// Read-through renderer: resolve + fetch at request time (Decision 0007).
+export const prerender = false;
+
+interface SkyDocument {
+	title?: string;
+	description?: string;
+	textContent?: string;
+	publishedAt?: string;
+	site?: string;
+	content?: { blocks?: BlockNode[] };
+}
+
+const { author, rkey } = Astro.params;
+
+if ( ! author || ! author.startsWith( '@' ) || ! rkey ) {
+	return new Response( 'Not found', { status: 404 } );
+}
+const handle = author.slice( 1 );
+
+const resolved = await resolveAuthor( handle );
+if ( ! resolved ) {
+	return new Response( `Could not resolve @${ handle }`, { status: 404 } );
+}
+const { did, pdsUrl } = resolved;
+
+const record = await getRecord< SkyDocument >( pdsUrl, did, 'site.standard.document', rkey );
+if ( ! record?.value ) {
+	return new Response( 'Article not found', { status: 404 } );
+}
+
+const doc = record.value;
+const blocks = resolveBlobImageUrls( doc.content?.blocks ?? [], { pdsUrl, did } );
+const html = sanitizeArticleHtml( renderBlocks( blocks ) );
+const textContent = doc.textContent || blocksToText( blocks );
+
+const title = doc.title ?? 'Untitled';
+const description = doc.description || textContent.slice( 0, 200 );
+const canonical = canonicalArticleUrl( handle, rkey );
+const docUri = `at://${ did }/site.standard.document/${ rkey }`;
+const pubUri = doc.site;
+
+const words = textContent.split( /\s+/ ).filter( Boolean ).length;
+const readingMinutes = Math.max( 1, Math.round( words / 200 ) );
+const publishedLabel = doc.publishedAt ? doc.publishedAt.slice( 0, 10 ) : null;
+---
+
+<Base title={`${ title } — SkyPress`} description={description}>
+	<Fragment slot="head">
+		{/* standard.site indexing tags (brief §3) — Bluesky cards + AppView pickup */}
+		<link rel="site.standard.document" href={docUri} />
+		{pubUri?.startsWith( 'at://' ) && (
+			<link rel="site.standard.publication" href={pubUri} />
+		)}
+		<link rel="canonical" href={canonical} />
+		<meta property="og:type" content="article" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonical} />
+	</Fragment>
+
+	<main class="reader">
+		<p class="reader__meta">
+			<a class="reader__author" href={`/@${ handle }`}>@{handle}</a>
+			{publishedLabel && <> · {publishedLabel}</>}
+			· {readingMinutes} min read
+		</p>
+		<h1 class="reader__title">{title}</h1>
+		<article class="reader__article" set:html={html} />
+	</main>
+</Base>
+
+<style>
+	.reader {
+		max-width: 42rem;
+		margin: 0 auto;
+		padding: 3rem 1.5rem 6rem;
+	}
+	.reader__meta {
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		font-size: 0.72rem;
+		color: var(--muted);
+		margin-bottom: 1.5rem;
+	}
+	.reader__author {
+		color: var(--sky);
+		text-decoration: none;
+		font-weight: 600;
+	}
+	.reader__title {
+		font-size: clamp( 2rem, 5vw, 3rem );
+		line-height: 1.1;
+		margin: 0 0 2rem;
+	}
+	.reader__article {
+		font-size: 1.15rem;
+		line-height: 1.7;
+	}
+	.reader__article :global(img) {
+		max-width: 100%;
+		height: auto;
+		border-radius: 8px;
+	}
+	.reader__article :global(pre) {
+		background: #16181d;
+		color: #f5f3ee;
+		padding: 1rem;
+		border-radius: 8px;
+		overflow: auto;
+		font-size: 0.95rem;
+	}
+</style>

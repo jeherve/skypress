@@ -2,12 +2,14 @@
 import { defineConfig } from 'astro/config';
 import { fileURLToPath } from 'node:url';
 import react from '@astrojs/react';
+import node from '@astrojs/node';
 
 const nodeModules = fileURLToPath( new URL( './node_modules', import.meta.url ) );
 
-// SP0: static build, no host adapter yet (added in SP7). The editor runs as a
-// client-only React island; public pages render to light HTML at build time.
+// Static by default; the article route is rendered on demand (read-through renderer,
+// SP4) and needs an adapter. Node for now — SP7 swaps in the chosen edge host.
 export default defineConfig( {
+	adapter: node( { mode: 'standalone' } ),
 	integrations: [ react() ],
 	vite: {
 		// React 18 is required by the bundled @wordpress/* packages (Decision 0001).

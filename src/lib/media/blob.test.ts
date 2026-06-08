@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildGetBlobUrl, attachBlobRefs, type BlobRefJson } from './blob';
+import {
+	buildGetBlobUrl,
+	attachBlobRefs,
+	resolveBlobImageUrls,
+	type BlobRefJson,
+} from './blob';
 import type { BlockNode } from '../blocks/render';
 
 const REF: BlobRefJson = {
@@ -57,5 +62,32 @@ describe( 'attachBlobRefs', () => {
 		];
 		attachBlobRefs( blocks, lookup );
 		expect( 'skypressBlob' in ( blocks[ 0 ].attributes ?? {} ) ).toBe( false );
+	} );
+} );
+
+describe( 'resolveBlobImageUrls', () => {
+	it( 'reconstructs the image url from skypressBlob against the author PDS + DID', () => {
+		const blocks: BlockNode[] = [
+			{
+				name: 'core/image',
+				attributes: { url: 'https://old-host.example/stale', skypressBlob: REF },
+				innerBlocks: [],
+			},
+		];
+		const out = resolveBlobImageUrls( blocks, {
+			pdsUrl: 'https://pds.example.com',
+			did: 'did:plc:abc',
+		} );
+		expect( out[ 0 ].attributes?.url ).toBe(
+			'https://pds.example.com/xrpc/com.atproto.sync.getBlob?did=did%3Aplc%3Aabc&cid=bafycid123'
+		);
+	} );
+
+	it( 'leaves external images (no skypressBlob) untouched', () => {
+		const blocks: BlockNode[] = [
+			{ name: 'core/image', attributes: { url: 'https://example.com/cat.jpg' }, innerBlocks: [] },
+		];
+		const out = resolveBlobImageUrls( blocks, { pdsUrl: 'https://pds.example.com', did: 'did:plc:abc' } );
+		expect( out[ 0 ].attributes?.url ).toBe( 'https://example.com/cat.jpg' );
 	} );
 } );

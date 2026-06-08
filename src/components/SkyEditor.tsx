@@ -45,7 +45,8 @@ export default function SkyEditor( { onChange, mediaUpload, initialBlocks }: Sky
 	// Empty until the first autosave. The in-editor placeholder already prompts
 	// the writer; this line is reserved for save feedback ("Draft saved · …").
 	// Kept in the DOM as an `aria-live` region so updates are announced; the
-	// `:empty` rule hides it while idle.
+	// `:empty` rule clips it out of view (not `display: none`, which would drop
+	// it from the accessibility tree and suppress the announcement) while idle.
 	const [ status, setStatus ] = useState< string >( '' );
 
 	// Load existing content (editing) by rebuilding block instances from the stored tree.

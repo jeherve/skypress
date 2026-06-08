@@ -36,6 +36,8 @@ function StudioGate() {
 	if ( status === 'signed-in' && agent && did ) {
 		// Re-mount the editor + panel when switching article so onLoad + the title reset.
 		const editorKey = editing ? `edit-${ editing.rkey }` : `new-${ refreshKey }`;
+		const viewerName = displayNameFor( { did, handle, displayName, avatar } );
+		const publicPath = authorPath( handle );
 
 		const startEdit = ( article: MyArticle ) => {
 			setEditing( article );
@@ -54,19 +56,17 @@ function StudioGate() {
 							<img className="studio__avatar" src={ avatar } alt="" width={ 38 } height={ 38 } />
 						) : (
 							<span className="studio__avatar studio__avatar--fallback" aria-hidden="true">
-								{ displayNameFor( { did, handle, displayName, avatar } ).charAt( 0 ).toUpperCase() }
+								{ viewerName.charAt( 0 ).toUpperCase() }
 							</span>
 						) }
 						<span className="studio__who">
-							<strong className="studio__name">
-								{ displayNameFor( { did, handle, displayName, avatar } ) }
-							</strong>
+							<strong className="studio__name">{ viewerName }</strong>
 							{ handle && <span className="studio__handle">@{ handle }</span> }
 						</span>
 					</span>
 					<span className="studio__account-actions">
-						{ authorPath( handle ) && (
-							<a className="studio__viewpage" href={ authorPath( handle ) as string }>
+						{ publicPath && (
+							<a className="studio__viewpage" href={ publicPath }>
 								View my public page ↗
 							</a>
 						) }

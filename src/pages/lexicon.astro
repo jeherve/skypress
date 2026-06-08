@@ -1,0 +1,292 @@
+---
+import Base from '../layouts/Base.astro';
+import Logo from '../components/Logo.astro';
+import {
+	CONTENT_LEXICON,
+	CONTENT_LEXICON_ID,
+	CONTENT_LEXICON_DESCRIPTION,
+	contentSchemaFields,
+} from '../lib/lexicon/schema-doc';
+
+const contentFields = contentSchemaFields();
+const schemaJson = JSON.stringify( CONTENT_LEXICON, null, 2 );
+
+// Hand-authored interop tables (site.standard.* are community-owned — Decision 0005).
+const documentFields = [
+	{ name: 'site', req: true, value: "the writer's publication at:// URI — links the document to its publication (Bluesky needs this for the high-fidelity link card)" },
+	{ name: 'title', req: true, value: 'the document title' },
+	{ name: 'publishedAt', req: true, value: 'when it was published (ISO datetime)' },
+	{ name: 'path', req: false, value: '/<rkey> — the document’s own record key; the canonical URL is the publication url + this path' },
+	{ name: 'description', req: false, value: 'a short excerpt' },
+	{ name: 'textContent', req: false, value: 'plain text of the article — what Bluesky indexes for search and reading time, so we always write it' },
+	{ name: 'content', req: false, value: 'the open content union — where our blog.skypress.content.gutenberg object lives' },
+	{ name: 'bskyPostRef', req: false, value: 'a reference back to the companion Bluesky post' },
+	{ name: 'updatedAt', req: false, value: 'set when an article is edited' },
+];
+
+const publicationFields = [
+	{ name: 'url', req: true, value: 'https://skypress.blog/@<handle> — your SkyPress home; articles hang off it' },
+	{ name: 'name', req: true, value: 'the publication name (defaults from your handle)' },
+	{ name: 'description', req: false, value: 'an optional description' },
+	{ name: 'icon', req: false, value: 'an optional icon image' },
+];
+---
+
+<Base
+	title="The lexicon — how SkyPress stores your writing"
+	description="The open AT Protocol records SkyPress writes to your account when you publish: a publication, a document with your block content, and a Bluesky post linking back."
+>
+	<header class="lex-masthead">
+		<a class="lex-home" href="/" aria-label="SkyPress home"><Logo /></a>
+		<a class="btn btn--ghost" href="/editor">Open the studio</a>
+	</header>
+
+	<main class="lex">
+		<p class="lex-eyebrow">The open format</p>
+		<h1 class="lex-title">Your words live in <em>your</em> account.</h1>
+		<p class="lex-lede">
+			When you publish with SkyPress, nothing gets locked inside SkyPress. Your
+			writing is saved to your own AT&nbsp;Protocol account in open, published
+			formats &mdash; so any reader on the open social web can understand it, and
+			you can take it anywhere. This page documents exactly what we write.
+		</p>
+
+		<section class="lex-section">
+			<h2>What gets written when you publish</h2>
+			<p>Publishing creates a few records on your PDS (your account&rsquo;s data store):</p>
+			<ul class="lex-records">
+				<li>
+					<code>site.standard.publication</code> &mdash; your SkyPress home,
+					created once and reused after that.
+				</li>
+				<li>
+					<code>site.standard.document</code> &mdash; the article itself: its
+					title, a plain-text copy, and your block content.
+				</li>
+				<li>
+					<code>app.bsky.feed.post</code> &mdash; a public Bluesky post with a
+					link back to the article, so people can find it.
+				</li>
+			</ul>
+			<p class="lex-honest">
+				One thing worth repeating: publishing also creates a public Bluesky post.
+				SkyPress always tells you before you hit publish.
+			</p>
+		</section>
+
+		<section class="lex-section">
+			<h2>The format we own: <code>{ CONTENT_LEXICON_ID }</code></h2>
+			<p>{ CONTENT_LEXICON_DESCRIPTION }</p>
+			<table class="lex-table">
+				<thead>
+					<tr><th>Field</th><th>Type</th><th>Required</th><th>What it is</th></tr>
+				</thead>
+				<tbody>
+					{ contentFields.map( ( f ) => (
+						<tr>
+							<td><code>{ f.name }</code></td>
+							<td>{ f.type }</td>
+							<td>{ f.required ? 'yes' : 'optional' }</td>
+							<td>{ f.description }</td>
+						</tr>
+					) ) }
+				</tbody>
+			</table>
+			<p class="lex-note">
+				This is the only lexicon SkyPress owns &mdash; the reverse-DNS of
+				<code>skypress.blog</code>. A reader that doesn&rsquo;t understand this
+				format simply falls back to the document&rsquo;s plain-text
+				<code>textContent</code>, so your article is never unreadable. The schema
+				in full:
+			</p>
+			<pre class="lex-code"><code>{ schemaJson }</code></pre>
+		</section>
+
+		<section class="lex-section">
+			<h2>Interop: the <code>site.standard.*</code> surface</h2>
+			<p>
+				The publication and document metadata reuse the community
+				<a href="https://tangled.org/standard.site/lexicons" rel="noreferrer">standard.site</a>
+				lexicons rather than anything SkyPress-specific &mdash; so your articles are
+				discoverable by other tools and readers that already speak them, not just by
+				SkyPress.
+			</p>
+
+			<h3><code>site.standard.document</code> &mdash; the article</h3>
+			<table class="lex-table">
+				<thead>
+					<tr><th>Field</th><th>Required</th><th>What SkyPress writes</th></tr>
+				</thead>
+				<tbody>
+					{ documentFields.map( ( f ) => (
+						<tr>
+							<td><code>{ f.name }</code></td>
+							<td>{ f.req ? 'yes' : 'optional' }</td>
+							<td>{ f.value }</td>
+						</tr>
+					) ) }
+				</tbody>
+			</table>
+
+			<h3><code>site.standard.publication</code> &mdash; your SkyPress home</h3>
+			<table class="lex-table">
+				<thead>
+					<tr><th>Field</th><th>Required</th><th>What SkyPress writes</th></tr>
+				</thead>
+				<tbody>
+					{ publicationFields.map( ( f ) => (
+						<tr>
+							<td><code>{ f.name }</code></td>
+							<td>{ f.req ? 'yes' : 'optional' }</td>
+							<td>{ f.value }</td>
+						</tr>
+					) ) }
+				</tbody>
+			</table>
+		</section>
+
+		<div class="lex-actions">
+			<a class="btn btn--primary" href="/editor">Start writing</a>
+			<a class="btn btn--ghost" href="/preview">Read a sample</a>
+		</div>
+	</main>
+
+	<footer class="lex-footer">
+		<span>Your words, your account, the open web.</span>
+		<span class="lex-footer__mark">
+			GPL-2.0 &middot; schemas in
+			<a href="https://tangled.org/standard.site/lexicons" rel="noreferrer">standard.site</a>
+		</span>
+	</footer>
+</Base>
+
+<style>
+	.lex-masthead {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 1.5rem clamp( 1.25rem, 5vw, 4rem );
+		border-bottom: 1px solid var( --line );
+	}
+	.lex-home { text-decoration: none; }
+
+	.lex {
+		max-width: 48rem;
+		margin: 0 auto;
+		padding: clamp( 2.5rem, 7vh, 4.5rem ) clamp( 1.25rem, 5vw, 4rem ) 4rem;
+	}
+	.lex-eyebrow {
+		font-family: var( --font-mono );
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+		font-size: 0.72rem;
+		color: var( --sun );
+		margin: 0;
+	}
+	.lex-title {
+		font-size: clamp( 2.2rem, 6vw, 3.4rem );
+		font-weight: 760;
+		letter-spacing: -0.03em;
+		line-height: 1.02;
+		margin: 0.5rem 0 0;
+	}
+	.lex-title em { font-style: italic; color: var( --sun ); }
+	.lex-lede {
+		font-size: clamp( 1.1rem, 2.2vw, 1.3rem );
+		line-height: 1.6;
+		color: var( --ink-soft );
+		margin: 1.25rem 0 0;
+	}
+
+	.lex-section {
+		margin-top: 3rem;
+		padding-top: 2.5rem;
+		border-top: 1px solid var( --line );
+	}
+	.lex-section h2 {
+		font-size: 1.5rem;
+		letter-spacing: -0.02em;
+		margin: 0 0 0.75rem;
+	}
+	.lex-section h3 {
+		font-size: 1.1rem;
+		margin: 2rem 0 0.6rem;
+	}
+	.lex-section p { color: var( --ink-soft ); line-height: 1.65; }
+	.lex-section code {
+		font-family: var( --font-mono );
+		font-size: 0.86em;
+		background: var( --sun-tint );
+		color: var( --sun-strong );
+		padding: 0.08em 0.36em;
+		border-radius: 5px;
+	}
+
+	.lex-records { padding-left: 1.2rem; color: var( --ink-soft ); line-height: 1.7; }
+	.lex-records li { margin: 0.35rem 0; }
+	.lex-honest { color: var( --muted ); font-size: 0.95rem; }
+	.lex-note { margin-top: 1.25rem; }
+
+	.lex-table {
+		width: 100%;
+		border-collapse: collapse;
+		margin: 1rem 0 0;
+		font-size: 0.95rem;
+	}
+	.lex-table th,
+	.lex-table td {
+		text-align: left;
+		vertical-align: top;
+		padding: 0.6rem 0.75rem;
+		border-bottom: 1px solid var( --line );
+	}
+	.lex-table th {
+		font-family: var( --font-mono );
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		font-size: 0.7rem;
+		color: var( --muted );
+	}
+	.lex-table td { color: var( --ink-soft ); }
+	.lex-table td:first-child code { white-space: nowrap; }
+
+	.lex-code {
+		margin-top: 1.25rem;
+		background: var( --paper-raised );
+		border: 1px solid var( --line );
+		border-radius: 10px;
+		padding: 1rem 1.1rem;
+		overflow: auto;
+		font-size: 0.85rem;
+		line-height: 1.55;
+	}
+	.lex-code code {
+		font-family: var( --font-mono );
+		background: none;
+		color: var( --ink );
+		padding: 0;
+	}
+
+	.lex-actions {
+		display: flex;
+		gap: 0.85rem;
+		flex-wrap: wrap;
+		margin-top: 3rem;
+		padding-top: 2.5rem;
+		border-top: 1px solid var( --line );
+	}
+
+	.lex-footer {
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+		padding: 1.5rem clamp( 1.25rem, 5vw, 4rem );
+		border-top: 1px solid var( --line );
+		color: var( --muted );
+		font-family: var( --font-mono );
+		font-size: 0.72rem;
+		letter-spacing: 0.04em;
+	}
+	.lex-footer a { color: var( --muted ); }
+</style>

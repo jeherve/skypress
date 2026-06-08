@@ -1,16 +1,19 @@
 /**
  * Regression guard for the landing-page sky phase carrier (docs/specs/sp8-brand-first-light.md).
  *
- * The per-phase sky gradients use *descendant* selectors — `[data-phase='x'] .sky` / `.masthead`
- * / `.hero` — and `.sky` is a descendant of BOTH `<html>` and `.page`. If two ancestors carry a
- * conflicting `data-phase`, both rules match with equal specificity and the one later in the
- * stylesheet wins regardless of the clock. (A hardcoded `data-phase="golden"` on `.page` once
- * pinned the sky to golden at every hour, even though the head script set `night` on `<html>`.)
+ * `data-phase` lives on exactly one carrier: `<html>`, the only element the pre-paint inline head
+ * script can reach (it runs in `<head>`, before `.page` exists, so it sets `documentElement`).
  *
- * So `data-phase` must live on exactly one carrier: `<html>`, the only element the pre-paint
- * inline head script can reach. This test asserts that wiring at the source level — rendering the
- * page through astro/container isn't viable here (the test runner is pinned to jsdom for the
- * WordPress block suites, which breaks esbuild's init invariant).
+ * The catch: the per-phase rules — `[data-phase='x'] .sky` / `.masthead` / `.hero` — live in
+ * index.astro's *scoped* `<style>`. Astro appends index.astro's scope id to every part of a
+ * selector, including the ancestor, yielding `[cid][data-phase='x'] .sky[cid]`. But `<html>` is
+ * rendered by Base.astro and never carries index.astro's cid, so a bare (scoped) ancestor matches
+ * nothing and the sky renders unstyled. Wrapping the ancestor in `:global([data-phase='x'])` keeps
+ * the descendant (`.sky`/`.masthead`/`.hero`) scoped while letting the ancestor match `<html>`.
+ *
+ * These asserts pin the wiring at the source level — rendering the page through astro/container
+ * isn't viable here (the test runner is pinned to jsdom for the WordPress block suites, which
+ * breaks esbuild's init invariant).
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -49,6 +52,18 @@ describe( 'landing page sky phase carrier', () => {
 
 	it( 'updates the phase before first paint via documentElement', () => {
 		expect( index ).toMatch( /document\.documentElement\.dataset\.phase\s*=/ );
+	} );
+
+	it( 'wraps every per-phase ancestor selector in :global() so it can match <html>', () => {
+		// The phase carrier is <html> (rendered by Base.astro), which never carries index.astro's
+		// scoped cid. A bare `[data-phase=...]` ancestor would be scoped to that cid and match
+		// nothing; only `:global([data-phase=...])` reaches <html>. Assert that EVERY data-phase
+		// selector is global-wrapped — a single scoped one silently blanks the sky.
+		const style = index.match( /<style>([\s\S]*?)<\/style>/ )?.[ 1 ] ?? '';
+		const total = ( style.match( /\[data-phase=/g ) ?? [] ).length;
+		const global = ( style.match( /:global\(\s*\[data-phase=/g ) ?? [] ).length;
+		expect( total, 'expected per-phase selectors in the landing-page styles' ).toBeGreaterThan( 0 );
+		expect( global, 'every [data-phase=...] selector must be :global()-wrapped' ).toBe( total );
 	} );
 
 	// The inline head script must run before any module loads (for a no-flash sky), so it

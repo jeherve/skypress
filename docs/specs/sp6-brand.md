@@ -1,7 +1,9 @@
 # SP6 — Brand identity
 
 - **Date:** 2026-06-08
-- **Status:** ✅ Complete — system built + applied + screenshot-verified
+- **Status:** ✅ Complete — system built + applied + screenshot-verified.
+  Superseded in part by [SP8 — First Light](./sp8-brand-first-light.md) (palette, type, and
+  landing redesigned 2026-06-08); SP6's token system + light/dark architecture carry forward.
 - **Goal (brief §7):** Deliver a complete brand identity and apply it across the editor +
   reading experience.
 

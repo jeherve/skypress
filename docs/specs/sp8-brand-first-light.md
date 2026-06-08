@@ -1,7 +1,7 @@
 # SP8 — Brand redesign: "First Light"
 
 - **Date:** 2026-06-08
-- **Status:** 📋 Spec — approved, not yet built
+- **Status:** 🚧 In progress — built, screenshot verification pending
 - **Supersedes:** the visual layer of [SP6](./sp6-brand.md) (altitude-blue + Fraunces/Newsreader).
   SP6's structure (token system, light/dark, applied-everywhere approach) is kept; only the
   palette, type, and landing page change.

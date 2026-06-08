@@ -5,6 +5,7 @@ import { resolveAuthor } from '../../lib/reader/identity';
 import { listReaderPublications } from '../../lib/reader/publications';
 import { fetchActorProfile } from '../../lib/reader/profile';
 import { buildGetBlobUrl } from '../../lib/media/blob';
+import CreatePublicationCta from '../../components/CreatePublicationCta.tsx';
 
 export const prerender = false;
 
@@ -53,7 +54,10 @@ const initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
 
 		<h2 class="author__heading">Publications</h2>
 		{publications.length === 0 ? (
-			<p class="author__empty">No SkyPress publications yet.</p>
+			<div class="author__emptyblock">
+				<p class="author__empty">No SkyPress publications yet.</p>
+				<CreatePublicationCta client:only="react" profileDid={did} />
+			</div>
 		) : (
 			<ul class="author__list">
 				{publications.map( ( pub ) => {
@@ -207,5 +211,29 @@ const initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
 	.author__pubdesc {
 		color: var(--ink-soft);
 		font-size: 0.95rem;
+	}
+</style>
+
+<!-- CreatePublicationCta is a `client:only` React island, so Astro's scoped
+     styles never reach its DOM. The CTA rule must be global. -->
+<style is:global>
+	.author__emptyblock {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1rem;
+	}
+	.author__cta {
+		display: inline-block;
+		border-radius: 8px;
+		background: var(--sun);
+		color: #fff;
+		font-weight: 600;
+		text-decoration: none;
+		padding: 0.5rem 1rem;
+	}
+	.author__cta:hover {
+		text-decoration: none;
+		opacity: 0.92;
 	}
 </style>

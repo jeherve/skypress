@@ -13,7 +13,7 @@ function agentThrowing(): Agent {
 describe( 'fetchViewerProfile', () => {
 	it( 'maps did, handle, displayName and avatar from getProfile', async () => {
 		const agent = agentReturning( {
-			did: 'did:plc:abc',
+			did: 'did:plc:ignored',
 			handle: 'jane.bsky.social',
 			displayName: 'Jane Rivera',
 			avatar: 'https://cdn.example/av.jpg',

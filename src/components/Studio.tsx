@@ -7,6 +7,7 @@ import SkyEditor from './SkyEditor';
 import PublishPanel from './PublishPanel';
 import MyArticles from './MyArticles';
 import { createMediaUpload, type BlobRegistry } from '../lib/media/mediaUpload';
+import { displayNameFor, authorPath } from '../lib/auth/profile';
 import type { MyArticle } from '../lib/publish/publisher';
 
 /**
@@ -14,7 +15,7 @@ import type { MyArticle } from '../lib/publish/publisher';
  * loading → (signed-out: login form) | (signed-in: account bar + editor).
  */
 function StudioGate() {
-	const { status, agent, handle, did, pdsUrl, error, signOut } = useAuth();
+	const { status, agent, handle, displayName, avatar, did, pdsUrl, error, signOut } = useAuth();
 	const [ blocks, setBlocks ] = useState< BlockInstance[] >( [] );
 	const [ editing, setEditing ] = useState< MyArticle | null >( null );
 	const [ refreshKey, setRefreshKey ] = useState( 0 );
@@ -48,12 +49,35 @@ function StudioGate() {
 		return (
 			<>
 				<div className="studio__account">
-					<span>
-						Signed in as <strong>{ handle ?? did }</strong>
+					<span className="studio__identity">
+						{ avatar ? (
+							<img className="studio__avatar" src={ avatar } alt="" width={ 38 } height={ 38 } />
+						) : (
+							<span className="studio__avatar studio__avatar--fallback" aria-hidden="true">
+								{ displayNameFor( { did, handle, displayName, avatar } ).charAt( 0 ).toUpperCase() }
+							</span>
+						) }
+						<span className="studio__who">
+							<strong className="studio__name">
+								{ displayNameFor( { did, handle, displayName, avatar } ) }
+							</strong>
+							{ handle && <span className="studio__handle">@{ handle }</span> }
+						</span>
 					</span>
-					<button type="button" className="studio__signout" onClick={ () => void signOut() }>
-						Sign out
-					</button>
+					<span className="studio__account-actions">
+						{ authorPath( handle ) && (
+							<a className="studio__viewpage" href={ authorPath( handle ) as string }>
+								View my public page ↗
+							</a>
+						) }
+						<button
+							type="button"
+							className="studio__signout"
+							onClick={ () => void signOut() }
+						>
+							Sign out
+						</button>
+					</span>
 				</div>
 
 				<MyArticles

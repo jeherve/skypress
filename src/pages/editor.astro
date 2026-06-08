@@ -63,10 +63,60 @@ import Studio from '../components/Studio.tsx';
 		font-size: 0.9rem;
 		flex-wrap: wrap;
 	}
+	.studio__identity {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		min-width: 0;
+	}
+	.studio__avatar {
+		width: 38px;
+		height: 38px;
+		border-radius: 50%;
+		object-fit: cover;
+		flex: none;
+	}
+	.studio__avatar--fallback {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--sun-tint);
+		color: var(--sun);
+		font-weight: 700;
+	}
+	.studio__who {
+		display: flex;
+		flex-direction: column;
+		line-height: 1.15;
+		min-width: 0;
+	}
+	.studio__name {
+		font-weight: 680;
+	}
+	.studio__handle {
+		color: var(--muted);
+		font-size: 0.8rem;
+	}
+	.studio__account-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+	.studio__viewpage {
+		color: var(--sun);
+		text-decoration: none;
+		font-size: 0.85rem;
+		padding: 0.3rem 0.5rem;
+		border-radius: var(--radius-sm);
+	}
+	.studio__viewpage:hover {
+		text-decoration: underline;
+	}
 	.studio__signout {
 		border: 1px solid var(--line-strong);
 		background: var(--paper-raised);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		padding: 0.3rem 0.7rem;
 		cursor: pointer;
 		font: inherit;

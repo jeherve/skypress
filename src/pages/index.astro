@@ -1,28 +1,50 @@
 ---
 import Base from '../layouts/Base.astro';
 import Logo from '../components/Logo.astro';
+import { PHASES, DEFAULT_PHASE } from '../lib/landing/time-of-day';
+
+const fallback = PHASES[ DEFAULT_PHASE ];
 ---
 
 <Base
 	title="SkyPress — a writing studio for the open social web"
 	description="A standalone, long-form writing studio for the AT Protocol. Write in blocks; your words are saved to your own server."
 >
-	<div class="page sun-wash">
+	<Fragment slot="head">
+		<script is:inline>
+			// Set the sky phase before first paint so there is no flash.
+			// Boundaries mirror src/lib/landing/time-of-day.ts (kept in sync by its test).
+			( function () {
+				var h = new Date().getHours();
+				var p =
+					h >= 21 || h < 5 ? 'night'
+					: h < 7 ? 'dawn'
+					: h < 10 ? 'morning'
+					: h < 16 ? 'midday'
+					: h < 19 ? 'golden'
+					: 'dusk';
+				document.documentElement.dataset.phase = p;
+			} )();
+		</script>
+	</Fragment>
+
+	<div class="page" data-phase={DEFAULT_PHASE}>
+		<div class="sky" aria-hidden="true">
+			<div class="stars"></div>
+			<div class="bloom"></div>
+			<div class="halo"></div>
+			<div class="horizon"></div>
+		</div>
+
 		<header class="masthead">
 			<Logo />
 			<a class="btn btn--ghost" href="/editor">Open the studio</a>
 		</header>
 
 		<main class="hero">
-			<p class="eyebrow">Long-form for the AT Protocol</p>
-			<h1 class="hero__title">
-				The open sky meets the<br /><span class="hero__em">typesetter's bench.</span>
-			</h1>
-			<p class="hero__lede">
-				A calm, block-based writing studio for the open social web. Compose rich
-				long-form pieces and publish them straight to <em>your own</em> server — SkyPress
-				is just the studio you write in.
-			</p>
+			<p class="eyebrow" id="greet">{fallback.greeting}</p>
+			<h1 class="hero__title" id="headline" set:html={fallback.headlineHtml} />
+			<p class="hero__lede" id="lede">{fallback.lede}</p>
 			<div class="hero__actions">
 				<a class="btn btn--primary" href="/editor">Start writing</a>
 				<a class="btn btn--ghost" href="/preview">Read a sample</a>
@@ -32,63 +54,206 @@ import Logo from '../components/Logo.astro';
 			</p>
 		</main>
 
+		<section class="how">
+			<ol class="steps">
+				<li><span class="steps__n">01</span><h2>Sign in, no new account</h2><p>Use your existing Bluesky / AT&nbsp;Protocol identity.</p></li>
+				<li><span class="steps__n">02</span><h2>Write in blocks</h2><p>Rich long-form, powered by the Gutenberg editor.</p></li>
+				<li><span class="steps__n">03</span><h2>Own your words</h2><p>Saved to your own server, on the open web.</p></li>
+			</ol>
+			<p class="how__honest">Publishing also creates a Bluesky post that links back — so your piece is discoverable. We always say so before you publish.</p>
+		</section>
+
 		<footer class="footer">
-			<span>Your data, your server, the open web.</span>
+			<span>Your words, your server, the open web.</span>
 			<span class="footer__mark">GPL-2.0 · built on Gutenberg</span>
 		</footer>
 	</div>
 </Base>
 
+<script>
+	import { PHASES, phaseForHour } from '../lib/landing/time-of-day';
+
+	const now = new Date();
+	const phase = PHASES[ phaseForHour( now.getHours() ) ];
+	const greet = document.getElementById( 'greet' );
+	const headline = document.getElementById( 'headline' );
+	const lede = document.getElementById( 'lede' );
+	const hh = String( now.getHours() ).padStart( 2, '0' );
+	const mm = String( now.getMinutes() ).padStart( 2, '0' );
+	if ( greet ) greet.textContent = `${ phase.greeting } · ${ hh }:${ mm }`;
+	if ( headline ) headline.innerHTML = phase.headlineHtml;
+	if ( lede ) lede.textContent = phase.lede;
+</script>
+
 <style>
 	.page {
+		position: relative;
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
+		overflow: hidden;
 	}
+
+	/* ===== Atmospheric sky (hero backdrop) — varies by [data-phase] ===== */
+	.sky {
+		position: absolute;
+		inset: 0 0 auto 0;
+		height: 78vh;
+		min-height: 32rem;
+		z-index: 0;
+		pointer-events: none;
+	}
+	.sky .stars,
+	.sky .bloom,
+	.sky .halo {
+		position: absolute;
+		inset: 0;
+		transition: opacity 0.6s ease;
+	}
+	.bloom {
+		background: radial-gradient(
+			ellipse 46% 42% at 50% 78%,
+			rgba(255, 238, 200, 0.55),
+			rgba(255, 200, 120, 0.3) 40%,
+			transparent 72%
+		);
+	}
+	.halo {
+		background: radial-gradient(circle at 50% 62%, transparent 0 70px, rgba(255, 236, 200, 0.85) 71px 73px, transparent 74px);
+		filter: drop-shadow(0 0 26px rgba(255, 200, 120, 0.45));
+	}
+	.horizon {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 70%;
+		height: 1px;
+		background: linear-gradient(90deg, transparent, rgba(232, 146, 12, 0.7), transparent);
+	}
+	.stars {
+		opacity: 0;
+		background-image:
+			radial-gradient(1.5px 1.5px at 20% 18%, #fff, transparent),
+			radial-gradient(1.5px 1.5px at 67% 12%, #fff, transparent),
+			radial-gradient(1px 1px at 43% 30%, #fff, transparent),
+			radial-gradient(1px 1px at 82% 24%, #fff, transparent),
+			radial-gradient(1.5px 1.5px at 12% 38%, #fff, transparent),
+			radial-gradient(1px 1px at 90% 40%, #fff, transparent),
+			radial-gradient(1px 1px at 33% 9%, #fff, transparent);
+	}
+
+	/* Per-phase sky gradient + star visibility + hero text colour */
+	[data-phase='night'] .sky { background: linear-gradient(180deg, #080611, #140f28 50%, #231a38); }
+	[data-phase='night'] .stars { opacity: 1; }
+	[data-phase='dawn'] .sky { background: linear-gradient(180deg, #231533, #7a2f63 42%, #d7613a 78%, #f4a14a); }
+	[data-phase='dawn'] .stars { opacity: 0.5; }
+	[data-phase='morning'] .sky { background: linear-gradient(180deg, #3a2752, #c0567f 34%, #f5934a 70%, #ffd98a); }
+	[data-phase='midday'] .sky { background: linear-gradient(180deg, #e9b977, #f7dca5 45%, #fdf0d6); }
+	[data-phase='golden'] .sky { background: linear-gradient(180deg, #4a2150, #b5417a 30%, #ef7d3a 64%, #f9c25a 92%, #ffe6ab); }
+	[data-phase='dusk'] .sky { background: linear-gradient(180deg, #140f2a, #4a2150 38%, #93324f 70%, #c75a3b); }
+	[data-phase='dusk'] .stars { opacity: 0.5; }
+
+	/* Light-text phases (dark skies) vs ink-text phase (pale midday). */
+	[data-phase='night'] .hero,
+	[data-phase='dawn'] .hero,
+	[data-phase='morning'] .hero,
+	[data-phase='golden'] .hero,
+	[data-phase='dusk'] .hero { --hero-ink: #f6f0e3; --hero-soft: rgba(246, 240, 227, 0.82); }
+	[data-phase='midday'] .hero { --hero-ink: #241a10; --hero-soft: rgba(36, 26, 16, 0.72); }
+
 	.masthead {
+		position: relative;
+		z-index: 2;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		padding: 1.5rem clamp(1.25rem, 5vw, 4rem);
 	}
 	.hero {
+		position: relative;
+		z-index: 2;
 		flex: 1;
-		max-width: 52rem;
+		width: 100%;
+		max-width: 46rem;
 		margin: 0 auto;
-		padding: clamp(3rem, 10vh, 7rem) clamp(1.25rem, 5vw, 4rem);
+		padding: clamp(2rem, 9vh, 5rem) clamp(1.25rem, 5vw, 4rem) clamp(3rem, 8vh, 5rem);
 		display: flex;
 		flex-direction: column;
-		align-items: flex-start;
+		align-items: center;
+		text-align: center;
 	}
+	.hero .eyebrow { color: var(--sun); }
 	.hero__title {
-		font-size: clamp(2.6rem, 8vw, 5rem);
-		font-weight: 560;
-		line-height: 1.02;
-		margin: 1rem 0 0;
+		font-size: clamp(2.7rem, 8vw, 5rem);
+		font-weight: 760;
+		letter-spacing: -0.035em;
+		line-height: 0.98;
+		margin: 0.75rem 0 0;
+		max-width: 14ch;
+		color: var(--hero-ink);
 	}
-	.hero__em {
+	.hero__title :global(em) {
 		font-style: italic;
 		color: var(--sun);
 	}
 	.hero__lede {
-		font-size: clamp(1.15rem, 2.4vw, 1.4rem);
-		line-height: 1.55;
-		color: var(--ink-soft);
-		max-width: 38ch;
-		margin: 1.75rem 0 0;
+		font-size: clamp(1.1rem, 2.2vw, 1.35rem);
+		line-height: 1.5;
+		color: var(--hero-soft);
+		max-width: 36ch;
+		margin: 1.25rem 0 0;
 	}
 	.hero__actions {
 		display: flex;
 		gap: 0.85rem;
-		margin: 2.25rem 0 0;
+		margin: 2rem 0 0;
 		flex-wrap: wrap;
+		justify-content: center;
 	}
 	.hero__note {
-		color: var(--muted);
+		color: var(--hero-soft);
 		font-size: 0.95rem;
 		margin-top: 1.5rem;
 	}
+
+	/* ===== How it works (standard themed surface, below the sky) ===== */
+	.how {
+		position: relative;
+		z-index: 2;
+		background: var(--paper);
+		border-top: 1px solid var(--line);
+		padding: clamp(2.5rem, 6vw, 4rem) clamp(1.25rem, 5vw, 4rem);
+	}
+	.steps {
+		list-style: none;
+		margin: 0 auto;
+		padding: 0;
+		max-width: 60rem;
+		display: grid;
+		gap: 1.75rem;
+		grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+	}
+	.steps li { margin: 0; }
+	.steps__n {
+		font-family: var(--font-mono);
+		font-weight: 500;
+		color: var(--sun);
+		font-size: 1.1rem;
+		letter-spacing: 0.04em;
+	}
+	.steps h2 { font-size: 1.2rem; margin: 0.4rem 0 0.3rem; }
+	.steps p { margin: 0; color: var(--ink-soft); }
+	.how__honest {
+		max-width: 60rem;
+		margin: 2rem auto 0;
+		color: var(--muted);
+		font-size: 0.95rem;
+	}
+
 	.footer {
+		position: relative;
+		z-index: 2;
+		background: var(--paper);
 		display: flex;
 		justify-content: space-between;
 		gap: 1rem;
@@ -99,5 +264,9 @@ import Logo from '../components/Logo.astro';
 		font-family: var(--font-mono);
 		font-size: 0.72rem;
 		letter-spacing: 0.04em;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.sky .stars, .sky .bloom, .sky .halo { transition: none; }
 	}
 </style>

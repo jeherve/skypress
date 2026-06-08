@@ -10,6 +10,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 <Base
 	title="SkyPress — a writing studio for the open social web"
 	description="A standalone, long-form writing studio for the AT Protocol. Write in blocks and publish to the open social web, under your own account."
+	phase={DEFAULT_PHASE}
 >
 	<Fragment slot="head">
 		<script is:inline>
@@ -29,7 +30,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		</script>
 	</Fragment>
 
-	<div class="page" data-phase={DEFAULT_PHASE}>
+	<div class="page">
 		<div class="sky" aria-hidden="true">
 			<div class="stars"></div>
 			<div class="bloom"></div>

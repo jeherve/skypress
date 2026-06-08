@@ -4,12 +4,18 @@ import '../styles/global.css';
 interface Props {
 	title: string;
 	description?: string;
+	/**
+	 * Optional landing-page sky phase. Rendered as `data-phase` on `<html>` so the
+	 * no-JS / pre-paint default has a sky; the inline head script then overwrites it
+	 * from the visitor's clock. `<html>` is the single phase carrier — see index.astro.
+	 */
+	phase?: string;
 }
-const { title, description } = Astro.props;
+const { title, description, phase } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-phase={phase}>
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />

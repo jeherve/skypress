@@ -2,14 +2,20 @@
 import { defineConfig } from 'astro/config';
 import { fileURLToPath } from 'node:url';
 import react from '@astrojs/react';
-import node from '@astrojs/node';
+import cloudflare from '@astrojs/cloudflare';
 
 const nodeModules = fileURLToPath( new URL( './node_modules', import.meta.url ) );
 
-// Static by default; the article route is rendered on demand (read-through renderer,
-// SP4) and needs an adapter. Node for now — SP7 swaps in the chosen edge host.
+// Static by default; the article/homepage routes render on demand (read-through
+// renderer, SP4). Deployed to Cloudflare Pages (SP7). `nodejs_compat` (set in
+// wrangler.toml) lets sanitize-html's Node-style deps run on the edge.
 export default defineConfig( {
-	adapter: node( { mode: 'standalone' } ),
+	site: 'https://skypress.blog',
+	adapter: cloudflare(),
+	// SkyPress doesn't use Astro server sessions (auth is a browser OAuth client).
+	// A no-binding in-memory driver stops the adapter requiring a Cloudflare KV
+	// namespace, keeping the no-database goal (brief §2). Never used at runtime.
+	session: { driver: 'memory' },
 	integrations: [ react() ],
 	vite: {
 		// React 18 is required by the bundled @wordpress/* packages (Decision 0001).

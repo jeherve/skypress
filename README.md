@@ -64,7 +64,22 @@ docs/
 | SP4 | Public renderer (`/@<handle>/<rkey>`, link tags, edge SSR, sanitisation) | ✅ Complete |
 | SP5 | Edit flow (the "puppy problem") + unpublish | ✅ Complete |
 | SP6 | Brand identity | ✅ Complete |
-| SP7 | Deploy to a free host | Next |
+| SP7 | Deploy to Cloudflare | ✅ Deploy-ready (edge-verified; `npm run deploy`) |
+
+## Deploy (Cloudflare)
+
+SkyPress deploys to **Cloudflare Workers (Static Assets)** via `@astrojs/cloudflare`
+(Decision 0009). The read-through renderer runs as the Worker; everything else is static.
+No database/KV — `nodejs_compat` (in `wrangler.toml`) lets the reader's sanitiser run on
+the edge.
+
+```sh
+npx wrangler login   # one-time, owner's Cloudflare account
+npm run deploy        # astro build && wrangler deploy
+```
+
+Then attach `skypress.blog` as a custom domain in the Cloudflare dashboard. Full runbook +
+verification: [`docs/specs/sp7-deploy.md`](./docs/specs/sp7-deploy.md).
 
 ## License
 

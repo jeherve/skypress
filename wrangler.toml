@@ -1,0 +1,7 @@
+# Cloudflare Workers (Static Assets) config for SkyPress (SP7).
+# @astrojs/cloudflare merges this with the built worker (main = dist/server/entry.mjs,
+# assets = dist/client) into dist/server/wrangler.json at build time.
+name = "skypress"
+compatibility_date = "2025-09-23"
+# nodejs_compat lets sanitize-html's Node-style deps run on the edge (SP4 reader path).
+compatibility_flags = ["nodejs_compat"]

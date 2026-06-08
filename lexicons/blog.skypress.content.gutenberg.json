@@ -4,7 +4,7 @@
   "defs": {
     "main": {
       "type": "object",
-      "description": "A WordPress Gutenberg block tree — the canonical content of a SkyPress document. Placed inside the open `content` union of a `site.standard.document`. Readers that don't understand this format should fall back to the document's `textContent`.",
+      "description": "A WordPress Gutenberg block tree, the canonical content of a SkyPress document. Placed inside the open `content` union of a `site.standard.document`. Readers that don't understand this format should fall back to the document's `textContent`.",
       "required": ["version", "blocks"],
       "properties": {
         "version": {

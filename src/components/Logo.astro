@@ -17,8 +17,9 @@ const { size = 28, wordmark = true } = Astro.props;
 	>
 		<!-- the type block / page -->
 		<rect x="2.5" y="2.5" width="27" height="27" rx="7.5" stroke="currentColor" stroke-width="2.2" />
-		<!-- sun over the horizon (sky) -->
-		<circle cx="16" cy="12.5" r="3.4" fill="currentColor" />
+		<!-- sun over the horizon: a halo ring with a glowing core (echoes the landing sun) -->
+		<circle cx="16" cy="12.5" r="3.6" stroke="currentColor" stroke-width="1.9" />
+		<circle cx="16" cy="12.5" r="0.9" fill="currentColor" />
 		<path d="M7 18.5h18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
 		<!-- lines of set type (press) -->
 		<path d="M9 22.8h14M9 25.6h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" opacity="0.55" />

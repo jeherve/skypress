@@ -3,15 +3,24 @@
  * "The open sky meets the typesetter's bench" — editorial letterpress + open air.
  * Self-hosted, freely-licensed fonts; light + dark first-class.
  */
-@import '@fontsource-variable/fraunces';
-@import '@fontsource-variable/newsreader';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
 
+/* Overused Grotesk — self-hosted variable font (OFL-1.1, see public/fonts/). */
+@font-face {
+	font-family: 'Overused Grotesk';
+	src:
+		url('/fonts/OverusedGrotesk-VF.woff2') format('woff2-variations'),
+		url('/fonts/OverusedGrotesk-VF.woff') format('woff-variations');
+	font-weight: 300 900;
+	font-style: normal;
+	font-display: swap;
+}
+
 :root {
-	/* Type */
-	--font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
-	--font-body: 'Newsreader Variable', Georgia, serif;
+	/* Type — one grotesk for display + body, mono for labels/code */
+	--font-display: 'Overused Grotesk', system-ui, sans-serif;
+	--font-body: 'Overused Grotesk', system-ui, sans-serif;
 	--font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
 
 	/* Palette — light (warm paper, ink, altitude blue) */

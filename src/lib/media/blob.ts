@@ -49,6 +49,38 @@ export function resolveBlobImageUrls(
 	} );
 }
 
+/**
+ * Coerce a blob ref into the portable JSON (`{ ref: { $link } }`) shape, whatever form the
+ * source handed us. Records read through the `@atproto/api` agent are run through `jsonToLex`,
+ * which turns blob fields into `BlobRef` instances whose `ref` is a CID OBJECT (no `$link`) —
+ * reading `icon.ref.$link` off one yields `undefined` (→ `cid=undefined` in a getBlob URL).
+ * Records fetched as raw JSON (the reader's `safeFetch` path) already carry `{ $link }`. This
+ * accepts either and always returns `BlobRefJson`, or `undefined` if there's no usable CID.
+ */
+export function normalizeBlobRefJson( value: unknown ): BlobRefJson | undefined {
+	if ( ! value || typeof value !== 'object' ) {
+		return undefined;
+	}
+	const raw = value as { ref?: unknown; mimeType?: unknown; size?: unknown };
+	const ref = raw.ref;
+	// JSON shape: ref.$link. BlobRef shape: ref is a CID whose toString() is the CID string.
+	const cid =
+		ref && typeof ref === 'object' && typeof ( ref as { $link?: unknown } ).$link === 'string'
+			? ( ref as { $link: string } ).$link
+			: ref != null
+				? String( ref )
+				: undefined;
+	if ( ! cid ) {
+		return undefined;
+	}
+	return {
+		$type: 'blob',
+		ref: { $link: cid },
+		mimeType: typeof raw.mimeType === 'string' ? raw.mimeType : '',
+		size: typeof raw.size === 'number' ? raw.size : 0,
+	};
+}
+
 /** Build the `com.atproto.sync.getBlob` URL for a writer's DID + blob CID. */
 export function buildGetBlobUrl( pdsUrl: string, did: string, cid: string ): string {
 	const base = pdsUrl.replace( /\/$/, '' );

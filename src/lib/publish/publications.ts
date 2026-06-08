@@ -15,7 +15,7 @@ import {
 	uniquePublicationSlug,
 	type PublicationRecord,
 } from './records';
-import type { BlobRefJson } from '../media/blob';
+import { normalizeBlobRefJson, type BlobRefJson } from '../media/blob';
 
 const PUBLICATION_COLLECTION = 'site.standard.publication';
 const DOCUMENT_COLLECTION = 'site.standard.document';
@@ -61,13 +61,16 @@ function toPublication( record: {
 	if ( ! slug ) {
 		return null;
 	}
+	// The agent deserialises the icon blob into a BlobRef (ref = CID object); normalise back to
+	// the portable `{ ref: { $link } }` shape the dashboard + form read from.
+	const icon = normalizeBlobRefJson( value.icon );
 	return {
 		uri: record.uri,
 		rkey: rkeyFromUri( record.uri ),
 		slug,
 		name: value.name ?? slug,
 		...( value.description ? { description: value.description } : {} ),
-		...( value.icon ? { icon: value.icon } : {} ),
+		...( icon ? { icon } : {} ),
 	};
 }
 

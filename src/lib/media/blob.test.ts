@@ -3,6 +3,7 @@ import {
 	buildGetBlobUrl,
 	attachBlobRefs,
 	resolveBlobImageUrls,
+	normalizeBlobRefJson,
 	type BlobRefJson,
 } from './blob';
 import type { BlockNode } from '../blocks/render';
@@ -26,6 +27,35 @@ describe( 'buildGetBlobUrl', () => {
 		expect( buildGetBlobUrl( 'https://pds.example.com/', 'did:plc:abc', 'c' ) ).toContain(
 			'https://pds.example.com/xrpc/'
 		);
+	} );
+} );
+
+describe( 'normalizeBlobRefJson', () => {
+	it( 'passes through the JSON ($link) shape from raw-fetched records', () => {
+		expect( normalizeBlobRefJson( REF ) ).toEqual( REF );
+	} );
+
+	it( 'extracts the CID from a BlobRef instance (ref is a CID object, no $link)', () => {
+		// `@atproto/api` runs jsonToLex on responses, turning the icon into a BlobRef whose
+		// `ref` is a multiformats CID — its toString() is the CID string.
+		const blobRef = {
+			$type: 'blob',
+			ref: { toString: () => 'bafyfromcid' },
+			mimeType: 'image/jpeg',
+			size: 99,
+		};
+		expect( normalizeBlobRefJson( blobRef ) ).toEqual( {
+			$type: 'blob',
+			ref: { $link: 'bafyfromcid' },
+			mimeType: 'image/jpeg',
+			size: 99,
+		} );
+	} );
+
+	it( 'returns undefined for a missing or refless value', () => {
+		expect( normalizeBlobRefJson( undefined ) ).toBeUndefined();
+		expect( normalizeBlobRefJson( {} ) ).toBeUndefined();
+		expect( normalizeBlobRefJson( { mimeType: 'image/png' } ) ).toBeUndefined();
 	} );
 } );
 

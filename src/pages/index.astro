@@ -200,8 +200,11 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		border-color: var(--sky-ink);
 	}
 
-	/* Signed-in author pill — shares the frosted sky-chip treatment + button radius. */
-	.masthead .authorpill {
+	/* Signed-in author pill — shares the frosted sky-chip treatment + button radius.
+	   AuthorPill is a `client:only` React island, so Astro's scoped styles never
+	   reach its DOM; target it with `:global()`. The `.masthead` prefix stays scoped
+	   so the pill still inherits the per-phase `--sky-*` custom properties. */
+	.masthead :global(.authorpill) {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.55rem;
@@ -215,17 +218,17 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		-webkit-backdrop-filter: blur(8px);
 		text-shadow: var(--sky-shadow);
 	}
-	.masthead .authorpill:hover {
+	.masthead :global(.authorpill:hover) {
 		border-color: var(--sky-ink);
 	}
-	.authorpill__avatar {
+	.masthead :global(.authorpill__avatar) {
 		width: 30px;
 		height: 30px;
 		border-radius: 50%;
 		object-fit: cover;
 		flex: none;
 	}
-	.authorpill__avatar--fallback {
+	.masthead :global(.authorpill__avatar--fallback) {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -234,16 +237,16 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		font-weight: 700;
 		font-size: 0.85rem;
 	}
-	.authorpill__who {
+	.masthead :global(.authorpill__who) {
 		display: flex;
 		flex-direction: column;
 		line-height: 1.1;
 	}
-	.authorpill__name {
+	.masthead :global(.authorpill__name) {
 		font-weight: 680;
 		font-size: 0.86rem;
 	}
-	.authorpill__handle {
+	.masthead :global(.authorpill__handle) {
 		font-size: 0.72rem;
 		opacity: 0.8;
 	}

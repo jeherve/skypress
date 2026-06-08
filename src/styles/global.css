@@ -85,8 +85,7 @@ body {
 
 h1, h2, h3, h4 {
 	font-family: var(--font-display);
-	font-weight: 540;
-	font-variation-settings: 'opsz' 40, 'SOFT' 30, 'WONK' 0;
+	font-weight: 640;
 	line-height: 1.1;
 	letter-spacing: -0.01em;
 	color: var(--ink);

@@ -79,7 +79,7 @@ const publicationFields = [
 			<p>{ CONTENT_LEXICON_DESCRIPTION }</p>
 			<table class="lex-table">
 				<thead>
-					<tr><th>Field</th><th>Type</th><th>Required</th><th>What it is</th></tr>
+					<tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Required</th><th scope="col">What it is</th></tr>
 				</thead>
 				<tbody>
 					{ contentFields.map( ( f ) => (
@@ -106,7 +106,7 @@ const publicationFields = [
 			<h2>Interop: the <code>site.standard.*</code> surface</h2>
 			<p>
 				The publication and document metadata reuse the community
-				<a href="https://tangled.org/standard.site/lexicons" rel="noreferrer">standard.site</a>
+				<a href="https://tangled.org/standard.site/lexicons" target="_blank" rel="noopener noreferrer">standard.site</a>
 				lexicons rather than anything SkyPress-specific &mdash; so your articles are
 				discoverable by other tools and readers that already speak them, not just by
 				SkyPress.
@@ -115,7 +115,7 @@ const publicationFields = [
 			<h3><code>site.standard.document</code> &mdash; the article</h3>
 			<table class="lex-table">
 				<thead>
-					<tr><th>Field</th><th>Required</th><th>What SkyPress writes</th></tr>
+					<tr><th scope="col">Field</th><th scope="col">Required</th><th scope="col">What SkyPress writes</th></tr>
 				</thead>
 				<tbody>
 					{ documentFields.map( ( f ) => (
@@ -131,7 +131,7 @@ const publicationFields = [
 			<h3><code>site.standard.publication</code> &mdash; your SkyPress home</h3>
 			<table class="lex-table">
 				<thead>
-					<tr><th>Field</th><th>Required</th><th>What SkyPress writes</th></tr>
+					<tr><th scope="col">Field</th><th scope="col">Required</th><th scope="col">What SkyPress writes</th></tr>
 				</thead>
 				<tbody>
 					{ publicationFields.map( ( f ) => (
@@ -155,7 +155,7 @@ const publicationFields = [
 		<span>Your words, your account, the open web.</span>
 		<span class="lex-footer__mark">
 			GPL-2.0 &middot; schemas in
-			<a href="https://tangled.org/standard.site/lexicons" rel="noreferrer">standard.site</a>
+			<a href="https://tangled.org/standard.site/lexicons" target="_blank" rel="noopener noreferrer">standard.site</a>
 		</span>
 	</footer>
 </Base>

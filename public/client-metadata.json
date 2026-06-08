@@ -2,7 +2,7 @@
   "client_id": "https://skypress.blog/client-metadata.json",
   "client_name": "SkyPress",
   "client_uri": "https://skypress.blog",
-  "redirect_uris": ["https://skypress.blog/editor"],
+  "redirect_uris": ["https://skypress.blog/editor/"],
   "scope": "atproto transition:generic",
   "grant_types": ["authorization_code", "refresh_token"],
   "response_types": ["code"],

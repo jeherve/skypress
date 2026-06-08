@@ -48,6 +48,18 @@ Git-connected builds (Workers Builds) are an alternative: build `npm run build`,
 `npx wrangler deploy`, set `nodejs_compat` — but the local `npm run deploy` is the simplest
 first cut.
 
+## Gotcha: OAuth redirect_uri must include the trailing slash
+
+Cloudflare serves the prerendered `/editor` page canonically at **`/editor/`** (`/editor`
+→ 307 → `/editor/`). The atproto browser client only processes a callback when
+`location.pathname` **exactly** equals a registered `redirect_uri` pathname
+(`findRedirectUrl`). So `client-metadata.json` must register
+**`https://skypress.blog/editor/`** (with the trailing slash) — otherwise auth completes at
+Bluesky, redirects back to `/editor/`, but the editor silently stays on the sign-in screen
+(`init()` falls through to `initRestore`). Verified against the canonical path locally
+(`astro preview` on workerd). Reading routes are SSR (not slash-canonicalised), so article
+URLs stay `/@<handle>/<rkey>`.
+
 ## Notes / follow-ups
 
 - The dev OAuth client is loopback (`127.0.0.1`); production uses the hosted

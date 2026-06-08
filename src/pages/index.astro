@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Logo from '../components/Logo.astro';
+import AuthorPill from '../components/AuthorPill.tsx';
 import { PHASES, DEFAULT_PHASE } from '../lib/landing/time-of-day';
 
 const fallback = PHASES[ DEFAULT_PHASE ];
@@ -38,7 +39,10 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 
 		<header class="masthead">
 			<Logo />
-			<a class="btn btn--ghost" href="/editor">Open the studio</a>
+			<div class="masthead__right">
+				<AuthorPill client:only="react" />
+				<a class="btn btn--ghost" href="/editor">Open the studio</a>
+			</div>
 		</header>
 
 		<main class="hero">
@@ -196,6 +200,53 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		border-color: var(--sky-ink);
 	}
 
+	/* Signed-in author pill — shares the frosted sky-chip treatment + button radius. */
+	.masthead .authorpill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.55rem;
+		padding: 0.32rem 0.7rem 0.32rem 0.4rem;
+		border-radius: var(--radius-sm);
+		background: var(--sky-chip);
+		border: 1px solid var(--sky-line);
+		color: var(--sky-ink);
+		text-decoration: none;
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		text-shadow: var(--sky-shadow);
+	}
+	.masthead .authorpill:hover {
+		border-color: var(--sky-ink);
+	}
+	.authorpill__avatar {
+		width: 30px;
+		height: 30px;
+		border-radius: 50%;
+		object-fit: cover;
+		flex: none;
+	}
+	.authorpill__avatar--fallback {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(255, 255, 255, 0.25);
+		font-weight: 700;
+		font-size: 0.85rem;
+	}
+	.authorpill__who {
+		display: flex;
+		flex-direction: column;
+		line-height: 1.1;
+	}
+	.authorpill__name {
+		font-weight: 680;
+		font-size: 0.86rem;
+	}
+	.authorpill__handle {
+		font-size: 0.72rem;
+		opacity: 0.8;
+	}
+
 	.masthead {
 		position: relative;
 		z-index: 2;
@@ -203,6 +254,11 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		align-items: center;
 		justify-content: space-between;
 		padding: 1.5rem clamp(1.25rem, 5vw, 4rem);
+	}
+	.masthead__right {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
 	}
 	.hero {
 		position: relative;

@@ -4,6 +4,7 @@
  */
 import { resolvePdsUrl } from '../media/pds';
 import { safeFetch } from '../net/safe-fetch';
+import { isValidHandleOrDid, normalizeHandle } from '../auth/config';
 
 /** Default handle resolver — a `com.atproto.identity.resolveHandle` XRPC endpoint. */
 const FALLBACK_RESOLVER = 'https://bsky.social';
@@ -45,10 +46,18 @@ async function resolveViaXrpc( handle: string ): Promise< string | null > {
  * (no third party), falling back to a public resolver XRPC.
  */
 export async function resolveHandleToDid( handleOrDid: string ): Promise< string | null > {
+	// Validate before the value is used as a resolver fetch host: the read path takes it
+	// straight from the URL (`/@<author>`), so a non-handle-shaped value could otherwise
+	// smuggle a path/port/query into the outbound request and turn the worker into a
+	// request proxy. safeFetch still guards internal hosts; this rejects bad syntax first.
+	if ( ! isValidHandleOrDid( handleOrDid ) ) {
+		return null;
+	}
 	if ( handleOrDid.startsWith( 'did:' ) ) {
 		return handleOrDid;
 	}
-	return ( await resolveViaWellKnown( handleOrDid ) ) ?? ( await resolveViaXrpc( handleOrDid ) );
+	const handle = normalizeHandle( handleOrDid );
+	return ( await resolveViaWellKnown( handle ) ) ?? ( await resolveViaXrpc( handle ) );
 }
 
 export interface Author {

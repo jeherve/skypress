@@ -4,6 +4,7 @@ import {
 	clientMetadataUrl,
 	normalizeHandle,
 	isValidAccountInput,
+	isValidHandleOrDid,
 	OAUTH_SCOPE,
 } from './config';
 
@@ -46,6 +47,30 @@ describe( 'isValidAccountInput', () => {
 		expect( isValidAccountInput( '' ) ).toBe( false );
 		expect( isValidAccountInput( '   ' ) ).toBe( false );
 		expect( isValidAccountInput( 'notahandle' ) ).toBe( false );
+	} );
+} );
+
+describe( 'isValidHandleOrDid', () => {
+	it( 'accepts handles and DIDs', () => {
+		expect( isValidHandleOrDid( 'alice.bsky.social' ) ).toBe( true );
+		expect( isValidHandleOrDid( '@alice.bsky.social' ) ).toBe( true );
+		expect( isValidHandleOrDid( 'did:plc:abc123' ) ).toBe( true );
+		expect( isValidHandleOrDid( 'did:web:example.com' ) ).toBe( true );
+	} );
+
+	it( 'rejects URLs and anything carrying a path, port, query or scheme', () => {
+		// These would otherwise be used directly as a resolver fetch host (SSRF/proxy).
+		expect( isValidHandleOrDid( 'https://pds.example.com' ) ).toBe( false );
+		expect( isValidHandleOrDid( 'evil.com/.well-known/atproto-did' ) ).toBe( false );
+		expect( isValidHandleOrDid( 'evil.com?x=y' ) ).toBe( false );
+		expect( isValidHandleOrDid( 'evil.com:8080' ) ).toBe( false );
+		expect( isValidHandleOrDid( 'user@evil.com' ) ).toBe( false );
+	} );
+
+	it( 'rejects empty input and bare words without a domain', () => {
+		expect( isValidHandleOrDid( '' ) ).toBe( false );
+		expect( isValidHandleOrDid( '   ' ) ).toBe( false );
+		expect( isValidHandleOrDid( 'notahandle' ) ).toBe( false );
 	} );
 } );
 

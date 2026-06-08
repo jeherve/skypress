@@ -56,3 +56,22 @@ export function isValidAccountInput( input: string ): boolean {
 	}
 	return HANDLE_RE.test( normalizeHandle( value ) );
 }
+
+/**
+ * Stricter sibling of `isValidAccountInput` for the public READ path. Accepts only a
+ * syntactic handle (`alice.bsky.social`) or DID (`did:plc:…`) — and, unlike
+ * `isValidAccountInput`, rejects `https://…` URLs and anything carrying a path, port,
+ * query or scheme. The renderer takes the author straight from the URL and uses it as a
+ * resolver fetch host, so this stops a value like `evil.com/x?y=` from smuggling into the
+ * outbound request (`safeFetch` still blocks internal hosts; this gates the syntax).
+ */
+export function isValidHandleOrDid( input: string ): boolean {
+	const value = input.trim();
+	if ( ! value ) {
+		return false;
+	}
+	if ( DID_RE.test( value ) ) {
+		return true;
+	}
+	return HANDLE_RE.test( normalizeHandle( value ) );
+}

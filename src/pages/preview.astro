@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { renderBlocks, blocksToText } from '../lib/blocks/render';
+import { sanitizeArticleHtml } from '../lib/reader/sanitize';
 import { SAMPLE_TREE } from '../lib/blocks/sample';
 
 // Frontend block styles only — no editor chrome, no JS.
@@ -10,7 +11,9 @@ import '@wordpress/block-library/build-style/theme.css';
 
 // Render path (server/edge-safe): stored content (a block tree) → HTML via the
 // dependency-free renderer (Decision 0003). No @wordpress runtime on this page.
-const html = renderBlocks( SAMPLE_TREE );
+// Sanitised even though SAMPLE_TREE is static: every `set:html` sink goes through the
+// sanitizer, so the invariant holds if this is ever repointed at untrusted content.
+const html = sanitizeArticleHtml( renderBlocks( SAMPLE_TREE ) );
 const textContent = blocksToText( SAMPLE_TREE );
 
 const words = textContent.split( /\s+/ ).filter( Boolean ).length;

@@ -53,6 +53,23 @@ Each article page emits `<link rel="site.standard.document">` + (when linked)
 `skypress.blog/@<handle>/<rkey>` URL. With these + the publication `url` pointing back at
 skypress.blog, no separate `.well-known` route is needed for verification.
 
+## Security — SSRF guard
+
+The renderer fetches hostnames derived from untrusted input: the `@handle` in the URL,
+a `did:web` host, and the PDS `serviceEndpoint` from a DID document. Unguarded, a request
+like `/@169.254.169.254/x` or a `did:web` pointing at an internal host would make the
+server fetch loopback / cloud-metadata / private addresses (SSRF).
+
+Every such fetch goes through **`src/lib/net/safe-fetch.ts`**, which allows only `https://`
+to syntactically valid **public** domains — rejecting IP literals, single-label/`localhost`,
+and reserved/internal TLDs — and refuses to follow redirects (no pivot to an internal
+host). Verified: legit handles render (200) while `/@127.0.0.1/…` and `/@169.254.169.254/…`
+are rejected (404, no internal request made). Unit-tested in `net/safe-fetch.test.ts`.
+
+**Residual:** a public domain whose DNS resolves to a private IP (DNS rebinding) can't be
+closed portably without resolving DNS and inspecting the address (Node-only, fights edge
+portability). Close it at the network/egress layer of the chosen host in SP7.
+
 ## Consequences
 
 - `@astrojs/node` is a placeholder host; `sanitize-html` is Node-oriented. SP7 must

@@ -1,11 +1,14 @@
+import { safeFetch, assertSafeUrl } from '../net/safe-fetch';
+
 /**
- * Resolve a writer's PDS endpoint from their DID document (browser-only).
- * Needed to build `getBlob` URLs. Handles `did:plc` (via plc.directory) and `did:web`.
+ * Resolve a writer's PDS endpoint from their DID document. Handles `did:plc` (via
+ * plc.directory) and `did:web`. The `did:web` host and the returned `serviceEndpoint`
+ * are untrusted, so both go through `safeFetch`/`assertSafeUrl` to prevent SSRF.
  */
 export async function resolvePdsUrl( did: string ): Promise< string > {
 	let docUrl: string;
 	if ( did.startsWith( 'did:plc:' ) ) {
-		docUrl = `https://plc.directory/${ did }`;
+		docUrl = `https://plc.directory/${ encodeURIComponent( did ) }`;
 	} else if ( did.startsWith( 'did:web:' ) ) {
 		const host = did.slice( 'did:web:'.length ).replace( /:/g, '/' );
 		docUrl = `https://${ host }/.well-known/did.json`;
@@ -13,7 +16,7 @@ export async function resolvePdsUrl( did: string ): Promise< string > {
 		throw new Error( `Unsupported DID method: ${ did }` );
 	}
 
-	const res = await fetch( docUrl );
+	const res = await safeFetch( docUrl );
 	if ( ! res.ok ) {
 		throw new Error( `Failed to resolve DID document (${ res.status })` );
 	}
@@ -27,5 +30,6 @@ export async function resolvePdsUrl( did: string ): Promise< string > {
 	if ( ! pds?.serviceEndpoint ) {
 		throw new Error( 'No atproto PDS endpoint in DID document' );
 	}
-	return pds.serviceEndpoint;
+	// The endpoint comes from the DID doc — validate before anyone fetches it.
+	return assertSafeUrl( pds.serviceEndpoint ).toString().replace( /\/$/, '' );
 }

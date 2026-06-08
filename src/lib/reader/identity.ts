@@ -3,13 +3,16 @@
  * Runs server-side (Node/edge): handle → DID → PDS.
  */
 import { resolvePdsUrl } from '../media/pds';
+import { safeFetch } from '../net/safe-fetch';
 
 /** Default handle resolver — a `com.atproto.identity.resolveHandle` XRPC endpoint. */
 const FALLBACK_RESOLVER = 'https://bsky.social';
 
 async function resolveViaWellKnown( handle: string ): Promise< string | null > {
 	try {
-		const res = await fetch( `https://${ handle }/.well-known/atproto-did` );
+		// safeFetch rejects non-public hosts, so an attacker-supplied handle like
+		// `169.254.169.254` or `internal-svc` can't trigger an internal request (SSRF).
+		const res = await safeFetch( `https://${ handle }/.well-known/atproto-did` );
 		if ( ! res.ok ) {
 			return null;
 		}
@@ -22,7 +25,7 @@ async function resolveViaWellKnown( handle: string ): Promise< string | null > {
 
 async function resolveViaXrpc( handle: string ): Promise< string | null > {
 	try {
-		const res = await fetch(
+		const res = await safeFetch(
 			`${ FALLBACK_RESOLVER }/xrpc/com.atproto.identity.resolveHandle?handle=${ encodeURIComponent(
 				handle
 			) }`

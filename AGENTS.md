@@ -31,8 +31,11 @@ Read the relevant `docs/decisions/*` and `docs/specs/*` before working in an are
    Adding a block means adding a `render.ts` case **and** a fidelity assertion.
 5. **Curated block allowlist is the content model.** Add blocks deliberately; removing
    one after content exists is a breaking change. (Decision 0002)
-6. **Untrusted content:** stored block trees come from arbitrary PDSes. The reader must
-   **sanitise** HTML before injecting it (tracked for SP4).
+6. **Untrusted content:** stored block trees come from arbitrary PDSes. The reader
+   **sanitises** HTML before injecting it (`src/lib/reader/sanitize.ts`). Two standing
+   rules for the read path: (a) any server-side `fetch` to a host derived from user input
+   (a handle, `did:web`, a PDS `serviceEndpoint`) MUST go through `src/lib/net/safe-fetch.ts`
+   (SSRF guard); (b) never inject PDS-sourced HTML without sanitising.
 7. **OAuth is a browser public client** (`@atproto/oauth-client-browser`, Decision 0004).
    In **dev you must serve on `http://127.0.0.1:<port>`, not `localhost`** (atproto
    loopback requirement), and the loopback `client_id` must be path-less — see

@@ -42,7 +42,11 @@ interface SkyEditorProps {
  * reading pages (Decision 0001).
  */
 export default function SkyEditor( { onChange, mediaUpload, initialBlocks }: SkyEditorProps ) {
-	const [ status, setStatus ] = useState< string >( 'Start writing…' );
+	// Empty until the first autosave. The in-editor placeholder already prompts
+	// the writer; this line is reserved for save feedback ("Draft saved · …").
+	// Kept in the DOM as an `aria-live` region so updates are announced; the
+	// `:empty` rule hides it while idle.
+	const [ status, setStatus ] = useState< string >( '' );
 
 	// Load existing content (editing) by rebuilding block instances from the stored tree.
 	// Core blocks are registered globally by the time onLoad runs.

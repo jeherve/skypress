@@ -58,7 +58,7 @@ export default function AuthorPill() {
 	);
 
 	return href ? (
-		<a className="authorpill" href={ href }>
+		<a className="authorpill" href={ href } aria-label={ `${ name } — view your public page` }>
 			{ inner }
 		</a>
 	) : (

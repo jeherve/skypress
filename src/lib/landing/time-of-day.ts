@@ -15,34 +15,34 @@ export const PHASE_ORDER: PhaseKey[] = [ 'night', 'dawn', 'morning', 'midday', '
 
 export const PHASES: Record< PhaseKey, Phase > = {
 	night: {
-		greeting: 'Burning the midnight oil',
-		headlineHtml: 'Write while the <em>world sleeps.</em>',
-		lede: 'A calm, block-based studio for long-form on the open social web.',
+		greeting: 'Still up?',
+		headlineHtml: 'Write while it’s <em>quiet.</em>',
+		lede: 'A calm place to write long-form, and publish it to your own server on the open web.',
 	},
 	dawn: {
-		greeting: 'Up before the birds',
+		greeting: 'Up with the sun',
 		headlineHtml: 'Catch the <em>first light.</em>',
-		lede: 'A calm, block-based studio for long-form on the open social web.',
+		lede: 'A calm place to write long-form, and publish it to your own server on the open web.',
 	},
 	morning: {
 		greeting: 'Good morning',
 		headlineHtml: 'Start the day on the <em>page.</em>',
-		lede: 'A calm, block-based studio for long-form on the open social web.',
+		lede: 'A calm place to write long-form, and publish it to your own server on the open web.',
 	},
 	midday: {
 		greeting: 'Good afternoon',
-		headlineHtml: 'Write things <em>worth keeping.</em>',
-		lede: 'A calm, block-based studio for long-form on the open social web.',
+		headlineHtml: 'Write something <em>worth keeping.</em>',
+		lede: 'A calm place to write long-form, and publish it to your own server on the open web.',
 	},
 	golden: {
 		greeting: 'Golden hour',
 		headlineHtml: 'Write before the <em>light goes.</em>',
-		lede: 'A calm, block-based studio for long-form on the open social web.',
+		lede: 'A calm place to write long-form, and publish it to your own server on the open web.',
 	},
 	dusk: {
 		greeting: 'Good evening',
-		headlineHtml: 'End the day with <em>your words.</em>',
-		lede: 'A calm, block-based studio for long-form on the open social web.',
+		headlineHtml: 'Wind down with <em>your words.</em>',
+		lede: 'A calm place to write long-form, and publish it to your own server on the open web.',
 	},
 };
 

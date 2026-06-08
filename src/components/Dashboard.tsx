@@ -77,8 +77,8 @@ function DashboardGate() {
 					Your publications
 				</button>
 				<span className="dash__bar-actions">
-					<a className="dash__link" href="/editor">
-						Open the studio
+					<a className="dash__studio" href="/editor">
+						Studio
 					</a>
 					<button type="button" className="dash__signout" onClick={ () => void signOut() }>
 						Sign out

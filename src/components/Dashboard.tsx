@@ -226,6 +226,7 @@ function PublicationManager( {
 	const [ articles, setArticles ] = useState< MyArticle[] | null >( null );
 	const [ busy, setBusy ] = useState< string | null >( null );
 	const [ deleting, setDeleting ] = useState( false );
+	const [ error, setError ] = useState< string | null >( null );
 
 	useEffect( () => {
 		let cancelled = false;
@@ -245,9 +246,12 @@ function PublicationManager( {
 			return;
 		}
 		setBusy( article.rkey );
+		setError( null );
 		try {
 			await unpublish( agent, did, { rkey: article.rkey, bskyPostRef: article.bskyPostRef } );
 			setArticles( ( prev ) => prev?.filter( ( a ) => a.rkey !== article.rkey ) ?? null );
+		} catch ( err ) {
+			setError( err instanceof Error ? err.message : String( err ) );
 		} finally {
 			setBusy( null );
 		}
@@ -265,10 +269,15 @@ function PublicationManager( {
 			return;
 		}
 		setDeleting( true );
+		setError( null );
 		try {
 			await deletePublication( agent, did, { uri: pub.uri, rkey: pub.rkey } );
 			onDeleted();
-		} catch {
+		} catch ( err ) {
+			setError(
+				`${ err instanceof Error ? err.message : String( err ) } — some articles or ` +
+					`posts may already have been removed. Reopen this publication and try again.`
+			);
 			setDeleting( false );
 		}
 	}
@@ -305,6 +314,12 @@ function PublicationManager( {
 					Delete
 				</button>
 			</nav>
+
+			{ error && (
+				<p className="dash__error" role="alert">
+					{ error }
+				</p>
+			) }
 
 			{ tab === 'posts' && (
 				<div className="dash__posts">

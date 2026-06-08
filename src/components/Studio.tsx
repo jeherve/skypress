@@ -21,7 +21,8 @@ function StudioGate() {
 	const [ editing, setEditing ] = useState< MyArticle | null >( null );
 	const [ refreshKey, setRefreshKey ] = useState( 0 );
 	const [ avatarOk, setAvatarOk ] = useState( true );
-	const [ publications, setPublications ] = useState< Publication[] >( [] );
+	// `null` = still loading; `[]` = loaded, none exist. PublishPanel needs the distinction.
+	const [ publications, setPublications ] = useState< Publication[] | null >( null );
 	// Shared between mediaUpload (writes blob refs) and publish (reads them).
 	const registry = useRef< BlobRegistry >( new Map() ).current;
 

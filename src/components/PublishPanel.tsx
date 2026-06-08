@@ -27,8 +27,11 @@ interface Props {
 	identity: Identity;
 	blocks: BlockInstance[];
 	blobRegistry: BlobRegistry;
-	/** The writer's SkyPress publications — the publish target is chosen from these. */
-	publications: Publication[];
+	/**
+	 * The writer's SkyPress publications — the publish target is chosen from these.
+	 * `null` means they're still loading (distinct from `[]`, which means none exist yet).
+	 */
+	publications: Publication[] | null;
 	/** When set, the panel updates an existing article instead of publishing a new one. */
 	editing?: EditingTarget;
 	initialTitle?: string;
@@ -52,9 +55,10 @@ export default function PublishPanel( {
 	initialTitle,
 	onComplete,
 }: Props ) {
+	const pubs = publications ?? [];
 	const [ title, setTitle ] = useState( initialTitle ?? '' );
 	const [ targetUri, setTargetUri ] = useState(
-		() => editing?.siteUri ?? publications[ 0 ]?.uri ?? ''
+		() => editing?.siteUri ?? pubs[ 0 ]?.uri ?? ''
 	);
 	const [ phase, setPhase ] = useState< Phase >( 'idle' );
 	const [ resultUrl, setResultUrl ] = useState< string | null >( null );
@@ -63,9 +67,9 @@ export default function PublishPanel( {
 	const isEditing = Boolean( editing );
 	const target = isEditing
 		? { uri: editing!.siteUri, slug: editing!.siteSlug }
-		: publications.find( ( pub ) => pub.uri === targetUri );
+		: pubs.find( ( pub ) => pub.uri === targetUri );
 	const editingPubName =
-		isEditing && publications.find( ( pub ) => pub.uri === editing!.siteUri )?.name;
+		isEditing && pubs.find( ( pub ) => pub.uri === editing!.siteUri )?.name;
 	const hasTarget = Boolean( target );
 	const canSubmit = title.trim().length > 0 && blocks.length > 0 && hasTarget;
 
@@ -73,13 +77,23 @@ export default function PublishPanel( {
 	// any loaded publication. Lock onto the first one once they load (and recover if the current
 	// pick disappears) — otherwise `targetUri` stays '' and the Publish button never enables.
 	useEffect( () => {
-		if ( ! isEditing && publications.length > 0 && ! hasTarget ) {
-			setTargetUri( publications[ 0 ].uri );
+		if ( ! isEditing && pubs.length > 0 && ! hasTarget ) {
+			setTargetUri( pubs[ 0 ].uri );
 		}
 	}, [ isEditing, publications, hasTarget ] );
 
+	// New article, but the writer's publications are still loading — don't flash the
+	// "no publication" call-to-action below at someone who actually has one.
+	if ( ! isEditing && publications === null ) {
+		return (
+			<section className="publish" aria-label="Publish">
+				<p className="publish__status">Loading your publications…</p>
+			</section>
+		);
+	}
+
 	// New article, but the writer has no publication to publish into yet.
-	if ( ! isEditing && publications.length === 0 ) {
+	if ( ! isEditing && pubs.length === 0 ) {
 		return (
 			<section className="publish" aria-label="Publish">
 				<p className="publish__status">
@@ -152,7 +166,7 @@ export default function PublishPanel( {
 						onChange={ ( event ) => setTargetUri( event.target.value ) }
 						disabled={ phase === 'working' }
 					>
-						{ publications.map( ( pub ) => (
+						{ pubs.map( ( pub ) => (
 							<option key={ pub.uri } value={ pub.uri }>
 								{ pub.name }
 							</option>

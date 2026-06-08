@@ -99,6 +99,39 @@ describe( 'listPublications', () => {
 			description: 'Hi',
 		} );
 	} );
+
+	it( 'normalises an icon the @atproto/api client deserialised into a BlobRef', async () => {
+		// The live agent runs `jsonToLex` over responses, turning the stored icon blob into a
+		// BlobRef instance whose `ref` is a CID OBJECT (no `$link`) — not the JSON shape. The
+		// dashboard reads `icon.ref.$link`, so an un-normalised icon yields `cid=undefined`.
+		const cidObject = { toString: () => 'bafyrealcid' }; // stands in for a multiformats CID
+		const { agent } = mockAgent( {
+			'site.standard.publication': [
+				pubRecord( 'a', `${ SITE_BASE }/@me.bsky.social/my-blog`, {
+					icon: { $type: 'blob', ref: cidObject, mimeType: 'image/png', size: 42 },
+				} ),
+			],
+		} );
+		const pubs = await listPublications( agent, DID );
+		expect( pubs[ 0 ].icon ).toEqual( {
+			$type: 'blob',
+			ref: { $link: 'bafyrealcid' },
+			mimeType: 'image/png',
+			size: 42,
+		} );
+	} );
+
+	it( 'keeps an icon already stored in the JSON ($link) shape', async () => {
+		const { agent } = mockAgent( {
+			'site.standard.publication': [
+				pubRecord( 'a', `${ SITE_BASE }/@me.bsky.social/my-blog`, {
+					icon: { $type: 'blob', ref: { $link: 'bafyjson' }, mimeType: 'image/png', size: 7 },
+				} ),
+			],
+		} );
+		const pubs = await listPublications( agent, DID );
+		expect( pubs[ 0 ].icon?.ref.$link ).toBe( 'bafyjson' );
+	} );
 } );
 
 describe( 'createPublication', () => {

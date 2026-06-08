@@ -11,6 +11,7 @@ import type { BrowserOAuthClient, OAuthSession } from '@atproto/oauth-client-bro
 import { createOAuthClient } from './oauth';
 import { isValidAccountInput, normalizeHandle } from './config';
 import { resolvePdsUrl } from '../media/pds';
+import { fetchViewerProfile } from './profile';
 
 export type AuthStatus = 'loading' | 'signed-out' | 'signed-in' | 'error';
 
@@ -19,6 +20,8 @@ export interface AuthContextValue {
 	agent: Agent | null;
 	did: string | null;
 	handle: string | null;
+	displayName: string | null;
+	avatar: string | null;
 	/** The writer's PDS endpoint (for getBlob URLs); null until resolved. */
 	pdsUrl: string | null;
 	error: string | null;
@@ -28,22 +31,14 @@ export interface AuthContextValue {
 
 export const AuthContext = createContext< AuthContextValue | null >( null );
 
-/** Best-effort handle lookup; falls back to the DID if the appview is unreachable. */
-async function resolveHandle( agent: Agent, did: string ): Promise< string | null > {
-	try {
-		const profile = await agent.getProfile( { actor: did } );
-		return profile.data.handle ?? null;
-	} catch {
-		return null;
-	}
-}
-
 export function AuthProvider( { children }: { children: ReactNode } ) {
 	const clientRef = useRef< BrowserOAuthClient | null >( null );
 	const [ status, setStatus ] = useState< AuthStatus >( 'loading' );
 	const [ agent, setAgent ] = useState< Agent | null >( null );
 	const [ did, setDid ] = useState< string | null >( null );
 	const [ handle, setHandle ] = useState< string | null >( null );
+	const [ displayName, setDisplayName ] = useState< string | null >( null );
+	const [ avatar, setAvatar ] = useState< string | null >( null );
 	const [ pdsUrl, setPdsUrl ] = useState< string | null >( null );
 	const [ error, setError ] = useState< string | null >( null );
 
@@ -53,7 +48,10 @@ export function AuthProvider( { children }: { children: ReactNode } ) {
 		setDid( session.did );
 		setStatus( 'signed-in' );
 		setError( null );
-		setHandle( await resolveHandle( nextAgent, session.did ) );
+		const profile = await fetchViewerProfile( nextAgent, session.did );
+		setHandle( profile.handle );
+		setDisplayName( profile.displayName );
+		setAvatar( profile.avatar );
 		try {
 			setPdsUrl( await resolvePdsUrl( session.did ) );
 		} catch {
@@ -125,13 +123,15 @@ export function AuthProvider( { children }: { children: ReactNode } ) {
 		setAgent( null );
 		setDid( null );
 		setHandle( null );
+		setDisplayName( null );
+		setAvatar( null );
 		setPdsUrl( null );
 		setStatus( 'signed-out' );
 	}, [ did ] );
 
 	return (
 		<AuthContext.Provider
-			value={ { status, agent, did, handle, pdsUrl, error, signIn, signOut } }
+			value={ { status, agent, did, handle, displayName, avatar, pdsUrl, error, signIn, signOut } }
 		>
 			{ children }
 		</AuthContext.Provider>

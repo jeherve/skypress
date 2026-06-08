@@ -3,6 +3,8 @@ import type { Agent } from '@atproto/api';
 import type { BlockInstance } from '@wordpress/blocks';
 import { publish, type Identity, type PublishResult } from '../lib/publish/publisher';
 import { normalizeBlocks } from '../lib/publish/records';
+import { attachBlobRefs } from '../lib/media/blob';
+import type { BlobRegistry } from '../lib/media/mediaUpload';
 
 type Phase = 'idle' | 'confirm' | 'publishing' | 'done' | 'error';
 
@@ -10,13 +12,14 @@ interface Props {
 	agent: Agent;
 	identity: Identity;
 	blocks: BlockInstance[];
+	blobRegistry: BlobRegistry;
 }
 
 /**
  * Title + publish control. Publishing creates a PUBLIC Bluesky post in addition to
  * the PDS document, so it requires an explicit, unmistakable confirmation (brief §10).
  */
-export default function PublishPanel( { agent, identity, blocks }: Props ) {
+export default function PublishPanel( { agent, identity, blocks, blobRegistry }: Props ) {
 	const [ title, setTitle ] = useState( '' );
 	const [ phase, setPhase ] = useState< Phase >( 'idle' );
 	const [ result, setResult ] = useState< PublishResult | null >( null );
@@ -28,9 +31,13 @@ export default function PublishPanel( { agent, identity, blocks }: Props ) {
 		setPhase( 'publishing' );
 		setError( null );
 		try {
+			// Normalise (strip clientId), then persist blob refs for uploaded images.
+			const prepared = attachBlobRefs( normalizeBlocks( blocks ), ( url ) =>
+				blobRegistry.get( url )
+			);
 			const res = await publish( agent, identity, {
 				title: title.trim(),
-				blocks: normalizeBlocks( blocks ),
+				blocks: prepared,
 			} );
 			setResult( res );
 			setPhase( 'done' );

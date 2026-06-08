@@ -7,12 +7,15 @@ import '@automattic/isolated-block-editor/build-browser/core.css';
 import '@automattic/isolated-block-editor/build-browser/isolated-block-editor.css';
 
 import { ALLOWED_BLOCKS } from '../lib/blocks/allowlist';
+import type { MediaUploadHandler } from '../lib/media/mediaUpload';
 
 export const SPIKE_BLOCKS_KEY = 'skypress:spike:blocks';
 
 interface SkyEditorProps {
 	/** Receives the live block tree on every change (for the publish flow, SP2). */
 	onChange?: ( blocks: BlockInstance[] ) => void;
+	/** Custom Gutenberg media handler — uploads to the PDS as a blob (SP3). */
+	mediaUpload?: MediaUploadHandler;
 }
 
 /**
@@ -24,7 +27,7 @@ interface SkyEditorProps {
  * Rendered with `client:only="react"` so its (heavy) bundle never reaches
  * reading pages (Decision 0001).
  */
-export default function SkyEditor( { onChange }: SkyEditorProps ) {
+export default function SkyEditor( { onChange, mediaUpload }: SkyEditorProps ) {
 	const [ status, setStatus ] = useState< string >( 'Start writing…' );
 
 	const onSaveBlocks = useCallback(
@@ -37,6 +40,8 @@ export default function SkyEditor( { onChange }: SkyEditorProps ) {
 	);
 
 	const settings = {
+		// Core block-editor settings: a custom mediaUpload routes uploads to the PDS (SP3).
+		editor: mediaUpload ? { mediaUpload } : {},
 		iso: {
 			moreMenu: false,
 			footer: true,

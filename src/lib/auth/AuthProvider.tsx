@@ -10,6 +10,7 @@ import { Agent } from '@atproto/api';
 import type { BrowserOAuthClient, OAuthSession } from '@atproto/oauth-client-browser';
 import { createOAuthClient } from './oauth';
 import { isValidAccountInput, normalizeHandle } from './config';
+import { resolvePdsUrl } from '../media/pds';
 
 export type AuthStatus = 'loading' | 'signed-out' | 'signed-in' | 'error';
 
@@ -18,6 +19,8 @@ export interface AuthContextValue {
 	agent: Agent | null;
 	did: string | null;
 	handle: string | null;
+	/** The writer's PDS endpoint (for getBlob URLs); null until resolved. */
+	pdsUrl: string | null;
 	error: string | null;
 	signIn: ( input: string ) => Promise< void >;
 	signOut: () => Promise< void >;
@@ -41,6 +44,7 @@ export function AuthProvider( { children }: { children: ReactNode } ) {
 	const [ agent, setAgent ] = useState< Agent | null >( null );
 	const [ did, setDid ] = useState< string | null >( null );
 	const [ handle, setHandle ] = useState< string | null >( null );
+	const [ pdsUrl, setPdsUrl ] = useState< string | null >( null );
 	const [ error, setError ] = useState< string | null >( null );
 
 	const adoptSession = useCallback( async ( session: OAuthSession ) => {
@@ -50,6 +54,11 @@ export function AuthProvider( { children }: { children: ReactNode } ) {
 		setStatus( 'signed-in' );
 		setError( null );
 		setHandle( await resolveHandle( nextAgent, session.did ) );
+		try {
+			setPdsUrl( await resolvePdsUrl( session.did ) );
+		} catch {
+			setPdsUrl( null ); // image upload stays disabled if the PDS can't be resolved
+		}
 	}, [] );
 
 	// Initialise once: process an OAuth callback or restore an existing session.
@@ -116,12 +125,13 @@ export function AuthProvider( { children }: { children: ReactNode } ) {
 		setAgent( null );
 		setDid( null );
 		setHandle( null );
+		setPdsUrl( null );
 		setStatus( 'signed-out' );
 	}, [ did ] );
 
 	return (
 		<AuthContext.Provider
-			value={ { status, agent, did, handle, error, signIn, signOut } }
+			value={ { status, agent, did, handle, pdsUrl, error, signIn, signOut } }
 		>
 			{ children }
 		</AuthContext.Provider>

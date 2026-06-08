@@ -1,0 +1,45 @@
+---
+import Base from '../layouts/Base.astro';
+import SkyEditor from '../components/SkyEditor.tsx';
+---
+
+<Base title="Write — SkyPress">
+	<main class="editor-shell">
+		<header class="editor-shell__bar">
+			<a class="editor-shell__home" href="/">SkyPress</a>
+			<span class="editor-shell__hint"
+				>SP0 spike — the block tree is captured to localStorage on every
+				change.</span
+			>
+		</header>
+		<!-- client:only — the editor never server-renders and its bundle never
+		     reaches reading pages (Decision 0001). -->
+		<SkyEditor client:only="react">
+			<p slot="fallback" class="editor-shell__loading">Loading the editor…</p>
+		</SkyEditor>
+	</main>
+</Base>
+
+<style>
+	.editor-shell__bar {
+		display: flex;
+		align-items: baseline;
+		gap: 1rem;
+		padding: 0.75rem 1.25rem;
+		border-bottom: 1px solid #e7e3da;
+		flex-wrap: wrap;
+	}
+	.editor-shell__home {
+		font-weight: 700;
+		color: var(--ink);
+		text-decoration: none;
+	}
+	.editor-shell__hint {
+		color: var(--muted);
+		font-size: 0.85rem;
+	}
+	.editor-shell__loading {
+		padding: 2rem 1.25rem;
+		color: var(--muted);
+	}
+</style>

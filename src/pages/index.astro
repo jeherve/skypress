@@ -1,0 +1,56 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+	title="SkyPress — a writing studio for the open social web"
+	description="A standalone long-form writing studio for the AT Protocol."
+>
+	<main class="home">
+		<p class="home__kicker">SkyPress · SP0 spike</p>
+		<h1 class="home__title">The open sky meets the typesetter's bench.</h1>
+		<p class="home__lede">
+			A standalone, long-form writing studio for the AT Protocol. Write in
+			blocks; your words are saved to your own server.
+		</p>
+		<nav class="home__nav">
+			<a href="/editor">Open the editor →</a>
+			<a href="/preview">See a rendered article →</a>
+		</nav>
+	</main>
+</Base>
+
+<style>
+	.home {
+		max-width: 42rem;
+		margin: 0 auto;
+		padding: 6rem 1.5rem;
+	}
+	.home__kicker {
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+		font-size: 0.75rem;
+		color: var(--muted);
+	}
+	.home__title {
+		font-size: clamp(2rem, 6vw, 3.25rem);
+		line-height: 1.05;
+		margin: 0.25rem 0 1rem;
+	}
+	.home__lede {
+		font-size: 1.2rem;
+		color: var(--muted);
+		max-width: 34rem;
+	}
+	.home__nav {
+		display: flex;
+		gap: 1.5rem;
+		margin-top: 2rem;
+		flex-wrap: wrap;
+	}
+	.home__nav a {
+		color: var(--sky);
+		text-decoration: none;
+		font-weight: 600;
+	}
+</style>

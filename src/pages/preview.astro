@@ -1,0 +1,74 @@
+---
+import Base from '../layouts/Base.astro';
+import { renderBlocks, blocksToText } from '../lib/blocks/render';
+import { SAMPLE_TREE } from '../lib/blocks/sample';
+
+// Frontend block styles only — no editor chrome, no JS.
+import '@wordpress/block-library/build-style/common.css';
+import '@wordpress/block-library/build-style/style.css';
+import '@wordpress/block-library/build-style/theme.css';
+
+// Render path (server/edge-safe): stored content (a block tree) → HTML via the
+// dependency-free renderer (Decision 0003). No @wordpress runtime on this page.
+const html = renderBlocks( SAMPLE_TREE );
+const textContent = blocksToText( SAMPLE_TREE );
+
+const words = textContent.split( /\s+/ ).filter( Boolean ).length;
+const readingMinutes = Math.max( 1, Math.round( words / 200 ) );
+---
+
+<Base title="The open sky meets the typesetter's bench — SkyPress">
+	<main class="reader">
+		<p class="reader__meta">
+			{words} words · {readingMinutes} min read · rendered server-side, zero
+			editor JS
+		</p>
+		<article class="reader__article" set:html={html} />
+		<details class="reader__debug">
+			<summary>textContent (what Bluesky indexes — brief §3)</summary>
+			<pre>{textContent}</pre>
+		</details>
+	</main>
+</Base>
+
+<style>
+	.reader {
+		max-width: 42rem;
+		margin: 0 auto;
+		padding: 3rem 1.5rem 6rem;
+	}
+	.reader__meta {
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		font-size: 0.72rem;
+		color: var(--muted);
+		margin-bottom: 2rem;
+	}
+	.reader__article {
+		font-size: 1.15rem;
+		line-height: 1.7;
+	}
+	.reader__article :global(h1) {
+		font-size: 2.4rem;
+		line-height: 1.1;
+	}
+	.reader__article :global(pre) {
+		background: #16181d;
+		color: #f5f3ee;
+		padding: 1rem;
+		border-radius: 8px;
+		overflow: auto;
+		font-size: 0.95rem;
+	}
+	.reader__debug {
+		margin-top: 3rem;
+		color: var(--muted);
+		font-size: 0.9rem;
+	}
+	.reader__debug pre {
+		white-space: pre-wrap;
+		background: #f1eee7;
+		padding: 1rem;
+		border-radius: 8px;
+	}
+</style>

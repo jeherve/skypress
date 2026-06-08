@@ -4,6 +4,20 @@ import { buildGetBlobUrl, type BlobUpload } from './blob';
 /** Maps a preview (object) URL → its blob ref + canonical getBlob URL for this session. */
 export type BlobRegistry = Map< string, BlobUpload >;
 
+/**
+ * Release the preview object URLs held by `registry` and empty it. Each preview URL was
+ * minted with `URL.createObjectURL`, which pins its `File` in memory until revoked — so
+ * an editing session that uploads many images would otherwise leak them all until the
+ * page unloads. Call this only when those previews are no longer on screen (the editor is
+ * being torn down for a new/other article, or unmounted), never mid-edit.
+ */
+export function revokeBlobRegistry( registry: BlobRegistry ): void {
+	for ( const previewUrl of registry.keys() ) {
+		URL.revokeObjectURL( previewUrl );
+	}
+	registry.clear();
+}
+
 interface MediaFile {
 	url: string;
 	alt: string;

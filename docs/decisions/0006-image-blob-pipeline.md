@@ -36,6 +36,11 @@ canonical `getBlob` URL at publish (so the stored record stays portable, never a
 object URL). The reader (SP4) still reconstructs the URL from `skypressBlob` + the
 author's current PDS.
 
+Each object URL pins its `File` in memory until revoked, so the registry releases them
+(`revokeBlobRegistry`) at the points where the editor is torn down and the previews leave
+the DOM — switching/starting an article and Studio unmount — never mid-edit, which would
+blank a still-displayed preview.
+
 The "Media Library" button (Gutenberg's `editor.MediaUpload`, which opens the legacy
 `wp.media` Backbone frame) is **disabled** via a filter override — SkyPress has no media
 library; uploads go straight to the PDS through the Upload/drop-zone path. See

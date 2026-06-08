@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Agent } from '@atproto/api';
-import { createMediaUpload, type BlobRegistry } from './mediaUpload';
+import { createMediaUpload, revokeBlobRegistry, type BlobRegistry } from './mediaUpload';
 
 /** A fake `uploadBlob` response shaped like the atproto BlobRef the agent returns. */
 function fakeUploadResult( cid: string, mimeType: string, size: number ) {
@@ -84,5 +84,26 @@ describe( 'createMediaUpload', () => {
 		expect( uploadBlob ).not.toHaveBeenCalled();
 		expect( onError ).toHaveBeenCalledTimes( 1 );
 		expect( onError.mock.calls[ 0 ][ 0 ] ).toBeInstanceOf( Error );
+	} );
+} );
+
+describe( 'revokeBlobRegistry', () => {
+	it( 'revokes every preview object URL and empties the registry', () => {
+		const revoke = vi.fn();
+		vi.stubGlobal( 'URL', { ...URL, revokeObjectURL: revoke } );
+		const ref = { $type: 'blob' as const, ref: { $link: 'cid' }, mimeType: 'image/png', size: 1 };
+		const registry: BlobRegistry = new Map( [
+			[ 'blob:preview-1', { ref, url: 'https://pds.example.com/a' } ],
+			[ 'blob:preview-2', { ref, url: 'https://pds.example.com/b' } ],
+		] );
+
+		revokeBlobRegistry( registry );
+
+		expect( revoke ).toHaveBeenCalledTimes( 2 );
+		expect( revoke ).toHaveBeenCalledWith( 'blob:preview-1' );
+		expect( revoke ).toHaveBeenCalledWith( 'blob:preview-2' );
+		expect( registry.size ).toBe( 0 );
+
+		vi.unstubAllGlobals();
 	} );
 } );

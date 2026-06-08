@@ -98,6 +98,13 @@ describe( 'buildDocumentRecord', () => {
 		const ref = { uri: 'at://did:plc:abc/app.bsky.feed.post/p', cid: 'bafy' };
 		expect( buildDocumentRecord( { ...base, bskyPostRef: ref } ).bskyPostRef ).toEqual( ref );
 	} );
+
+	it( 'omits updatedAt on first publish, includes it on edit', () => {
+		expect( 'updatedAt' in buildDocumentRecord( base ) ).toBe( false );
+		const edited = buildDocumentRecord( { ...base, updatedAt: '2026-06-09T09:00:00.000Z' } );
+		expect( edited.updatedAt ).toBe( '2026-06-09T09:00:00.000Z' );
+		expect( edited.publishedAt ).toBe( base.publishedAt ); // preserved
+	} );
 } );
 
 describe( 'buildBskyPost', () => {

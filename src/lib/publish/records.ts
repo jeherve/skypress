@@ -97,6 +97,7 @@ export interface DocumentRecord {
 	content: GutenbergContent;
 	description?: string;
 	bskyPostRef?: StrongRef;
+	updatedAt?: string;
 }
 
 export function buildDocumentRecord( input: {
@@ -108,6 +109,8 @@ export function buildDocumentRecord( input: {
 	publishedAt: string;
 	description?: string;
 	bskyPostRef?: StrongRef;
+	/** Set on edit (Decision 0008); preserves publishedAt + bskyPostRef. */
+	updatedAt?: string;
 } ): DocumentRecord {
 	return {
 		$type: 'site.standard.document',
@@ -119,6 +122,7 @@ export function buildDocumentRecord( input: {
 		content: buildContentObject( input.blocks ),
 		...( input.description ? { description: input.description } : {} ),
 		...( input.bskyPostRef ? { bskyPostRef: input.bskyPostRef } : {} ),
+		...( input.updatedAt ? { updatedAt: input.updatedAt } : {} ),
 	};
 }
 

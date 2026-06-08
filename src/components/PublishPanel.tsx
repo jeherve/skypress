@@ -1,46 +1,84 @@
 import { useState } from 'react';
 import type { Agent } from '@atproto/api';
 import type { BlockInstance } from '@wordpress/blocks';
-import { publish, type Identity, type PublishResult } from '../lib/publish/publisher';
-import { normalizeBlocks } from '../lib/publish/records';
+import {
+	publish,
+	updateDocument,
+	type Identity,
+} from '../lib/publish/publisher';
+import { normalizeBlocks, type StrongRef } from '../lib/publish/records';
 import { attachBlobRefs } from '../lib/media/blob';
 import type { BlobRegistry } from '../lib/media/mediaUpload';
 
-type Phase = 'idle' | 'confirm' | 'publishing' | 'done' | 'error';
+type Phase = 'idle' | 'confirm' | 'working' | 'done' | 'error';
+
+export interface EditingTarget {
+	rkey: string;
+	siteUri: string;
+	publishedAt: string;
+	bskyPostRef?: StrongRef;
+}
 
 interface Props {
 	agent: Agent;
 	identity: Identity;
 	blocks: BlockInstance[];
 	blobRegistry: BlobRegistry;
+	/** When set, the panel updates an existing article instead of publishing a new one. */
+	editing?: EditingTarget;
+	initialTitle?: string;
+	/** Called after a successful publish/update so the parent can refresh. */
+	onComplete?: () => void;
 }
 
 /**
- * Title + publish control. Publishing creates a PUBLIC Bluesky post in addition to
- * the PDS document, so it requires an explicit, unmistakable confirmation (brief §10).
+ * Title + publish/update control. Publishing a NEW article creates a public Bluesky
+ * post, so it requires an explicit confirmation (brief §10). Editing updates the
+ * existing record in place and does NOT create a new post (Decision 0008).
  */
-export default function PublishPanel( { agent, identity, blocks, blobRegistry }: Props ) {
-	const [ title, setTitle ] = useState( '' );
+export default function PublishPanel( {
+	agent,
+	identity,
+	blocks,
+	blobRegistry,
+	editing,
+	initialTitle,
+	onComplete,
+}: Props ) {
+	const [ title, setTitle ] = useState( initialTitle ?? '' );
 	const [ phase, setPhase ] = useState< Phase >( 'idle' );
-	const [ result, setResult ] = useState< PublishResult | null >( null );
+	const [ resultUrl, setResultUrl ] = useState< string | null >( null );
 	const [ error, setError ] = useState< string | null >( null );
 
-	const canPublish = title.trim().length > 0 && blocks.length > 0;
+	const isEditing = Boolean( editing );
+	const canSubmit = title.trim().length > 0 && blocks.length > 0;
 
-	async function doPublish() {
-		setPhase( 'publishing' );
+	async function run() {
+		setPhase( 'working' );
 		setError( null );
 		try {
-			// Normalise (strip clientId), then persist blob refs for uploaded images.
 			const prepared = attachBlobRefs( normalizeBlocks( blocks ), ( url ) =>
 				blobRegistry.get( url )
 			);
-			const res = await publish( agent, identity, {
-				title: title.trim(),
-				blocks: prepared,
-			} );
-			setResult( res );
+			if ( editing ) {
+				const res = await updateDocument( agent, identity, {
+					rkey: editing.rkey,
+					siteUri: editing.siteUri,
+					publishedAt: editing.publishedAt,
+					bskyPostRef: editing.bskyPostRef,
+					title: title.trim(),
+					blocks: prepared,
+				} );
+				setResultUrl( res.articleUrl );
+			} else {
+				const res = await publish( agent, identity, {
+					title: title.trim(),
+					blocks: prepared,
+				} );
+				setResultUrl( res.articleUrl );
+			}
 			setPhase( 'done' );
+			onComplete?.();
 		} catch ( err ) {
 			setError( err instanceof Error ? err.message : String( err ) );
 			setPhase( 'error' );
@@ -48,24 +86,24 @@ export default function PublishPanel( { agent, identity, blocks, blobRegistry }:
 	}
 
 	return (
-		<section className="publish" aria-label="Publish">
+		<section className="publish" aria-label={ isEditing ? 'Update article' : 'Publish' }>
 			<input
 				className="publish__title"
 				type="text"
 				placeholder="Article title"
 				value={ title }
 				onChange={ ( event ) => setTitle( event.target.value ) }
-				disabled={ phase === 'publishing' }
+				disabled={ phase === 'working' }
 			/>
 
 			{ ( phase === 'idle' || phase === 'error' || phase === 'done' ) && (
 				<button
 					className="publish__button"
 					type="button"
-					disabled={ ! canPublish }
-					onClick={ () => setPhase( 'confirm' ) }
+					disabled={ ! canSubmit }
+					onClick={ () => ( isEditing ? void run() : setPhase( 'confirm' ) ) }
 				>
-					Publish…
+					{ isEditing ? 'Update' : 'Publish…' }
 				</button>
 			) }
 
@@ -77,7 +115,7 @@ export default function PublishPanel( { agent, identity, blocks, blobRegistry }:
 						following you will see it.
 					</p>
 					<div className="publish__actions">
-						<button className="publish__button" type="button" onClick={ doPublish }>
+						<button className="publish__button" type="button" onClick={ run }>
 							Publish &amp; post to Bluesky
 						</button>
 						<button
@@ -91,29 +129,26 @@ export default function PublishPanel( { agent, identity, blocks, blobRegistry }:
 				</div>
 			) }
 
-			{ phase === 'publishing' && <p className="publish__status">Publishing…</p> }
+			{ phase === 'working' && (
+				<p className="publish__status">{ isEditing ? 'Updating…' : 'Publishing…' }</p>
+			) }
 
-			{ phase === 'done' && result && (
+			{ phase === 'done' && resultUrl && (
 				<div className="publish__result">
-					<p>Published ✓ (the reading page goes live once SkyPress is deployed)</p>
-					<ul>
-						<li>
-							Article URL: <code>{ result.articleUrl }</code>
-						</li>
-						<li>
-							Bluesky post:{ ' ' }
-							<code>{ result.postUri }</code>
-						</li>
-						<li>
-							Document: <code>{ result.documentUri }</code>
-						</li>
-					</ul>
+					<p>
+						{ isEditing
+							? 'Updated ✓ (same URL; the original Bluesky post stays — its preview may not refresh)'
+							: 'Published ✓ (the reading page goes live once SkyPress is deployed)' }
+					</p>
+					<p>
+						Article URL: <code>{ resultUrl }</code>
+					</p>
 				</div>
 			) }
 
 			{ phase === 'error' && error && (
 				<p className="publish__error" role="alert">
-					Publish failed: { error }
+					{ isEditing ? 'Update' : 'Publish' } failed: { error }
 				</p>
 			) }
 		</section>

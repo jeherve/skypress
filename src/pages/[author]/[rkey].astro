@@ -20,6 +20,7 @@ interface SkyDocument {
 	description?: string;
 	textContent?: string;
 	publishedAt?: string;
+	updatedAt?: string;
 	site?: string;
 	content?: { blocks?: BlockNode[] };
 }
@@ -56,6 +57,7 @@ const pubUri = doc.site;
 const words = textContent.split( /\s+/ ).filter( Boolean ).length;
 const readingMinutes = Math.max( 1, Math.round( words / 200 ) );
 const publishedLabel = doc.publishedAt ? doc.publishedAt.slice( 0, 10 ) : null;
+const updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
 ---
 
 <Base title={`${ title } — SkyPress`} description={description}>
@@ -76,6 +78,7 @@ const publishedLabel = doc.publishedAt ? doc.publishedAt.slice( 0, 10 ) : null;
 		<p class="reader__meta">
 			<a class="reader__author" href={`/@${ handle }`}>@{handle}</a>
 			{publishedLabel && <> · {publishedLabel}</>}
+			{updatedLabel && <> · updated {updatedLabel}</>}
 			· {readingMinutes} min read
 		</p>
 		<h1 class="reader__title">{title}</h1>

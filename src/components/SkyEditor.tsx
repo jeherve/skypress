@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import IsolatedBlockEditor from '@automattic/isolated-block-editor';
-import type { BlockInstance } from '@wordpress/blocks';
+import { serialize, type BlockInstance } from '@wordpress/blocks';
+import type { BlockNode } from '../lib/blocks/render';
 
 // Compiled editor-chrome styles (prebuilt — no Sass needed for these).
 import '@automattic/isolated-block-editor/build-browser/core.css';
@@ -16,6 +17,8 @@ interface SkyEditorProps {
 	onChange?: ( blocks: BlockInstance[] ) => void;
 	/** Custom Gutenberg media handler — uploads to the PDS as a blob (SP3). */
 	mediaUpload?: MediaUploadHandler;
+	/** Existing article content to load when editing (SP5). */
+	initialBlocks?: BlockNode[];
 }
 
 /**
@@ -27,8 +30,16 @@ interface SkyEditorProps {
  * Rendered with `client:only="react"` so its (heavy) bundle never reaches
  * reading pages (Decision 0001).
  */
-export default function SkyEditor( { onChange, mediaUpload }: SkyEditorProps ) {
+export default function SkyEditor( { onChange, mediaUpload, initialBlocks }: SkyEditorProps ) {
 	const [ status, setStatus ] = useState< string >( 'Start writing…' );
+
+	// Load existing content (editing): serialize the stored tree to block markup and let
+	// the editor parse it. Core blocks are registered globally by the time this runs.
+	const onLoad =
+		initialBlocks && initialBlocks.length > 0
+			? ( parse: ( html: string ) => BlockInstance[] ) =>
+					parse( serialize( initialBlocks as unknown as BlockInstance[] ) )
+			: undefined;
 
 	const onSaveBlocks = useCallback(
 		( blocks: BlockInstance[] ) => {
@@ -56,6 +67,7 @@ export default function SkyEditor( { onChange, mediaUpload }: SkyEditorProps ) {
 			<IsolatedBlockEditor
 				settings={ settings }
 				onSaveBlocks={ onSaveBlocks }
+				onLoad={ onLoad }
 				onError={ () => (
 					<p role="alert">The editor hit an error. Reload to try again.</p>
 				) }

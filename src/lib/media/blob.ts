@@ -11,6 +11,16 @@ export interface BlobRefJson {
 	size: number;
 }
 
+/**
+ * What a session upload records for each previewed image. The editor previews from a
+ * transient object URL (`blob:…`); `attachBlobRefs` looks that key up at publish and
+ * persists the portable `url` (a `getBlob` URL) plus the typed `ref` (`skypressBlob`).
+ */
+export interface BlobUpload {
+	ref: BlobRefJson;
+	url: string;
+}
+
 /** Block names whose `url` attribute may reference an uploaded blob. */
 const IMAGE_BLOCKS = new Set( [ 'core/image' ] );
 
@@ -49,23 +59,25 @@ export function buildGetBlobUrl( pdsUrl: string, did: string, cid: string ): str
 
 /**
  * Attach the stored blob ref (`skypressBlob`) to every image block whose `url` was
- * uploaded this session (resolved via `lookup`). Returns a new tree; does not mutate
+ * uploaded this session (resolved via `lookup`), and rewrite that `url` to the canonical,
+ * portable `getBlob` URL — the editor previewed from a transient object URL which would
+ * otherwise be persisted as a dead `blob:` string. Returns a new tree; does not mutate
  * the input. Images without a matching upload (e.g. external URLs) are left as-is, so
  * the reader keeps their `url`.
  */
 export function attachBlobRefs(
 	blocks: BlockNode[],
-	lookup: ( url: string ) => BlobRefJson | undefined
+	lookup: ( url: string ) => BlobUpload | undefined
 ): BlockNode[] {
 	return blocks.map( ( block ) => {
 		const url = block.attributes?.url;
-		const ref = IMAGE_BLOCKS.has( block.name ) && typeof url === 'string'
+		const upload = IMAGE_BLOCKS.has( block.name ) && typeof url === 'string'
 			? lookup( url )
 			: undefined;
 		return {
 			name: block.name,
-			attributes: ref
-				? { ...block.attributes, skypressBlob: ref }
+			attributes: upload
+				? { ...block.attributes, skypressBlob: upload.ref, url: upload.url }
 				: { ...block.attributes },
 			innerBlocks: attachBlobRefs( block.innerBlocks ?? [], lookup ),
 		};

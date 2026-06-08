@@ -19,10 +19,27 @@ Use Gutenberg's stable **`mediaUpload`** seam (passed through
 
 1. Upload to the writer's PDS: `agent.uploadBlob(file, { encoding: file.type })` →
    `BlobRef`.
-2. Build a fetchable URL — `getBlob` on the writer's PDS for their DID + the blob CID —
-   and hand it back to the editor via `onFileChange([{ id: cid, url, alt }])` so the
-   image previews immediately.
-3. **Retain the full blob ref** in an in-memory registry keyed by that URL.
+2. Hand the editor a **local object URL** (`URL.createObjectURL(file)`) via
+   `onFileChange([{ url, alt }])` so the image previews immediately. **No `id`** — PDS
+   blobs aren't WP attachments; an `id` makes the Image block fetch `/wp/v2/media/<id>`,
+   which 404s.
+3. **Retain the blob ref + the canonical `getBlob` URL** in an in-memory registry keyed
+   by the object URL.
+
+### Preview via object URL, not the live `getBlob` URL (corrected 2026-06-08)
+A just-uploaded blob is **unreferenced** (temporary on the PDS) until a record commits a
+reference to it; `com.atproto.sync.getBlob` fails for it (observed: **500** on a
+bsky.network PDS). So the original "preview from the live `getBlob` URL" plan below is
+wrong for in-editor preview — it only resolves *after* publish. We preview from a local
+object URL instead, and `attachBlobRefs` rewrites that transient `blob:` URL to the
+canonical `getBlob` URL at publish (so the stored record stays portable, never a dead
+object URL). The reader (SP4) still reconstructs the URL from `skypressBlob` + the
+author's current PDS.
+
+The "Media Library" button (Gutenberg's `editor.MediaUpload`, which opens the legacy
+`wp.media` Backbone frame) is **disabled** via a filter override — SkyPress has no media
+library; uploads go straight to the PDS through the Upload/drop-zone path. See
+`src/lib/media/registerMediaUpload.ts`.
 
 At **publish**, `attachBlobRefs` walks the block tree and, for every image whose `url` is
 one we uploaded, writes the blob ref (`BlobRef.ipld()` →
@@ -38,8 +55,9 @@ attribute inside the document `content`.
   resolving the writer's *current* PDS — so the image survives a PDS migration.
 
 ### In-editor URL strategy
-Live `getBlob` URL (not a SkyPress media proxy) for v1 — simplest, proves the upload. A
-caching/resizing proxy through the edge is a later optimisation (brief §5).
+Local object URL for preview; the canonical `getBlob` URL (not a SkyPress media proxy) is
+persisted at publish. A caching/resizing proxy through the edge is a later optimisation
+(brief §5).
 
 ### Externally-URL'd images
 Allowed **as-is** for v1 (no `skypressBlob`, just their `url`). Only files added through

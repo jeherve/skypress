@@ -1,11 +1,10 @@
 import type { Agent } from '@atproto/api';
-import { buildGetBlobUrl, type BlobRefJson } from './blob';
+import { buildGetBlobUrl, type BlobUpload } from './blob';
 
-/** Maps a returned `getBlob` URL → its stored blob ref (filled during this session). */
-export type BlobRegistry = Map< string, BlobRefJson >;
+/** Maps a preview (object) URL → its blob ref + canonical getBlob URL for this session. */
+export type BlobRegistry = Map< string, BlobUpload >;
 
 interface MediaFile {
-	id: string;
 	url: string;
 	alt: string;
 }
@@ -20,8 +19,12 @@ interface MediaUploadArgs {
 
 /**
  * A Gutenberg `mediaUpload` handler backed by atproto blobs (Decision 0006):
- * upload each file to the writer's PDS, hand back a `getBlob` URL for preview, and
- * record the full blob ref in `registry` so the publish step can persist it.
+ * upload each file to the writer's PDS, hand back a local object URL for preview, and
+ * record the blob ref + canonical `getBlob` URL in `registry` so publish can persist them.
+ *
+ * Preview uses a local object URL rather than the live `getBlob` URL because a
+ * just-uploaded blob is unreferenced (temporary on the PDS) until a record commits it —
+ * `com.atproto.sync.getBlob` fails for it, so an inline `getBlob` preview would 500.
  */
 export type MediaUploadHandler = ( args: MediaUploadArgs ) => Promise< void >;
 
@@ -48,14 +51,20 @@ export function createMediaUpload( config: {
 				const res = await agent.uploadBlob( file, { encoding: file.type } );
 				const { blob } = res.data;
 				const cid = blob.ref.toString();
-				const url = buildGetBlobUrl( pdsUrl, did, cid );
-				registry.set( url, {
-					$type: 'blob',
-					ref: { $link: cid },
-					mimeType: blob.mimeType,
-					size: blob.size,
+				// Preview from a local object URL; persist the portable getBlob URL on publish.
+				const previewUrl = URL.createObjectURL( file );
+				registry.set( previewUrl, {
+					ref: {
+						$type: 'blob',
+						ref: { $link: cid },
+						mimeType: blob.mimeType,
+						size: blob.size,
+					},
+					url: buildGetBlobUrl( pdsUrl, did, cid ),
 				} );
-				onFileChange( [ { id: cid, url, alt: '' } ] );
+				// No `id`: PDS blobs aren't WP attachments, so the image block must not try
+				// to resolve one via /wp/v2/media/<id> (that 404s).
+				onFileChange( [ { url: previewUrl, alt: '' } ] );
 			} catch ( error ) {
 				onError?.( error instanceof Error ? error : new Error( String( error ) ) );
 			}

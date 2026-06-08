@@ -1,5 +1,8 @@
 import { useCallback, useState } from 'react';
 import IsolatedBlockEditor from '@automattic/isolated-block-editor';
+// Side-effect import: must run AFTER isolated-block-editor so our editor.MediaUpload
+// filter registers last and replaces the bundled wp.media-based one (see the module).
+import '../lib/media/registerMediaUpload';
 import { createBlock, type BlockInstance } from '@wordpress/blocks';
 import type { BlockNode } from '../lib/blocks/render';
 

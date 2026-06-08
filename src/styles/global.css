@@ -1,0 +1,154 @@
+/**
+ * SkyPress design system (SP6, Decision 0009).
+ * "The open sky meets the typesetter's bench" — editorial letterpress + open air.
+ * Self-hosted, freely-licensed fonts; light + dark first-class.
+ */
+@import '@fontsource-variable/fraunces';
+@import '@fontsource-variable/newsreader';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+:root {
+	/* Type */
+	--font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+	--font-body: 'Newsreader Variable', Georgia, serif;
+	--font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+	/* Palette — light (warm paper, ink, altitude blue) */
+	--paper: #faf6ef;
+	--paper-raised: #fffdf9;
+	--panel: #f1eadc;
+	--ink: #1c1a16;
+	--ink-soft: #46413a;
+	--muted: #756d5f;
+	--line: #e5ddcd;
+	--line-strong: #d8cdb8;
+	--sky: #2a5fd0;
+	--sky-strong: #1d418f;
+	--sky-tint: #e9f0fc;
+	--ember: #bb5a36; /* rare warm accent (the ink/press counterweight) */
+
+	--radius: 12px;
+	--radius-sm: 8px;
+	--shadow: 0 1px 2px rgba(28, 26, 22, 0.06), 0 10px 30px -12px rgba(28, 26, 22, 0.18);
+	--measure: 66ch;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--paper: #111319;
+		--paper-raised: #181b23;
+		--panel: #1b1f2a;
+		--ink: #ece6da;
+		--ink-soft: #c3bcad;
+		--muted: #938b7d;
+		--line: #292d39;
+		--line-strong: #353a49;
+		--sky: #7aa2ff;
+		--sky-strong: #a9c2ff;
+		--sky-tint: #1a2235;
+		--ember: #e08a63;
+		--shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -16px rgba(0, 0, 0, 0.6);
+	}
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	background: var(--paper);
+	color: var(--ink);
+	font-family: var(--font-body);
+	font-size: 18px;
+	line-height: 1.6;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+	color-scheme: light dark;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+}
+
+h1, h2, h3, h4 {
+	font-family: var(--font-display);
+	font-weight: 540;
+	font-variation-settings: 'opsz' 40, 'SOFT' 30, 'WONK' 0;
+	line-height: 1.1;
+	letter-spacing: -0.01em;
+	color: var(--ink);
+}
+
+a {
+	color: var(--sky);
+	text-underline-offset: 0.18em;
+	text-decoration-thickness: 1px;
+}
+a:hover {
+	color: var(--sky-strong);
+}
+
+::selection {
+	background: var(--sky-tint);
+}
+
+/* Mono "eyebrow" / kicker — the indie-press label voice */
+.eyebrow {
+	font-family: var(--font-mono);
+	font-weight: 500;
+	font-size: 0.7rem;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+/* Buttons */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-family: var(--font-mono);
+	font-size: 0.82rem;
+	letter-spacing: 0.04em;
+	padding: 0.6rem 1.1rem;
+	border-radius: var(--radius-sm);
+	border: 1px solid transparent;
+	cursor: pointer;
+	text-decoration: none;
+	transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+.btn:active {
+	transform: translateY(1px);
+}
+.btn--primary {
+	background: var(--sky);
+	color: #fff;
+}
+.btn--primary:hover {
+	background: var(--sky-strong);
+	color: #fff;
+}
+.btn--ghost {
+	background: var(--paper-raised);
+	color: var(--ink);
+	border-color: var(--line-strong);
+}
+.btn--ghost:hover {
+	border-color: var(--sky);
+	color: var(--sky);
+}
+.btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+/* Sky atmosphere: a soft horizon gradient for hero/empty surfaces */
+.sky-wash {
+	background:
+		radial-gradient(120% 80% at 50% -20%, var(--sky-tint) 0%, transparent 60%),
+		var(--paper);
+}

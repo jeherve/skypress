@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Logo from '../../components/Logo.astro';
 import { resolveAuthor } from '../../lib/reader/identity';
 import { getRecord } from '../../lib/reader/records';
 import { resolveBlobImageUrls } from '../../lib/media/blob';
@@ -74,8 +75,11 @@ const updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
 		<meta property="og:url" content={canonical} />
 	</Fragment>
 
+	<header class="masthead">
+		<a href="/"><Logo /></a>
+	</header>
 	<main class="reader">
-		<p class="reader__meta">
+		<p class="reader__meta eyebrow">
 			<a class="reader__author" href={`/@${ handle }`}>@{handle}</a>
 			{publishedLabel && <> · {publishedLabel}</>}
 			{updatedLabel && <> · updated {updatedLabel}</>}
@@ -83,47 +87,91 @@ const updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
 		</p>
 		<h1 class="reader__title">{title}</h1>
 		<article class="reader__article" set:html={html} />
+		<footer class="reader__foot">
+			<a class="reader__author" href={`/@${ handle }`}>More from @{handle}</a>
+		</footer>
 	</main>
 </Base>
 
 <style>
+	.masthead {
+		padding: 1.5rem clamp(1.25rem, 5vw, 4rem);
+		border-bottom: 1px solid var(--line);
+	}
+	.masthead a {
+		text-decoration: none;
+	}
 	.reader {
-		max-width: 42rem;
+		max-width: 40rem;
 		margin: 0 auto;
-		padding: 3rem 1.5rem 6rem;
+		padding: clamp(2.5rem, 6vw, 4.5rem) 1.5rem 6rem;
 	}
 	.reader__meta {
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		font-size: 0.72rem;
-		color: var(--muted);
-		margin-bottom: 1.5rem;
+		margin-bottom: 1.25rem;
 	}
 	.reader__author {
 		color: var(--sky);
 		text-decoration: none;
-		font-weight: 600;
 	}
 	.reader__title {
-		font-size: clamp( 2rem, 5vw, 3rem );
-		line-height: 1.1;
-		margin: 0 0 2rem;
+		font-size: clamp(2.2rem, 5.5vw, 3.4rem);
+		font-variation-settings: 'opsz' 144, 'SOFT' 40, 'WONK' 1;
+		line-height: 1.04;
+		margin: 0 0 2.25rem;
 	}
 	.reader__article {
-		font-size: 1.15rem;
-		line-height: 1.7;
+		font-family: var(--font-body);
+		font-size: 1.22rem;
+		line-height: 1.72;
+		color: var(--ink);
+	}
+	.reader__article :global(h2),
+	.reader__article :global(h3) {
+		margin: 2.4rem 0 0.8rem;
+	}
+	.reader__article :global(h2) {
+		font-size: 1.7rem;
+	}
+	.reader__article :global(p) {
+		margin: 1.2rem 0;
+	}
+	.reader__article :global(a) {
+		color: var(--sky);
+	}
+	/* First paragraph: a quiet editorial lead-in */
+	.reader__article :global(p:first-of-type) {
+		font-size: 1.32rem;
+		color: var(--ink-soft);
+	}
+	.reader__article :global(blockquote) {
+		margin: 1.8rem 0;
+		padding-left: 1.25rem;
+		border-left: 3px solid var(--sky);
+		font-style: italic;
+		color: var(--ink-soft);
 	}
 	.reader__article :global(img) {
 		max-width: 100%;
 		height: auto;
-		border-radius: 8px;
+		border-radius: var(--radius);
+		box-shadow: var(--shadow);
 	}
 	.reader__article :global(pre) {
-		background: #16181d;
-		color: #f5f3ee;
-		padding: 1rem;
-		border-radius: 8px;
+		background: var(--ink);
+		color: var(--paper);
+		font-family: var(--font-mono);
+		padding: 1.1rem 1.25rem;
+		border-radius: var(--radius);
 		overflow: auto;
-		font-size: 0.95rem;
+		font-size: 0.92rem;
+		line-height: 1.5;
+	}
+	.reader__article :global(code) {
+		font-family: var(--font-mono);
+	}
+	.reader__foot {
+		margin-top: 3.5rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--line);
 	}
 </style>

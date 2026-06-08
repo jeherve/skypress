@@ -63,8 +63,8 @@ docs/
 | SP3 | Image/blob pipeline (`mediaUpload` → `uploadBlob`) | ✅ Complete |
 | SP4 | Public renderer (`/@<handle>/<rkey>`, link tags, edge SSR, sanitisation) | ✅ Complete |
 | SP5 | Edit flow (the "puppy problem") + unpublish | ✅ Complete |
-| SP6 | Brand identity | Next |
-| SP7 | Deploy to a free host | |
+| SP6 | Brand identity | ✅ Complete |
+| SP7 | Deploy to a free host | Next |
 
 ## License
 

@@ -1,15 +1,14 @@
 ---
 import Base from '../layouts/Base.astro';
+import Logo from '../components/Logo.astro';
 import Studio from '../components/Studio.tsx';
 ---
 
 <Base title="Write — SkyPress">
 	<main class="editor-shell">
 		<header class="editor-shell__bar">
-			<a class="editor-shell__home" href="/">SkyPress</a>
-			<span class="editor-shell__hint"
-				>Sign in with your AT Protocol identity to write.</span
-			>
+			<a class="editor-shell__home" href="/"><Logo size={24} /></a>
+			<span class="editor-shell__hint eyebrow">The studio</span>
 		</header>
 		<!-- client:only — auth + editor run only in the browser; their bundle never
 		     reaches reading pages (Decisions 0001 & 0004). -->
@@ -25,7 +24,7 @@ import Studio from '../components/Studio.tsx';
 		align-items: baseline;
 		gap: 1rem;
 		padding: 0.75rem 1.25rem;
-		border-bottom: 1px solid #e7e3da;
+		border-bottom: 1px solid var(--line);
 		flex-wrap: wrap;
 	}
 	.editor-shell__home {
@@ -50,14 +49,14 @@ import Studio from '../components/Studio.tsx';
 		justify-content: space-between;
 		gap: 1rem;
 		padding: 0.5rem 1.25rem;
-		background: #f1eee7;
-		border-bottom: 1px solid #e7e3da;
+		background: var(--panel);
+		border-bottom: 1px solid var(--line);
 		font-size: 0.9rem;
 		flex-wrap: wrap;
 	}
 	.studio__signout {
-		border: 1px solid #d6d0c4;
-		background: #fff;
+		border: 1px solid var(--line-strong);
+		background: var(--paper-raised);
 		border-radius: 6px;
 		padding: 0.3rem 0.7rem;
 		cursor: pointer;
@@ -72,7 +71,7 @@ import Studio from '../components/Studio.tsx';
 	}
 	.studio__error,
 	.login__error {
-		color: #b3261e;
+		color: var(--ember);
 		font-size: 0.9rem;
 	}
 	.login__title {
@@ -93,7 +92,7 @@ import Studio from '../components/Studio.tsx';
 		width: 100%;
 		box-sizing: border-box;
 		padding: 0.6rem 0.7rem;
-		border: 1px solid #d6d0c4;
+		border: 1px solid var(--line-strong);
 		border-radius: 8px;
 		font: inherit;
 		margin-bottom: 0.85rem;
@@ -122,12 +121,12 @@ import Studio from '../components/Studio.tsx';
 		align-items: center;
 		gap: 0.75rem;
 		padding: 0.75rem 1.25rem;
-		border-bottom: 1px solid #e7e3da;
+		border-bottom: 1px solid var(--line);
 	}
 	.publish__title {
 		flex: 1 1 18rem;
 		padding: 0.5rem 0.7rem;
-		border: 1px solid #d6d0c4;
+		border: 1px solid var(--line-strong);
 		border-radius: 8px;
 		font: inherit;
 		font-size: 1.05rem;
@@ -148,16 +147,16 @@ import Studio from '../components/Studio.tsx';
 	}
 	.publish__cancel {
 		padding: 0.5rem 0.9rem;
-		border: 1px solid #d6d0c4;
-		background: #fff;
+		border: 1px solid var(--line-strong);
+		background: var(--paper-raised);
 		border-radius: 8px;
 		font: inherit;
 		cursor: pointer;
 	}
 	.publish__confirm {
 		flex: 1 1 100%;
-		background: #fff7e6;
-		border: 1px solid #f0d9a8;
+		background: var(--sky-tint);
+		border: 1px solid var(--line-strong);
 		border-radius: 10px;
 		padding: 0.85rem 1rem;
 	}
@@ -177,18 +176,18 @@ import Studio from '../components/Studio.tsx';
 	}
 	.publish__result code {
 		word-break: break-all;
-		background: #f1eee7;
+		background: var(--panel);
 		padding: 0.1rem 0.3rem;
 		border-radius: 4px;
 	}
 	.publish__error {
-		color: #b3261e;
+		color: var(--ember);
 	}
 
 	/* Your articles + mode bar */
 	.myarticles {
 		padding: 1rem 1.25rem;
-		border-bottom: 1px solid #e7e3da;
+		border-bottom: 1px solid var(--line);
 	}
 	.myarticles__heading {
 		font-size: 0.75rem;
@@ -224,8 +223,8 @@ import Studio from '../components/Studio.tsx';
 		gap: 0.5rem;
 	}
 	.myarticles__actions button {
-		border: 1px solid #d6d0c4;
-		background: #fff;
+		border: 1px solid var(--line-strong);
+		background: var(--paper-raised);
 		border-radius: 6px;
 		padding: 0.25rem 0.6rem;
 		font: inherit;
@@ -242,8 +241,8 @@ import Studio from '../components/Studio.tsx';
 		color: var(--muted);
 	}
 	.studio__mode button {
-		border: 1px solid #d6d0c4;
-		background: #fff;
+		border: 1px solid var(--line-strong);
+		background: var(--paper-raised);
 		border-radius: 6px;
 		padding: 0.25rem 0.7rem;
 		font: inherit;

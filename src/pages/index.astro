@@ -1,56 +1,105 @@
 ---
 import Base from '../layouts/Base.astro';
+import Logo from '../components/Logo.astro';
 ---
 
 <Base
 	title="SkyPress — a writing studio for the open social web"
-	description="A standalone long-form writing studio for the AT Protocol."
+	description="A standalone, long-form writing studio for the AT Protocol. Write in blocks; your words are saved to your own server."
 >
-	<main class="home">
-		<p class="home__kicker">SkyPress · SP0 spike</p>
-		<h1 class="home__title">The open sky meets the typesetter's bench.</h1>
-		<p class="home__lede">
-			A standalone, long-form writing studio for the AT Protocol. Write in
-			blocks; your words are saved to your own server.
-		</p>
-		<nav class="home__nav">
-			<a href="/editor">Open the editor →</a>
-			<a href="/preview">See a rendered article →</a>
-		</nav>
-	</main>
+	<div class="page sky-wash">
+		<header class="masthead">
+			<Logo />
+			<a class="btn btn--ghost" href="/editor">Open the studio</a>
+		</header>
+
+		<main class="hero">
+			<p class="eyebrow">Long-form for the AT Protocol</p>
+			<h1 class="hero__title">
+				The open sky meets the<br /><span class="hero__em">typesetter's bench.</span>
+			</h1>
+			<p class="hero__lede">
+				A calm, block-based writing studio for the open social web. Compose rich
+				long-form pieces and publish them straight to <em>your own</em> server — SkyPress
+				is just the studio you write in.
+			</p>
+			<div class="hero__actions">
+				<a class="btn btn--primary" href="/editor">Start writing</a>
+				<a class="btn btn--ghost" href="/preview">Read a sample</a>
+			</div>
+			<p class="hero__note">
+				Sign in with your existing Bluesky / AT&nbsp;Protocol identity. No new account.
+			</p>
+		</main>
+
+		<footer class="footer">
+			<span>Your data, your server, the open web.</span>
+			<span class="footer__mark">GPL-2.0 · built on Gutenberg</span>
+		</footer>
+	</div>
 </Base>
 
 <style>
-	.home {
-		max-width: 42rem;
-		margin: 0 auto;
-		padding: 6rem 1.5rem;
-	}
-	.home__kicker {
-		text-transform: uppercase;
-		letter-spacing: 0.12em;
-		font-size: 0.75rem;
-		color: var(--muted);
-	}
-	.home__title {
-		font-size: clamp(2rem, 6vw, 3.25rem);
-		line-height: 1.05;
-		margin: 0.25rem 0 1rem;
-	}
-	.home__lede {
-		font-size: 1.2rem;
-		color: var(--muted);
-		max-width: 34rem;
-	}
-	.home__nav {
+	.page {
+		min-height: 100vh;
 		display: flex;
-		gap: 1.5rem;
-		margin-top: 2rem;
+		flex-direction: column;
+	}
+	.masthead {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 1.5rem clamp(1.25rem, 5vw, 4rem);
+	}
+	.hero {
+		flex: 1;
+		max-width: 52rem;
+		margin: 0 auto;
+		padding: clamp(3rem, 10vh, 7rem) clamp(1.25rem, 5vw, 4rem);
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+	}
+	.hero__title {
+		font-size: clamp(2.6rem, 8vw, 5rem);
+		font-weight: 560;
+		font-variation-settings: 'opsz' 144, 'SOFT' 40, 'WONK' 1;
+		line-height: 1.02;
+		margin: 1rem 0 0;
+	}
+	.hero__em {
+		font-style: italic;
+		color: var(--sky);
+		font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1;
+	}
+	.hero__lede {
+		font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+		line-height: 1.55;
+		color: var(--ink-soft);
+		max-width: 38ch;
+		margin: 1.75rem 0 0;
+	}
+	.hero__actions {
+		display: flex;
+		gap: 0.85rem;
+		margin: 2.25rem 0 0;
 		flex-wrap: wrap;
 	}
-	.home__nav a {
-		color: var(--sky);
-		text-decoration: none;
-		font-weight: 600;
+	.hero__note {
+		color: var(--muted);
+		font-size: 0.95rem;
+		margin-top: 1.5rem;
+	}
+	.footer {
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+		padding: 1.5rem clamp(1.25rem, 5vw, 4rem);
+		border-top: 1px solid var(--line);
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+		letter-spacing: 0.04em;
 	}
 </style>

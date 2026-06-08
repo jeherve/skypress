@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Logo from '../../components/Logo.astro';
 import { resolveAuthor } from '../../lib/reader/identity';
 import { listRecords } from '../../lib/reader/records';
 import { publicationHomeUrl } from '../../lib/publish/records';
@@ -64,8 +65,11 @@ const articles = docs.map( ( record ) => ( {
 		{pubUri && <link rel="site.standard.publication" href={pubUri} />}
 	</Fragment>
 
+	<header class="masthead">
+		<a href="/"><Logo /></a>
+	</header>
 	<main class="home">
-		<p class="home__handle">@{handle}</p>
+		<p class="home__handle eyebrow">@{handle}</p>
 		<h1 class="home__title">{pubName}</h1>
 		{publication?.value.description && (
 			<p class="home__lede">{publication.value.description}</p>
@@ -90,24 +94,33 @@ const articles = docs.map( ( record ) => ( {
 </Base>
 
 <style>
+	.masthead {
+		padding: 1.5rem clamp(1.25rem, 5vw, 4rem);
+		border-bottom: 1px solid var(--line);
+	}
+	.masthead a {
+		text-decoration: none;
+	}
 	.home {
 		max-width: 42rem;
 		margin: 0 auto;
-		padding: 4rem 1.5rem 6rem;
+		padding: clamp(2.5rem, 6vw, 4.5rem) 1.5rem 6rem;
 	}
 	.home__handle {
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		font-size: 0.75rem;
-		color: var(--muted);
+		margin: 0;
 	}
 	.home__title {
-		font-size: clamp( 2rem, 5vw, 3rem );
-		margin: 0.25rem 0 1rem;
+		font-size: clamp(2.2rem, 6vw, 3.6rem);
+		font-variation-settings: 'opsz' 144, 'SOFT' 40, 'WONK' 1;
+		margin: 0.4rem 0 1rem;
 	}
 	.home__lede {
+		color: var(--ink-soft);
+		font-size: 1.2rem;
+		max-width: 42ch;
+	}
+	.home__empty {
 		color: var(--muted);
-		font-size: 1.15rem;
 	}
 	.home__list {
 		list-style: none;
@@ -115,22 +128,27 @@ const articles = docs.map( ( record ) => ( {
 		margin: 2.5rem 0 0;
 	}
 	.home__item {
-		padding: 1.25rem 0;
-		border-top: 1px solid #e7e3da;
+		padding: 1.35rem 0;
+		border-top: 1px solid var(--line);
 	}
 	.home__item a {
-		font-size: 1.3rem;
-		font-weight: 600;
+		font-family: var(--font-display);
+		font-size: 1.4rem;
+		font-weight: 560;
 		color: var(--ink);
 		text-decoration: none;
 	}
+	.home__item a:hover {
+		color: var(--sky);
+	}
 	.home__date {
 		color: var(--muted);
-		font-size: 0.8rem;
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
 		margin-left: 0.75rem;
 	}
 	.home__desc {
-		color: var(--muted);
+		color: var(--ink-soft);
 		margin: 0.4rem 0 0;
 	}
 </style>

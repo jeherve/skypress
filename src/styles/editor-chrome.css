@@ -95,55 +95,16 @@
 	font: inherit;
 }
 
-/* Login (signed out) */
+/* Login (signed out). The `.login__*` form rules are shared with the dashboard
+   and live in `login.css` (imported by editor.astro alongside this file). */
 .studio__login {
 	max-width: 30rem;
 	margin: 0 auto;
 	padding: 4rem 1.5rem;
 }
-.studio__error,
-.login__error {
+.studio__error {
 	color: var(--ember);
 	font-size: 0.9rem;
-}
-.login__title {
-	font-size: 1.6rem;
-	margin: 0 0 0.5rem;
-}
-.login__lede {
-	color: var(--muted);
-	margin: 0 0 1.5rem;
-}
-.login__label {
-	display: block;
-	font-size: 0.85rem;
-	font-weight: 600;
-	margin-bottom: 0.35rem;
-}
-.login__input {
-	width: 100%;
-	box-sizing: border-box;
-	padding: 0.6rem 0.7rem;
-	border: 1px solid var(--line-strong);
-	border-radius: 8px;
-	font: inherit;
-	margin-bottom: 0.85rem;
-}
-.login__submit {
-	width: 100%;
-	padding: 0.65rem 1rem;
-	border: 0;
-	border-radius: 8px;
-	background: var(--sun);
-	color: #fff;
-	font: inherit;
-	font-weight: 600;
-	cursor: pointer;
-}
-.login__note {
-	color: var(--muted);
-	font-size: 0.8rem;
-	margin-top: 1rem;
 }
 
 /* Publish panel */

@@ -2,6 +2,9 @@
 import Base from '../layouts/Base.astro';
 import Logo from '../components/Logo.astro';
 import Dashboard from '../components/Dashboard.tsx';
+// The signed-out sign-in form (`LoginForm`) is shared with the editor page; its
+// styles live in this global stylesheet so the form looks the same on both.
+import '../styles/login.css';
 ---
 
 <Base title="Dashboard — SkyPress">

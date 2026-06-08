@@ -1,87 +1,160 @@
 # SkyPress
 
-A standalone, long-form writing studio for the **AT Protocol** (the open network
-behind Bluesky). Write rich, block-based articles in the WordPress "Gutenberg" editor
-— used entirely on its own, no WordPress behind it — and publish them to **your own
-Personal Data Server (PDS)**. Your data is yours; SkyPress is just the studio you write
-in.
+A standalone, long-form writing studio for the **AT Protocol** (the open network behind
+Bluesky). Writers compose rich, block-based articles in the WordPress "Gutenberg" editor —
+used entirely on its own, no WordPress behind it — and publish them to **their own Personal
+Data Server (PDS)**. The writer owns their data; SkyPress is just the studio they write in,
+plus a public renderer for reading.
 
-> Status: early construction. **SP0 (Foundations + Editor Spike) is complete** — the
-> riskiest path is proven end-to-end. See the roadmap below.
+SkyPress is an **editor + OAuth client + public renderer** — never a PDS, never a relay.
+It runs as a single Astro app on Cloudflare with **no database**: the public reader
+resolves articles on demand (`handle → DID → PDS → record → HTML`).
+
+This guide is for developers who want to **run their own instance**.
+
+---
+
+## Prerequisites
+
+- **Node ≥ 20** and npm.
+- A **Cloudflare account** with a **domain managed in Cloudflare** (for production).
+- An **AT Protocol / Bluesky identity** to sign in and test publishing.
+
+---
+
+## Quick start (local)
+
+```sh
+git clone <your fork> skypress && cd skypress
+cp .env.example .env          # set PUBLIC_SITE_URL (see Configuration)
+npm install                   # installs the @wordpress/* tree (pinned — see Notes)
+npm run dev                   # http://localhost:4321
+```
+
+Open the studio at **`http://127.0.0.1:4321/editor`** — use the IP, not `localhost`:
+atproto's development ("loopback") OAuth client requires an IP origin, so sign-in only
+works on `127.0.0.1`. Sign in with your handle, write, and publish.
+
+> Publishing is real: it writes records to your PDS **and creates a public Bluesky post**
+> linking to the article. The UI says so before you confirm.
+
+Other scripts:
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Dev server (editor + reader, hot reload) |
+| `npm run build` | Production build (Cloudflare Worker + static assets) |
+| `npm run preview` | Run the built worker locally on `workerd` |
+| `npm run deploy` | `astro build && wrangler deploy` |
+| `npm test` | Vitest (block round-trip + render fidelity, publish builders, SSRF guard, …) |
+| `npm run check` | `astro check` (types) |
+
+---
+
+## Configuration
+
+One setting matters for self-hosting — your public origin:
+
+```sh
+# .env
+PUBLIC_SITE_URL=https://yourdomain.example
+```
+
+It's baked into the build and used for the stored publication/article URLs and the Bluesky
+post link, so it **must match the domain you serve from**. The OAuth client metadata and
+redirect URIs adapt to the request origin automatically, so there's nothing else to set.
+
+Optional: rename the worker in [`wrangler.toml`](./wrangler.toml) (`name`) and the
+displayed app name in [`src/pages/client-metadata.json.ts`](./src/pages/client-metadata.json.ts)
+(`client_name`, shown on the Bluesky consent screen).
+
+---
+
+## Deploy your own (Cloudflare)
+
+SkyPress targets **Cloudflare Workers with Static Assets** (via `@astrojs/cloudflare`). The
+on-demand reader runs as the Worker; everything else is static. No KV/D1/queues —
+`nodejs_compat` (already set in `wrangler.toml`) lets the reader's HTML sanitiser run on the
+edge.
+
+```sh
+npx wrangler login                      # once
+echo "PUBLIC_SITE_URL=https://yourdomain.example" > .env
+npm run deploy
+```
+
+Then, in the Cloudflare dashboard, attach **your domain** as a custom domain on the
+deployed Worker. Verify:
+
+1. `https://yourdomain.example/client-metadata.json` returns JSON (the OAuth client doc,
+   generated from the request origin).
+2. `https://yourdomain.example/editor` → sign in → publish → open the resulting
+   `https://yourdomain.example/@<handle>/<rkey>`.
+
+Use the **apex** origin you set in `PUBLIC_SITE_URL` (don't mix `www`), since the OAuth
+`client_id` is origin-specific. Detailed notes + gotchas (e.g. the editor's canonical
+trailing-slash path) live in [`docs/specs/sp7-deploy.md`](./docs/specs/sp7-deploy.md).
+
+---
 
 ## How it works
 
-- The editor is Automattic's [`isolated-block-editor`](https://github.com/Automattic/isolated-block-editor)
-  (standalone Gutenberg). The canonical content is the **Gutenberg block tree**.
-- On publish (SP2+), SkyPress writes two records to the writer's PDS: a
-  `site.standard.document` holding the block tree, and a companion `app.bsky.feed.post`
-  (the POSSE pattern). Reading pages are rendered back from the block tree.
-- It's an **editor + OAuth client + public renderer** — never a PDS, never a relay.
+- **Editor** (`/editor`): Automattic's [`isolated-block-editor`](https://github.com/Automattic/isolated-block-editor)
+  (standalone Gutenberg) as a single `client:only` React island. The canonical content is
+  the **Gutenberg block tree**.
+- **Publish:** writes a `site.standard.publication` (once), a `site.standard.document`
+  (block tree + plain-text `textContent`), and a companion `app.bsky.feed.post` — the POSSE
+  pattern. Images upload to the PDS as blobs (`uploadBlob`); the document stores the typed
+  blob ref.
+- **Reader** (`/@<handle>/<rkey>`): resolves identity, fetches the record, and renders the
+  block tree to **light HTML with zero JavaScript**, reconstructing blob image URLs and
+  **sanitising** the untrusted content. Other apps that don't understand the block format
+  fall back to `textContent`.
+- **Auth:** a browser OAuth public client (PKCE/DPoP) — no backend, no secrets.
 
-## Architecture at a glance
+The content lexicon is documented in [`lexicons/`](./lexicons/README.md); the design
+rationale for each non-obvious choice is in [`docs/decisions/`](./docs/decisions/).
 
-- **Stack:** [Astro](https://astro.build) + **React 18** islands (Decision 0001).
-  React 18 is required by the bundled `@wordpress/*` packages.
-- **Editor** (`/editor`): a `client:only="react"` island — its weight is confined to
-  that route.
-- **Reading pages** (`/`, `/preview`, later `/<handle>/<slug>`): rendered to light HTML
-  with a **dependency-free renderer** (`src/lib/blocks/render.ts`) whose fidelity is
-  locked to the real `@wordpress/blocks.serialize()` by tests. Reading pages ship **0
-  JS** (Decision 0003).
-
-## Getting started
-
-```sh
-npm install      # installs @wordpress/* pinned to one consistent version line
-npm run dev      # dev server (editor at /editor, sample article at /preview)
-npm run build    # static production build
-npm test         # Vitest: block round-trip + render fidelity + textContent
-```
-
-Requires Node ≥ 20.
+---
 
 ## Project layout
 
 ```
 src/
-  pages/        index, editor (island), preview (server-rendered article)
-  components/   SkyEditor.tsx — the editor island
-  lib/blocks/   render.ts (dependency-free reader) · serialize.ts (@wordpress oracle)
-                allowlist.ts (curated content model) · sample.ts (fixture)
-docs/
-  decisions/    one file per non-obvious decision (context, options, choice, why)
-  specs/        per-sub-project specs (SP0, SP1, …)
+  pages/        index · editor · client-metadata.json.ts (OAuth client doc, worker route)
+                [author]/index.astro + [author]/[rkey].astro  (read-through reader)
+  components/   Studio · SkyEditor · PublishPanel · MyArticles · Logo
+  lib/
+    blocks/     render.ts (dependency-free reader) · serialize.ts (@wordpress oracle) · allowlist.ts
+    auth/       oauth.ts · AuthProvider.tsx · config.ts · LoginForm.tsx
+    publish/    records.ts (pure builders) · publisher.ts (Agent orchestration)
+    media/      mediaUpload.ts · blob.ts · pds.ts
+    reader/     identity.ts · records.ts · sanitize.ts
+    net/        safe-fetch.ts (SSRF guard for the reader's outbound fetches)
+lexicons/       blog.skypress.content.gutenberg.json + README
+docs/           decisions/ (why) · specs/ (how) · brand/
+astro.config.mjs · wrangler.toml
 ```
 
-## Roadmap
+---
 
-| | Sub-project | Status |
-|---|---|---|
-| SP0 | Foundations + editor spike | ✅ Complete |
-| SP1 | atproto OAuth, session, the `Agent` | ✅ Complete |
-| SP2 | Lexicon (`blog.skypress.*`) + two-record publish | ✅ Complete |
-| SP3 | Image/blob pipeline (`mediaUpload` → `uploadBlob`) | ✅ Complete |
-| SP4 | Public renderer (`/@<handle>/<rkey>`, link tags, edge SSR, sanitisation) | ✅ Complete |
-| SP5 | Edit flow (the "puppy problem") + unpublish | ✅ Complete |
-| SP6 | Brand identity | ✅ Complete |
-| SP7 | Deploy to Cloudflare | ✅ Deploy-ready (edge-verified; `npm run deploy`) |
+## Notes if you fork
 
-## Deploy (Cloudflare)
+- **React 18 only.** The bundled `@wordpress/*` packages require `react@^18.3`; React 19
+  will break the editor.
+- **The whole `@wordpress/*` tree is version-pinned** via `overrides` in `package.json` to
+  the exact line `isolated-block-editor` bundles. Caret ranges otherwise pull a newer line
+  and crash the editor with duplicate data registries. Bumping `isolated-block-editor`
+  means regenerating that override map.
+- **Reading pages never import `@wordpress`** — the editor stack is browser-only and can't
+  render server-side. The reader uses the dependency-free `src/lib/blocks/render.ts`, whose
+  output fidelity is locked to the real serializer by tests.
+- **Untrusted content** from arbitrary PDSes is always sanitised before rendering, and any
+  server-side fetch to a user-derived host goes through `src/lib/net/safe-fetch.ts`.
 
-SkyPress deploys to **Cloudflare Workers (Static Assets)** via `@astrojs/cloudflare`
-(Decision 0009). The read-through renderer runs as the Worker; everything else is static.
-No database/KV — `nodejs_compat` (in `wrangler.toml`) lets the reader's sanitiser run on
-the edge.
-
-```sh
-npx wrangler login   # one-time, owner's Cloudflare account
-npm run deploy        # astro build && wrangler deploy
-```
-
-Then attach `skypress.blog` as a custom domain in the Cloudflare dashboard. Full runbook +
-verification: [`docs/specs/sp7-deploy.md`](./docs/specs/sp7-deploy.md).
+---
 
 ## License
 
-[GPL-2.0-only](./LICENSE) — WordPress/Gutenberg lineage; aligns with the
-open-source, your-data-is-yours ethos.
+[GPL-2.0-only](./LICENSE) — WordPress/Gutenberg lineage; aligns with the open-source,
+your-data-is-yours ethos.

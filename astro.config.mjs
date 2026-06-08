@@ -10,7 +10,8 @@ const nodeModules = fileURLToPath( new URL( './node_modules', import.meta.url ) 
 // renderer, SP4). Deployed to Cloudflare Pages (SP7). `nodejs_compat` (set in
 // wrangler.toml) lets sanitize-html's Node-style deps run on the edge.
 export default defineConfig( {
-	site: 'https://skypress.blog',
+	// Public origin. Override with PUBLIC_SITE_URL when self-hosting (see README / .env.example).
+	site: process.env.PUBLIC_SITE_URL || 'https://skypress.blog',
 	adapter: cloudflare(),
 	// SkyPress doesn't use Astro server sessions (auth is a browser OAuth client).
 	// A no-binding in-memory driver stops the adapter requiring a Cloudflare KV

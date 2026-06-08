@@ -10,6 +10,7 @@ import {
 	normalizeBlocks,
 	CONTENT_TYPE,
 	CONTENT_VERSION,
+	SITE_BASE,
 } from './records';
 import type { BlockNode } from '../blocks/render';
 
@@ -21,11 +22,11 @@ const BLOCKS: BlockNode[] = [
 describe( 'URLs', () => {
 	it( 'prefixes the handle with @ and addresses documents by rkey', () => {
 		expect( publicationHomeUrl( 'alice.bsky.social' ) ).toBe(
-			'https://skypress.blog/@alice.bsky.social'
+			`${ SITE_BASE }/@alice.bsky.social`
 		);
 		expect( articlePath( '3kabcrkey' ) ).toBe( '/3kabcrkey' );
 		expect( canonicalArticleUrl( 'alice.bsky.social', '3kabcrkey' ) ).toBe(
-			'https://skypress.blog/@alice.bsky.social/3kabcrkey'
+			`${ SITE_BASE }/@alice.bsky.social/3kabcrkey`
 		);
 	} );
 } );
@@ -67,7 +68,7 @@ describe( 'buildPublicationRecord', () => {
 	it( 'sets the required url + name', () => {
 		const pub = buildPublicationRecord( { handle: 'alice.bsky.social' } );
 		expect( pub.$type ).toBe( 'site.standard.publication' );
-		expect( pub.url ).toBe( 'https://skypress.blog/@alice.bsky.social' );
+		expect( pub.url ).toBe( `${ SITE_BASE }/@alice.bsky.social` );
 		expect( pub.name ).toBeTruthy();
 	} );
 } );

@@ -6,8 +6,13 @@
  */
 import type { BlockNode } from '../blocks/render';
 
-/** Public base origin for canonical article URLs (finalised at deploy, SP7). */
-export const SKYPRESS_BASE = 'https://skypress.blog';
+/**
+ * Public origin for the stored publication + article URLs (and the Bluesky post link).
+ * Set `PUBLIC_SITE_URL` to your own domain when self-hosting; it's baked into the build.
+ * Must match the origin the app is actually served from.
+ */
+export const SITE_BASE =
+	import.meta.env.PUBLIC_SITE_URL ?? 'https://skypress.blog';
 
 export const CONTENT_TYPE = 'blog.skypress.content.gutenberg';
 export const CONTENT_VERSION = 1;
@@ -19,10 +24,10 @@ export interface StrongRef {
 
 /**
  * The writer's SkyPress homepage — the publication's `url`. Handles are prefixed
- * with `@` (e.g. `https://skypress.blog/@alice.bsky.social`).
+ * with `@` (e.g. `<site>/@alice.bsky.social`).
  */
 export function publicationHomeUrl( handle: string ): string {
-	return `${ SKYPRESS_BASE }/@${ handle }`;
+	return `${ SITE_BASE }/@${ handle }`;
 }
 
 /**

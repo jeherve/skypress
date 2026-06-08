@@ -42,9 +42,10 @@ src/lib/auth/oauth.ts   loopback client_id now carries scope = OAUTH_SCOPE (writ
 
 ## TDD plan (pure `records.ts`)
 
-- `slugify('Hello, World!')` → `hello-world`
-- `articlePath(slug)` → `/hello-world`; `publicationHomeUrl(handle)` →
-  `https://skypress.blog/<handle>`; `canonicalArticleUrl(handle, slug)`
+- `publicationHomeUrl(handle)` → `https://skypress.blog/@<handle>`;
+  `articlePath(rkey)` → `/<rkey>`; `canonicalArticleUrl(handle, rkey)` →
+  `https://skypress.blog/@<handle>/<rkey>` (documents are addressed by record key, not a
+  title slug — stable across edits, direct `getRecord` for the renderer)
 - `buildContentObject(blocks)` → `{ $type, version:1, blocks }`
 - `buildDocumentRecord(...)` → required `site`/`title`/`publishedAt`, embeds content +
   textContent + bskyPostRef

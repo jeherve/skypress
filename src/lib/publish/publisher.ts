@@ -1,11 +1,11 @@
 import type { Agent } from '@atproto/api';
+import { TID } from '@atproto/common-web';
 import {
 	buildPublicationRecord,
 	buildDocumentRecord,
 	buildBskyPost,
 	canonicalArticleUrl,
 	publicationHomeUrl,
-	slugify,
 	type StrongRef,
 } from './records';
 import { blocksToText, type BlockNode } from '../blocks/render';
@@ -87,8 +87,10 @@ export async function publish(
 	const { did } = identity;
 	const handle = identity.handle ?? did;
 	const now = new Date().toISOString();
-	const slug = slugify( input.title );
-	const articleUrl = canonicalArticleUrl( handle, slug );
+	// Generate the document's rkey up front so the article URL (which the Bluesky post
+	// embeds) is known before either record is written — no circular dependency.
+	const rkey = TID.nextStr();
+	const articleUrl = canonicalArticleUrl( handle, rkey );
 	const textContent = blocksToText( input.blocks );
 
 	const publicationUri = await ensurePublication( agent, did, handle );
@@ -113,10 +115,11 @@ export async function publish(
 	const docRes = await agent.com.atproto.repo.createRecord( {
 		repo: did,
 		collection: DOCUMENT_COLLECTION,
+		rkey,
 		record: asRecord(
 			buildDocumentRecord( {
 				title: input.title,
-				slug,
+				rkey,
 				blocks: input.blocks,
 				textContent,
 				siteUri: publicationUri,

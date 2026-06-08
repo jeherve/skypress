@@ -12,24 +12,36 @@ Shapes below are verified against the live `site.standard.*` lexicons
 Two (or three) records on the writer's PDS, per brief §1:
 
 1. **`site.standard.publication`** (rkey: TID) — created once per writer if missing.
-   `url` (required) = the writer's SkyPress homepage `https://skypress.blog/<handle>`;
+   `url` (required) = the writer's SkyPress homepage `https://skypress.blog/@<handle>`;
    `name` (required) = a default derived from the handle. Reused on later publishes by
-   listing the writer's existing publication records (it is NOT a `self` singleton).
+   listing the writer's existing publication records and matching by `url` — NOT a `self`
+   singleton, and NOT just any standard.site publication the writer may already have from
+   other tools.
 2. **`site.standard.document`** (rkey: TID) — the article.
    - `site` = the publication's `at://` URI (links document↔publication, which Bluesky
      requires for the highest-fidelity card — brief §3).
-   - `path` = `/<slug>` (slug from the title). Canonical URL = publication `url` + `path`
-     = `https://skypress.blog/<handle>/<slug>`.
+   - `path` = `/<rkey>` (the document's own record key). Canonical URL = publication
+     `url` + `path` = `https://skypress.blog/@<handle>/<rkey>`.
    - `title`, `publishedAt` (required); `description`; `textContent` (de-facto required —
      Bluesky computes reading-time/search from it, ignoring `content`); `bskyPostRef`
      (strongRef to the post, below); `content` = our Gutenberg object.
 3. **`app.bsky.feed.post`** (rkey: TID) — the social signal, with an
    `app.bsky.embed.external` link card pointing at the canonical article URL.
 
+### URL structure
+`https://skypress.blog/@<handle>/<rkey>`. The `@` marks the handle segment, and the
+document is addressed by its **record key**, not a title slug:
+- a slug isn't stable across title edits; the rkey never changes (URL stability for the
+  edit flow, SP5);
+- the renderer (SP4) can `getRecord` the document directly by rkey — no listing +
+  path-matching.
+
 ### Publish order (avoids a circular dependency)
-handle + slug ⇒ the article URL is known up front. So:
-`ensure publication → create post (embed → article URL) → create document (content +
-textContent + bskyPostRef = post strongRef)`. One document write, no follow-up update.
+The document's rkey is generated client-side up front (`TID.nextStr()`), so the article
+URL is known before any record is written. So:
+`ensure publication → create post (embed → article URL) → create document at the
+pre-chosen rkey (content + textContent + bskyPostRef)`. One document write, no follow-up
+update.
 
 ## The SkyPress content lexicon — `blog.skypress.content.gutenberg`
 

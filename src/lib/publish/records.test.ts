@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-	slugify,
 	publicationHomeUrl,
 	articlePath,
 	canonicalArticleUrl,
@@ -19,25 +18,14 @@ const BLOCKS: BlockNode[] = [
 	{ name: 'core/paragraph', attributes: { content: 'Body' }, innerBlocks: [] },
 ];
 
-describe( 'slugify', () => {
-	it( 'lowercases and hyphenates', () => {
-		expect( slugify( 'Hello, World!' ) ).toBe( 'hello-world' );
-		expect( slugify( '  Multiple   Spaces & Symbols!! ' ) ).toBe( 'multiple-spaces-symbols' );
-	} );
-	it( 'falls back to "untitled" for empty/symbol-only input', () => {
-		expect( slugify( '' ) ).toBe( 'untitled' );
-		expect( slugify( '!!!' ) ).toBe( 'untitled' );
-	} );
-} );
-
 describe( 'URLs', () => {
-	it( 'builds publication home + canonical article URLs', () => {
+	it( 'prefixes the handle with @ and addresses documents by rkey', () => {
 		expect( publicationHomeUrl( 'alice.bsky.social' ) ).toBe(
-			'https://skypress.blog/alice.bsky.social'
+			'https://skypress.blog/@alice.bsky.social'
 		);
-		expect( articlePath( 'hello-world' ) ).toBe( '/hello-world' );
-		expect( canonicalArticleUrl( 'alice.bsky.social', 'hello-world' ) ).toBe(
-			'https://skypress.blog/alice.bsky.social/hello-world'
+		expect( articlePath( '3kabcrkey' ) ).toBe( '/3kabcrkey' );
+		expect( canonicalArticleUrl( 'alice.bsky.social', '3kabcrkey' ) ).toBe(
+			'https://skypress.blog/@alice.bsky.social/3kabcrkey'
 		);
 	} );
 } );
@@ -79,7 +67,7 @@ describe( 'buildPublicationRecord', () => {
 	it( 'sets the required url + name', () => {
 		const pub = buildPublicationRecord( { handle: 'alice.bsky.social' } );
 		expect( pub.$type ).toBe( 'site.standard.publication' );
-		expect( pub.url ).toBe( 'https://skypress.blog/alice.bsky.social' );
+		expect( pub.url ).toBe( 'https://skypress.blog/@alice.bsky.social' );
 		expect( pub.name ).toBeTruthy();
 	} );
 } );
@@ -87,7 +75,7 @@ describe( 'buildPublicationRecord', () => {
 describe( 'buildDocumentRecord', () => {
 	const base = {
 		title: 'Hello, World!',
-		slug: 'hello-world',
+		rkey: '3kabcrkey',
 		blocks: BLOCKS,
 		textContent: 'Hi\n\nBody',
 		siteUri: 'at://did:plc:abc/site.standard.publication/xyz',
@@ -99,7 +87,7 @@ describe( 'buildDocumentRecord', () => {
 		expect( doc.$type ).toBe( 'site.standard.document' );
 		expect( doc.site ).toBe( base.siteUri );
 		expect( doc.title ).toBe( base.title );
-		expect( doc.path ).toBe( '/hello-world' );
+		expect( doc.path ).toBe( '/3kabcrkey' );
 		expect( doc.publishedAt ).toBe( base.publishedAt );
 		expect( doc.textContent ).toBe( base.textContent );
 		expect( ( doc.content as { $type: string } ).$type ).toBe( CONTENT_TYPE );
@@ -116,7 +104,7 @@ describe( 'buildBskyPost', () => {
 	it( 'creates a post with an external embed pointing at the article', () => {
 		const post = buildBskyPost( {
 			title: 'Hello, World!',
-			articleUrl: 'https://skypress.blog/alice.bsky.social/hello-world',
+			articleUrl: 'https://skypress.blog/@alice.bsky.social/3kabcrkey',
 			description: 'An excerpt',
 			createdAt: '2026-06-08T12:00:00.000Z',
 		} );
@@ -125,7 +113,7 @@ describe( 'buildBskyPost', () => {
 		expect( post.createdAt ).toBe( '2026-06-08T12:00:00.000Z' );
 		expect( post.embed.$type ).toBe( 'app.bsky.embed.external' );
 		expect( post.embed.external.uri ).toBe(
-			'https://skypress.blog/alice.bsky.social/hello-world'
+			'https://skypress.blog/@alice.bsky.social/3kabcrkey'
 		);
 		expect( post.embed.external.title ).toBe( 'Hello, World!' );
 		expect( typeof post.embed.external.description ).toBe( 'string' );

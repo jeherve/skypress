@@ -17,30 +17,26 @@ export interface StrongRef {
 	cid: string;
 }
 
-/** A URL/file-safe slug from a title; `untitled` when nothing usable remains. */
-export function slugify( title: string ): string {
-	const slug = title
-		.toLowerCase()
-		.normalize( 'NFKD' )
-		.replace( /[̀-ͯ]/g, '' )
-		.replace( /[^a-z0-9]+/g, '-' )
-		.replace( /^-+|-+$/g, '' );
-	return slug || 'untitled';
-}
-
-/** The writer's SkyPress homepage — the publication's `url`. */
+/**
+ * The writer's SkyPress homepage — the publication's `url`. Handles are prefixed
+ * with `@` (e.g. `https://skypress.blog/@alice.bsky.social`).
+ */
 export function publicationHomeUrl( handle: string ): string {
-	return `${ SKYPRESS_BASE }/${ handle }`;
+	return `${ SKYPRESS_BASE }/@${ handle }`;
 }
 
-/** The document `path` (leading slash, per the lexicon). */
-export function articlePath( slug: string ): string {
-	return `/${ slug }`;
+/**
+ * The document `path` (leading slash, per the lexicon). SkyPress addresses documents
+ * by their record key (rkey), not a slug — stable across title edits and a direct
+ * `getRecord` lookup for the renderer.
+ */
+export function articlePath( rkey: string ): string {
+	return `/${ rkey }`;
 }
 
-/** Canonical article URL = publication url + path. */
-export function canonicalArticleUrl( handle: string, slug: string ): string {
-	return `${ publicationHomeUrl( handle ) }${ articlePath( slug ) }`;
+/** Canonical article URL = publication url + path = `<base>/@<handle>/<rkey>`. */
+export function canonicalArticleUrl( handle: string, rkey: string ): string {
+	return `${ publicationHomeUrl( handle ) }${ articlePath( rkey ) }`;
 }
 
 /**
@@ -105,7 +101,7 @@ export interface DocumentRecord {
 
 export function buildDocumentRecord( input: {
 	title: string;
-	slug: string;
+	rkey: string;
 	blocks: BlockNode[];
 	textContent: string;
 	siteUri: string;
@@ -117,7 +113,7 @@ export function buildDocumentRecord( input: {
 		$type: 'site.standard.document',
 		site: input.siteUri,
 		title: input.title,
-		path: articlePath( input.slug ),
+		path: articlePath( input.rkey ),
 		publishedAt: input.publishedAt,
 		textContent: input.textContent,
 		content: buildContentObject( input.blocks ),

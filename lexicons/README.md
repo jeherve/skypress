@@ -45,7 +45,7 @@ Record key: **TID**. ([source](https://tangled.org/standard.site/lexicons))
 | `site` | ✓ | the writer's `site.standard.publication` `at://` URI (links doc↔publication for high-fidelity Bluesky cards) |
 | `title` | ✓ | document title (≤500 graphemes) |
 | `publishedAt` | ✓ | ISO datetime of publish |
-| `path` | | `/<slug>` — combined with the publication `url` to form the canonical URL |
+| `path` | | `/<rkey>` — the document's own record key; combined with the publication `url` to form the canonical URL |
 | `description` | | excerpt (optional) |
 | `textContent` | | **de-facto required** — plain text from the block tree; Bluesky uses it for reading-time + search and ignores `content` |
 | `content` | | open union — our `blog.skypress.content.gutenberg` object |
@@ -58,7 +58,7 @@ Record key: **TID** (not a `self` singleton — reused by listing existing recor
 
 | Field | Req | SkyPress value |
 |---|---|---|
-| `url` | ✓ | `https://skypress.blog/<handle>` — the writer's SkyPress homepage; canonical doc URL = `url` + document `path` |
+| `url` | ✓ | `https://skypress.blog/@<handle>` — the writer's SkyPress homepage; canonical doc URL = `url` + document `path` = `…/@<handle>/<rkey>` |
 | `name` | ✓ | publication name (defaults from the handle) |
 | `description` | | optional |
 | `icon` | | optional blob (≤1MB) |
@@ -74,8 +74,9 @@ Record key: **TID** (not a `self` singleton — reused by listing existing recor
 ## The publish flow
 
 `ensure publication → create post (embed → article URL) → create document (content +
-textContent + bskyPostRef)`. The article URL is known up front from `handle` + `slug`,
-which avoids a circular dependency between the post and the document. Builders live in
+textContent + bskyPostRef)`. The document's rkey is generated up front
+(`TID.nextStr()`), so the article URL (`/@<handle>/<rkey>`) is known before any write —
+avoiding a circular dependency between the post and the document. Builders live in
 [`src/lib/publish/records.ts`](../src/lib/publish/records.ts); orchestration in
 [`publisher.ts`](../src/lib/publish/publisher.ts).
 

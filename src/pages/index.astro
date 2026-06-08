@@ -153,13 +153,41 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 	[data-phase='dusk'] .sky { background: linear-gradient(180deg, #140f2a, #4a2150 38%, #93324f 70%, #c75a3b); }
 	[data-phase='dusk'] .stars { opacity: 0.5; }
 
-	/* Light-text phases (dark skies) vs ink-text phase (pale midday). */
-	[data-phase='night'] .hero,
-	[data-phase='dawn'] .hero,
-	[data-phase='morning'] .hero,
-	[data-phase='golden'] .hero,
-	[data-phase='dusk'] .hero { --hero-ink: #f6f0e3; --hero-soft: rgba(246, 240, 227, 0.82); }
-	[data-phase='midday'] .hero { --hero-ink: #241a10; --hero-soft: rgba(36, 26, 16, 0.72); }
+	/* The whole sky zone (masthead + hero) is coloured by the phase, independent of the
+	   OS theme: light text on dark skies, ink on the pale midday sky. */
+	[data-phase='night'] .masthead, [data-phase='night'] .hero,
+	[data-phase='dawn'] .masthead, [data-phase='dawn'] .hero,
+	[data-phase='morning'] .masthead, [data-phase='morning'] .hero,
+	[data-phase='golden'] .masthead, [data-phase='golden'] .hero,
+	[data-phase='dusk'] .masthead, [data-phase='dusk'] .hero {
+		--sky-ink: #f6f0e3;
+		--sky-soft: rgba(246, 240, 227, 0.82);
+		--sky-line: rgba(246, 240, 227, 0.35);
+	}
+	[data-phase='midday'] .masthead, [data-phase='midday'] .hero {
+		--sky-ink: #241a10;
+		--sky-soft: rgba(36, 26, 16, 0.72);
+		--sky-line: rgba(36, 26, 16, 0.28);
+	}
+
+	/* Logo wordmark (in the Logo component) follows the sky, not the OS theme. */
+	.masthead :global(.logo),
+	.masthead :global(.logo__word) {
+		color: var(--sky-ink);
+	}
+
+	/* Ghost buttons sitting on the sky go translucent so they read at every phase. */
+	.masthead .btn--ghost,
+	.hero .btn--ghost {
+		background: transparent;
+		color: var(--sky-ink);
+		border-color: var(--sky-line);
+	}
+	.masthead .btn--ghost:hover,
+	.hero .btn--ghost:hover {
+		color: var(--sky-ink);
+		border-color: var(--sky-ink);
+	}
 
 	.masthead {
 		position: relative;
@@ -190,7 +218,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		line-height: 0.98;
 		margin: 0.75rem 0 0;
 		max-width: 14ch;
-		color: var(--hero-ink);
+		color: var(--sky-ink);
 	}
 	.hero__title :global(em) {
 		font-style: italic;
@@ -199,7 +227,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 	.hero__lede {
 		font-size: clamp(1.1rem, 2.2vw, 1.35rem);
 		line-height: 1.5;
-		color: var(--hero-soft);
+		color: var(--sky-soft);
 		max-width: 36ch;
 		margin: 1.25rem 0 0;
 	}
@@ -211,7 +239,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		justify-content: center;
 	}
 	.hero__note {
-		color: var(--hero-soft);
+		color: var(--sky-soft);
 		font-size: 0.95rem;
 		margin-top: 1.5rem;
 	}

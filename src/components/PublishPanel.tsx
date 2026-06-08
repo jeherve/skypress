@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Agent } from '@atproto/api';
 import type { BlockInstance } from '@wordpress/blocks';
 import {
@@ -68,6 +68,15 @@ export default function PublishPanel( {
 		isEditing && publications.find( ( pub ) => pub.uri === editing!.siteUri )?.name;
 	const hasTarget = Boolean( target );
 	const canSubmit = title.trim().length > 0 && blocks.length > 0 && hasTarget;
+
+	// `publications` arrives asynchronously after mount, so the initial selection may not match
+	// any loaded publication. Lock onto the first one once they load (and recover if the current
+	// pick disappears) — otherwise `targetUri` stays '' and the Publish button never enables.
+	useEffect( () => {
+		if ( ! isEditing && publications.length > 0 && ! hasTarget ) {
+			setTargetUri( publications[ 0 ].uri );
+		}
+	}, [ isEditing, publications, hasTarget ] );
 
 	// New article, but the writer has no publication to publish into yet.
 	if ( ! isEditing && publications.length === 0 ) {

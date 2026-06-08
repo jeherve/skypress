@@ -26,3 +26,17 @@ export async function fetchViewerProfile( agent: Agent, did: string ): Promise< 
 		return { did, handle: null, displayName: null, avatar: null };
 	}
 }
+
+/** Best display label for a viewer: real name, else handle, else the raw DID. */
+export function displayNameFor( profile: ViewerProfile ): string {
+	return profile.displayName ?? profile.handle ?? profile.did;
+}
+
+/**
+ * Public author-page path for a handle (the `/[author]` route requires a leading
+ * `@` and resolves by handle). Returns null when no handle is known, so callers
+ * can omit the link rather than render a broken one.
+ */
+export function authorPath( handle: string | null ): string | null {
+	return handle ? `/@${ handle }` : null;
+}

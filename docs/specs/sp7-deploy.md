@@ -48,17 +48,26 @@ Git-connected builds (Workers Builds) are an alternative: build `npm run build`,
 `npx wrangler deploy`, set `nodejs_compat` — but the local `npm run deploy` is the simplest
 first cut.
 
-## Gotcha: OAuth redirect_uri must include the trailing slash
+## OAuth client metadata: a worker route, not a static file
 
-Cloudflare serves the prerendered `/editor` page canonically at **`/editor/`** (`/editor`
-→ 307 → `/editor/`). The atproto browser client only processes a callback when
-`location.pathname` **exactly** equals a registered `redirect_uri` pathname
-(`findRedirectUrl`). So `client-metadata.json` must register
-**`https://skypress.blog/editor/`** (with the trailing slash) — otherwise auth completes at
-Bluesky, redirects back to `/editor/`, but the editor silently stays on the sign-in screen
-(`init()` falls through to `initRestore`). Verified against the canonical path locally
-(`astro preview` on workerd). Reading routes are SSR (not slash-canonicalised), so article
-URLs stay `/@<handle>/<rkey>`.
+`/client-metadata.json` is served by a **worker route**
+(`src/pages/client-metadata.json.ts`, `prerender = false`), not a static asset. Two prod
+failures drove this:
+
+1. **404 in production.** The static `public/client-metadata.json` served locally and on
+   the first deploy but 404'd at the deployed origin (`invalid_client_metadata … Not
+   Found`). Static `.json` serving on Cloudflare Workers Static Assets proved unreliable;
+   a worker route always runs.
+2. **Trailing slash.** Cloudflare serves the prerendered editor page canonically at
+   **`/editor/`** (`/editor` → 307 → `/editor/`), and the atproto client only processes a
+   callback when `location.pathname` **exactly** equals a registered `redirect_uri`
+   pathname (`findRedirectUrl`). So the metadata must register `…/editor/` **with** the
+   slash, or auth completes at Bluesky but the editor silently stays signed-out.
+
+The route generates the document from the **request origin**, so `client_id` always equals
+the fetched URL (apex / www / preview origins all work) and `redirect_uris` is
+`<origin>/editor/`. Verified on workerd (`astro preview`): 200 `application/json`. Reading
+routes are SSR (not slash-canonicalised), so article URLs stay `/@<handle>/<rkey>`.
 
 ## Notes / follow-ups
 

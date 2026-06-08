@@ -101,7 +101,7 @@ Single definition of the signed-in identity, used by both the pill and
 ### Changed — `src/components/Studio.tsx` (editor account bar)
 
 - Replace the `Signed in as <handle>` text line with: avatar + display name +
-  `@handle`, a "View my public page ↗" link (`/{handle}`), and the existing
+  `@handle`, a "View my public page ↗" link (`/@{handle}`), and the existing
   Sign out button. Consumes `displayName` / `avatar` from `useAuth()`.
 
 ### Changed — `src/pages/index.astro`

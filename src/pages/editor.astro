@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import SkyEditor from '../components/SkyEditor.tsx';
+import Studio from '../components/Studio.tsx';
 ---
 
 <Base title="Write — SkyPress">
@@ -8,15 +8,14 @@ import SkyEditor from '../components/SkyEditor.tsx';
 		<header class="editor-shell__bar">
 			<a class="editor-shell__home" href="/">SkyPress</a>
 			<span class="editor-shell__hint"
-				>SP0 spike — the block tree is captured to localStorage on every
-				change.</span
+				>Sign in with your AT Protocol identity to write.</span
 			>
 		</header>
-		<!-- client:only — the editor never server-renders and its bundle never
-		     reaches reading pages (Decision 0001). -->
-		<SkyEditor client:only="react">
-			<p slot="fallback" class="editor-shell__loading">Loading the editor…</p>
-		</SkyEditor>
+		<!-- client:only — auth + editor run only in the browser; their bundle never
+		     reaches reading pages (Decisions 0001 & 0004). -->
+		<Studio client:only="react">
+			<p slot="fallback" class="editor-shell__loading">Loading…</p>
+		</Studio>
 	</main>
 </Base>
 
@@ -38,8 +37,81 @@ import SkyEditor from '../components/SkyEditor.tsx';
 		color: var(--muted);
 		font-size: 0.85rem;
 	}
-	.editor-shell__loading {
+	.editor-shell__loading,
+	.studio__loading {
 		padding: 2rem 1.25rem;
 		color: var(--muted);
+	}
+
+	/* Account bar (signed in) */
+	.studio__account {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 0.5rem 1.25rem;
+		background: #f1eee7;
+		border-bottom: 1px solid #e7e3da;
+		font-size: 0.9rem;
+		flex-wrap: wrap;
+	}
+	.studio__signout {
+		border: 1px solid #d6d0c4;
+		background: #fff;
+		border-radius: 6px;
+		padding: 0.3rem 0.7rem;
+		cursor: pointer;
+		font: inherit;
+	}
+
+	/* Login (signed out) */
+	.studio__login {
+		max-width: 30rem;
+		margin: 0 auto;
+		padding: 4rem 1.5rem;
+	}
+	.studio__error,
+	.login__error {
+		color: #b3261e;
+		font-size: 0.9rem;
+	}
+	.login__title {
+		font-size: 1.6rem;
+		margin: 0 0 0.5rem;
+	}
+	.login__lede {
+		color: var(--muted);
+		margin: 0 0 1.5rem;
+	}
+	.login__label {
+		display: block;
+		font-size: 0.85rem;
+		font-weight: 600;
+		margin-bottom: 0.35rem;
+	}
+	.login__input {
+		width: 100%;
+		box-sizing: border-box;
+		padding: 0.6rem 0.7rem;
+		border: 1px solid #d6d0c4;
+		border-radius: 8px;
+		font: inherit;
+		margin-bottom: 0.85rem;
+	}
+	.login__submit {
+		width: 100%;
+		padding: 0.65rem 1rem;
+		border: 0;
+		border-radius: 8px;
+		background: var(--sky);
+		color: #fff;
+		font: inherit;
+		font-weight: 600;
+		cursor: pointer;
+	}
+	.login__note {
+		color: var(--muted);
+		font-size: 0.8rem;
+		margin-top: 1rem;
 	}
 </style>

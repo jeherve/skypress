@@ -33,6 +33,10 @@ Read the relevant `docs/decisions/*` and `docs/specs/*` before working in an are
    one after content exists is a breaking change. (Decision 0002)
 6. **Untrusted content:** stored block trees come from arbitrary PDSes. The reader must
    **sanitise** HTML before injecting it (tracked for SP4).
+7. **OAuth is a browser public client** (`@atproto/oauth-client-browser`, Decision 0004).
+   In **dev you must serve on `http://127.0.0.1:<port>`, not `localhost`** (atproto
+   loopback requirement), and the loopback `client_id` must be path-less — see
+   `src/lib/auth/oauth.ts`. Auth + editor live in the `Studio` client-only island.
 
 ## Product guardrails (from the brief)
 

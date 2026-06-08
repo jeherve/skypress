@@ -1,0 +1,58 @@
+/**
+ * Pure, dependency-free OAuth configuration helpers (Decision 0004).
+ *
+ * Kept free of `@atproto/*` imports so it's unit-testable in Node and importable
+ * from anywhere. The browser-only client construction lives in `oauth.ts`.
+ */
+
+/** Scope for SP1 — establishes a session. Granular write scopes are added in SP2. */
+export const OAUTH_SCOPE = 'atproto transition:generic';
+
+/** Handle resolver service (a `com.atproto.identity.resolveHandle` XRPC endpoint). */
+export const HANDLE_RESOLVER = 'https://bsky.social';
+
+const LOOPBACK_HOSTS = new Set( [ 'localhost', '127.0.0.1', '[::1]', '::1' ] );
+
+/**
+ * Loopback hosts use atproto's development client (auto-generated metadata);
+ * everything else uses a hosted `client-metadata.json`.
+ */
+export function getClientMode( hostname: string ): 'loopback' | 'hosted' {
+	return LOOPBACK_HOSTS.has( hostname ) ? 'loopback' : 'hosted';
+}
+
+/** The hosted client metadata URL — the `client_id` for production. */
+export function clientMetadataUrl( origin: string ): string {
+	return `${ origin.replace( /\/$/, '' ) }/client-metadata.json`;
+}
+
+/** Normalise a handle: trim, drop a leading `@`, lowercase. */
+export function normalizeHandle( input: string ): string {
+	return input.trim().replace( /^@/, '' ).toLowerCase();
+}
+
+const HANDLE_RE = /^([a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
+const DID_RE = /^did:[a-z]+:[a-zA-Z0-9._:%-]+$/;
+
+/**
+ * Accept the three things `signIn()` can resolve from: a handle (`alice.bsky.social`),
+ * a DID (`did:plc:…`), or a PDS/entryway URL (`https://…`). Rejects empty input and
+ * bare words with no domain.
+ */
+export function isValidAccountInput( input: string ): boolean {
+	const value = input.trim();
+	if ( ! value ) {
+		return false;
+	}
+	if ( DID_RE.test( value ) ) {
+		return true;
+	}
+	if ( /^https?:\/\//.test( value ) ) {
+		try {
+			return Boolean( new URL( value ).hostname );
+		} catch {
+			return false;
+		}
+	}
+	return HANDLE_RE.test( normalizeHandle( value ) );
+}

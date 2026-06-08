@@ -10,25 +10,31 @@ import { ALLOWED_BLOCKS } from '../lib/blocks/allowlist';
 
 export const SPIKE_BLOCKS_KEY = 'skypress:spike:blocks';
 
+interface SkyEditorProps {
+	/** Receives the live block tree on every change (for the publish flow, SP2). */
+	onChange?: ( blocks: BlockInstance[] ) => void;
+}
+
 /**
- * SP0 spike island: a standalone Gutenberg editor restricted to the curated
- * SkyPress block set. `onSaveBlocks` fires on every change with the live block
- * tree (the structured array — not HTML); the spike persists it to localStorage
- * to prove the canonical content path. PDS persistence arrives in SP2.
+ * Standalone Gutenberg editor restricted to the curated SkyPress block set.
+ * `onSaveBlocks` fires on every change with the live block tree (the structured
+ * array — not HTML); we persist a local draft and forward it via `onChange` so the
+ * Studio can publish it (SP2).
  *
  * Rendered with `client:only="react"` so its (heavy) bundle never reaches
  * reading pages (Decision 0001).
  */
-export default function SkyEditor() {
+export default function SkyEditor( { onChange }: SkyEditorProps ) {
 	const [ status, setStatus ] = useState< string >( 'Start writing…' );
 
-	const onSaveBlocks = useCallback( ( blocks: BlockInstance[] ) => {
-		window.localStorage.setItem(
-			SPIKE_BLOCKS_KEY,
-			JSON.stringify( blocks )
-		);
-		setStatus( `Captured ${ blocks.length } top-level block(s) → localStorage` );
-	}, [] );
+	const onSaveBlocks = useCallback(
+		( blocks: BlockInstance[] ) => {
+			window.localStorage.setItem( SPIKE_BLOCKS_KEY, JSON.stringify( blocks ) );
+			setStatus( `Draft saved · ${ blocks.length } block(s)` );
+			onChange?.( blocks );
+		},
+		[ onChange ]
+	);
 
 	const settings = {
 		iso: {

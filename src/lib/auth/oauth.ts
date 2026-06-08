@@ -2,7 +2,7 @@ import {
 	BrowserOAuthClient,
 	atprotoLoopbackClientMetadata,
 } from '@atproto/oauth-client-browser';
-import { getClientMode, clientMetadataUrl, HANDLE_RESOLVER } from './config';
+import { getClientMode, clientMetadataUrl, HANDLE_RESOLVER, OAUTH_SCOPE } from './config';
 
 /**
  * Create the browser OAuth client (Decision 0004). BROWSER-ONLY — reads
@@ -19,9 +19,11 @@ import { getClientMode, clientMetadataUrl, HANDLE_RESOLVER } from './config';
 export async function createOAuthClient(): Promise< BrowserOAuthClient > {
 	if ( getClientMode( window.location.hostname ) === 'loopback' ) {
 		const redirectUri = `${ window.location.origin }${ window.location.pathname }`;
-		const clientId = `http://localhost?redirect_uri=${ encodeURIComponent(
-			redirectUri
-		) }`;
+		// Request the write scope in dev too (the default loopback scope is read-only
+		// `atproto`), so createRecord works without a hosted metadata file (Decision 0005).
+		const clientId =
+			`http://localhost?redirect_uri=${ encodeURIComponent( redirectUri ) }` +
+			`&scope=${ encodeURIComponent( OAUTH_SCOPE ) }`;
 		return new BrowserOAuthClient( {
 			clientMetadata: atprotoLoopbackClientMetadata( clientId ),
 			handleResolver: HANDLE_RESOLVER,

@@ -59,8 +59,8 @@ docs/
 |---|---|---|
 | SP0 | Foundations + editor spike | ✅ Complete |
 | SP1 | atproto OAuth, session, the `Agent` | ✅ Complete |
-| SP2 | Lexicon (`blog.skypress.*`) + two-record publish | Next |
-| SP3 | Image/blob pipeline (`mediaUpload` → `uploadBlob`) | |
+| SP2 | Lexicon (`blog.skypress.*`) + two-record publish | ✅ Complete |
+| SP3 | Image/blob pipeline (`mediaUpload` → `uploadBlob`) | Next |
 | SP4 | Public renderer (`/<handle>/<slug>`, link tags, edge SSR, sanitisation) | |
 | SP5 | Edit flow (the "puppy problem") | |
 | SP6 | Brand identity | |

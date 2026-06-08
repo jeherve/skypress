@@ -1,0 +1,23 @@
+{
+  "lexicon": 1,
+  "id": "blog.skypress.content.gutenberg",
+  "defs": {
+    "main": {
+      "type": "object",
+      "description": "A WordPress Gutenberg block tree — the canonical content of a SkyPress document. Placed inside the open `content` union of a `site.standard.document`. Readers that don't understand this format should fall back to the document's `textContent`.",
+      "required": ["version", "blocks"],
+      "properties": {
+        "version": {
+          "type": "integer",
+          "description": "Serialization version of the block tree. Bump only for breaking changes; non-breaking changes are additive. Currently 1.",
+          "minimum": 1
+        },
+        "blocks": {
+          "type": "array",
+          "description": "The Gutenberg block tree exactly as produced by the editor's `onSaveBlocks` (NOT rendered HTML). Each item is a block node: `{ name: string, attributes: object, innerBlocks: block[] }`, where `name` is the Gutenberg block name (e.g. `core/paragraph`). Items are typed `unknown` because block attributes are open-ended per block type.",
+          "items": { "type": "unknown" }
+        }
+      }
+    }
+  }
+}

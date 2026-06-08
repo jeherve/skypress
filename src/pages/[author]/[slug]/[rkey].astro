@@ -1,12 +1,13 @@
 ---
-import Base from '../../layouts/Base.astro';
-import Logo from '../../components/Logo.astro';
-import { resolveAuthor } from '../../lib/reader/identity';
-import { getRecord } from '../../lib/reader/records';
-import { resolveBlobImageUrls } from '../../lib/media/blob';
-import { renderBlocks, blocksToText, type BlockNode } from '../../lib/blocks/render';
-import { sanitizeArticleHtml } from '../../lib/reader/sanitize';
-import { canonicalArticleUrl } from '../../lib/publish/records';
+import Base from '../../../layouts/Base.astro';
+import Logo from '../../../components/Logo.astro';
+import { resolveAuthor } from '../../../lib/reader/identity';
+import { getRecord } from '../../../lib/reader/records';
+import { resolveReaderPublication } from '../../../lib/reader/publications';
+import { resolveBlobImageUrls } from '../../../lib/media/blob';
+import { renderBlocks, blocksToText, type BlockNode } from '../../../lib/blocks/render';
+import { sanitizeArticleHtml } from '../../../lib/reader/sanitize';
+import { canonicalArticleUrl } from '../../../lib/publish/records';
 
 // Frontend block styles only — no editor chrome, no JS.
 import '@wordpress/block-library/build-style/common.css';
@@ -26,9 +27,9 @@ interface SkyDocument {
 	content?: { blocks?: BlockNode[] };
 }
 
-const { author, rkey } = Astro.params;
+const { author, slug, rkey } = Astro.params;
 
-if ( ! author || ! author.startsWith( '@' ) || ! rkey ) {
+if ( ! author || ! author.startsWith( '@' ) || ! slug || ! rkey ) {
 	return new Response( 'Not found', { status: 404 } );
 }
 const handle = author.slice( 1 );
@@ -39,9 +40,20 @@ if ( ! resolved ) {
 }
 const { did, pdsUrl } = resolved;
 
+// Resolve the publication by slug (Decision 0010), then the document by rkey.
+const publication = await resolveReaderPublication( pdsUrl, did, slug );
+if ( ! publication ) {
+	return new Response( 'Publication not found', { status: 404 } );
+}
+
 const record = await getRecord< SkyDocument >( pdsUrl, did, 'site.standard.document', rkey );
 if ( ! record?.value ) {
 	return new Response( 'Article not found', { status: 404 } );
+}
+
+// A document only renders under the publication it belongs to (Decision 0010, §3 step 3).
+if ( record.value.site !== publication.uri ) {
+	return new Response( 'Article not found in this publication', { status: 404 } );
 }
 
 const doc = record.value;
@@ -51,9 +63,9 @@ const textContent = doc.textContent || blocksToText( blocks );
 
 const title = doc.title ?? 'Untitled';
 const description = doc.description || textContent.slice( 0, 200 );
-const canonical = canonicalArticleUrl( handle, rkey );
+const canonical = canonicalArticleUrl( handle, slug, rkey );
 const docUri = `at://${ did }/site.standard.document/${ rkey }`;
-const pubUri = doc.site;
+const pubUrl = `/${ author }/${ slug }`;
 
 const words = textContent.split( /\s+/ ).filter( Boolean ).length;
 const readingMinutes = Math.max( 1, Math.round( words / 200 ) );
@@ -61,13 +73,11 @@ const publishedLabel = doc.publishedAt ? doc.publishedAt.slice( 0, 10 ) : null;
 const updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
 ---
 
-<Base title={`${ title } — SkyPress`} description={description}>
+<Base title={`${ title } — ${ publication.name }`} description={description}>
 	<Fragment slot="head">
 		{/* standard.site indexing tags (brief §3) — Bluesky cards + AppView pickup */}
 		<link rel="site.standard.document" href={docUri} />
-		{pubUri?.startsWith( 'at://' ) && (
-			<link rel="site.standard.publication" href={pubUri} />
-		)}
+		<link rel="site.standard.publication" href={publication.uri} />
 		<link rel="canonical" href={canonical} />
 		<meta property="og:type" content="article" />
 		<meta property="og:title" content={title} />
@@ -80,7 +90,7 @@ const updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
 	</header>
 	<main class="reader">
 		<p class="reader__meta eyebrow">
-			<a class="reader__author" href={`/@${ handle }`}>@{handle}</a>
+			<a class="reader__author" href={pubUrl}>{publication.name}</a>
 			{publishedLabel && <> · {publishedLabel}</>}
 			{updatedLabel && <> · updated {updatedLabel}</>}
 			· {readingMinutes} min read
@@ -88,7 +98,7 @@ const updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
 		<h1 class="reader__title">{title}</h1>
 		<article class="reader__article" set:html={html} />
 		<footer class="reader__foot">
-			<a class="reader__author" href={`/@${ handle }`}>More from @{handle}</a>
+			<a class="reader__author" href={pubUrl}>More from {publication.name}</a>
 		</footer>
 	</main>
 </Base>

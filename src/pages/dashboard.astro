@@ -1,0 +1,366 @@
+---
+import Base from '../layouts/Base.astro';
+import Logo from '../components/Logo.astro';
+import Dashboard from '../components/Dashboard.tsx';
+---
+
+<Base title="Dashboard — SkyPress">
+	<main class="dash-shell">
+		<header class="dash-shell__bar">
+			<a class="dash-shell__home" href="/"><Logo size={24} /></a>
+			<span class="dash-shell__hint eyebrow">Publications</span>
+		</header>
+		<!-- client:only — auth runs only in the browser; its bundle never reaches
+		     reading pages (Decisions 0003 & 0004). No `@wordpress/*` here. -->
+		<Dashboard client:only="react">
+			<p slot="fallback" class="dash__loading">Loading…</p>
+		</Dashboard>
+	</main>
+</Base>
+
+<style>
+	.dash-shell__bar {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 0.75rem 1.25rem;
+		border-bottom: 1px solid var(--line);
+		flex-wrap: wrap;
+	}
+	.dash-shell__home {
+		display: inline-flex;
+		font-weight: 700;
+		color: var(--ink);
+		text-decoration: none;
+	}
+	.dash-shell__hint {
+		font-size: 0.85rem;
+		line-height: 1;
+	}
+</style>
+
+<!-- Dashboard is a `client:only` React island, so Astro's scoped styles never reach
+     its DOM. These rules must be global. -->
+<style is:global>
+	.dash__loading,
+	.dash__empty {
+		padding: 1.5rem;
+		color: var(--muted);
+	}
+	.dash__login {
+		max-width: 30rem;
+		margin: 0 auto;
+		padding: 4rem 1.5rem;
+	}
+	.dash__error {
+		color: var(--ember);
+		font-size: 0.9rem;
+	}
+	.dash {
+		max-width: 48rem;
+		margin: 0 auto;
+		padding: 0 1.25rem 5rem;
+	}
+	.dash__bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 0.75rem 0;
+		flex-wrap: wrap;
+	}
+	.dash__crumb {
+		border: 0;
+		background: none;
+		font: inherit;
+		font-weight: 600;
+		color: var(--sun);
+		cursor: pointer;
+		padding: 0;
+	}
+	.dash__crumb:disabled {
+		color: var(--muted);
+		cursor: default;
+	}
+	.dash__bar-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+	.dash__link {
+		color: var(--sun);
+		text-decoration: none;
+		font-size: 0.9rem;
+	}
+	.dash__link:hover {
+		text-decoration: underline;
+	}
+	.dash__signout {
+		border: 1px solid var(--line-strong);
+		background: var(--paper-raised);
+		border-radius: var(--radius-sm);
+		padding: 0.3rem 0.7rem;
+		cursor: pointer;
+		font: inherit;
+		font-size: 0.85rem;
+	}
+	.dash__section-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+		margin: 1rem 0 1.5rem;
+	}
+	.dash__h1 {
+		font-size: clamp(1.6rem, 4vw, 2.2rem);
+		margin: 0;
+	}
+	.dash__new {
+		border: 0;
+		border-radius: 8px;
+		background: var(--sun);
+		color: #fff;
+		font: inherit;
+		font-weight: 600;
+		padding: 0.5rem 1rem;
+		cursor: pointer;
+	}
+	.dash__pubs,
+	.dash__postlist {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.dash__pub {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 0.9rem 0;
+		border-top: 1px solid var(--line);
+	}
+	.dash__publogo {
+		width: 48px;
+		height: 48px;
+		border-radius: 10px;
+		object-fit: cover;
+		flex: none;
+		background: var(--paper-raised);
+	}
+	.dash__publogo--fallback {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-family: var(--font-display);
+		font-weight: 700;
+		color: var(--sun);
+		background: var(--sun-tint);
+	}
+	.dash__pubtext {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-width: 0;
+	}
+	.dash__pubname {
+		font-weight: 600;
+		font-size: 1.1rem;
+	}
+	.dash__pubslug {
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: 0.78rem;
+	}
+	.dash__pubactions {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+	}
+	.dash__pubactions button,
+	.dash__post button {
+		border: 1px solid var(--line-strong);
+		background: var(--paper-raised);
+		border-radius: 6px;
+		padding: 0.3rem 0.7rem;
+		font: inherit;
+		font-size: 0.85rem;
+		cursor: pointer;
+	}
+	.dash__tabs {
+		display: flex;
+		gap: 0.5rem;
+		border-bottom: 1px solid var(--line);
+		margin-bottom: 1.5rem;
+	}
+	.dash__tabs button {
+		border: 0;
+		background: none;
+		font: inherit;
+		padding: 0.5rem 0.25rem;
+		margin-bottom: -1px;
+		border-bottom: 2px solid transparent;
+		color: var(--muted);
+		cursor: pointer;
+	}
+	.dash__tabs button.is-active {
+		color: var(--ink);
+		border-bottom-color: var(--sun);
+		font-weight: 600;
+	}
+	.dash__post {
+		display: flex;
+		align-items: center;
+		gap: 0.85rem;
+		padding: 0.65rem 0;
+		border-top: 1px solid var(--line);
+	}
+	.dash__postlink {
+		flex: 1;
+		min-width: 0;
+		color: var(--ink);
+		text-decoration: none;
+		font-weight: 540;
+	}
+	.dash__postlink:hover {
+		color: var(--sun);
+	}
+	.dash__postdate {
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+	}
+	.dash__danger {
+		border: 1px solid var(--ember);
+		border-radius: var(--radius);
+		padding: 1.25rem;
+		background: color-mix(in srgb, var(--ember) 6%, transparent);
+	}
+	.dash__danger h2 {
+		margin: 0 0 0.5rem;
+		font-size: 1.2rem;
+	}
+	.dash__danger p {
+		color: var(--ink-soft);
+		margin: 0 0 1rem;
+	}
+	.dash__delete {
+		border: 0;
+		border-radius: 8px;
+		background: var(--ember);
+		color: #fff;
+		font: inherit;
+		font-weight: 600;
+		padding: 0.55rem 1rem;
+		cursor: pointer;
+	}
+	.dash__delete:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	/* Publication form */
+	.pubform {
+		max-width: 34rem;
+	}
+	.pubform__title {
+		font-size: 1.4rem;
+		margin: 0 0 1.25rem;
+	}
+	.pubform__logo-row {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		margin-bottom: 1.25rem;
+	}
+	.pubform__logo {
+		width: 72px;
+		height: 72px;
+		border-radius: 16px;
+		object-fit: cover;
+		flex: none;
+		background: var(--paper-raised);
+		border: 1px solid var(--line);
+	}
+	.pubform__logo--fallback {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-family: var(--font-display);
+		font-size: 1.8rem;
+		font-weight: 700;
+		color: var(--sun);
+		background: var(--sun-tint);
+	}
+	.pubform__logo-label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		font-size: 0.85rem;
+		font-weight: 600;
+	}
+	.pubform__logo-label small {
+		font-weight: 400;
+		color: var(--muted);
+	}
+	.pubform__field {
+		display: block;
+		margin-bottom: 1rem;
+	}
+	.pubform__field span {
+		display: block;
+		font-size: 0.85rem;
+		font-weight: 600;
+		margin-bottom: 0.35rem;
+	}
+	.pubform__field input,
+	.pubform__field textarea {
+		width: 100%;
+		box-sizing: border-box;
+		padding: 0.6rem 0.7rem;
+		border: 1px solid var(--line-strong);
+		border-radius: 8px;
+		font: inherit;
+	}
+	.pubform__field textarea {
+		resize: vertical;
+	}
+	.pubform__note {
+		font-size: 0.82rem;
+		color: var(--muted);
+	}
+	.pubform__note code,
+	.dash__danger code {
+		font-family: var(--font-mono);
+	}
+	.pubform__error {
+		color: var(--ember);
+		font-size: 0.9rem;
+	}
+	.pubform__actions {
+		display: flex;
+		gap: 0.75rem;
+		margin-top: 1.25rem;
+	}
+	.pubform__save {
+		border: 0;
+		border-radius: 8px;
+		background: var(--sun);
+		color: #fff;
+		font: inherit;
+		font-weight: 600;
+		padding: 0.55rem 1.1rem;
+		cursor: pointer;
+	}
+	.pubform__save:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+	.pubform__cancel {
+		border: 1px solid var(--line-strong);
+		background: var(--paper-raised);
+		border-radius: 8px;
+		padding: 0.55rem 1rem;
+		font: inherit;
+		cursor: pointer;
+	}
+</style>

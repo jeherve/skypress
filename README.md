@@ -121,15 +121,16 @@ rationale for each non-obvious choice is in [`docs/decisions/`](./docs/decisions
 
 ```
 src/
-  pages/        index · editor · client-metadata.json.ts (OAuth client doc, worker route)
-                [author]/index.astro + [author]/[rkey].astro  (read-through reader)
-  components/   Studio · SkyEditor · PublishPanel · MyArticles · Logo
+  pages/        index · editor · dashboard · client-metadata.json.ts (OAuth client doc, worker route)
+                [author]/index.astro (author index) · [author]/[slug]/index.astro (publication)
+                · [author]/[slug]/[rkey].astro (read-through document reader)
+  components/   Studio · SkyEditor · PublishPanel · MyArticles · Dashboard · PublicationForm · Logo
   lib/
     blocks/     render.ts (dependency-free reader) · serialize.ts (@wordpress oracle) · allowlist.ts
     auth/       oauth.ts · AuthProvider.tsx · config.ts · LoginForm.tsx
-    publish/    records.ts (pure builders) · publisher.ts (Agent orchestration)
-    media/      mediaUpload.ts · blob.ts · pds.ts
-    reader/     identity.ts · records.ts · sanitize.ts
+    publish/    records.ts (pure builders) · publisher.ts (Agent orchestration) · publications.ts (publication CRUD)
+    media/      mediaUpload.ts · uploadImage.ts (logo) · blob.ts · pds.ts
+    reader/     identity.ts · records.ts · publications.ts · profile.ts · sanitize.ts
     net/        safe-fetch.ts (SSRF guard for the reader's outbound fetches)
 lexicons/       blog.skypress.content.gutenberg.json + README
 docs/           decisions/ (why) · specs/ (how) · brand/

@@ -5,6 +5,7 @@
  * Orchestration (createRecord via the Agent) lives in `publisher.ts`.
  */
 import type { BlockNode } from '../blocks/render';
+import type { BlobRefJson } from '../media/blob';
 
 /**
  * Public origin for the stored publication + article URLs (and the Bluesky post link).
@@ -23,25 +24,93 @@ export interface StrongRef {
 }
 
 /**
- * The writer's SkyPress homepage — the publication's `url`. Handles are prefixed
- * with `@` (e.g. `<site>/@alice.bsky.social`).
+ * A publication's `url` — handle-namespaced under SkyPress (Decision 0010):
+ * `<site>/@<handle>/<slug>`. The slug is frozen at creation; see `uniquePublicationSlug`.
  */
-export function publicationHomeUrl( handle: string ): string {
-	return `${ SITE_BASE }/@${ handle }`;
+export function publicationHomeUrl( handle: string, slug: string ): string {
+	return `${ SITE_BASE }/@${ handle }/${ slug }`;
 }
 
 /**
  * The document `path` (leading slash, per the lexicon). SkyPress addresses documents
  * by their record key (rkey), not a slug — stable across title edits and a direct
- * `getRecord` lookup for the renderer.
+ * `getRecord` lookup for the renderer. The path stays publication-relative.
  */
 export function articlePath( rkey: string ): string {
 	return `/${ rkey }`;
 }
 
-/** Canonical article URL = publication url + path = `<base>/@<handle>/<rkey>`. */
-export function canonicalArticleUrl( handle: string, rkey: string ): string {
-	return `${ publicationHomeUrl( handle ) }${ articlePath( rkey ) }`;
+/** Canonical article URL = publication url + path = `<base>/@<handle>/<slug>/<rkey>`. */
+export function canonicalArticleUrl( handle: string, slug: string, rkey: string ): string {
+	return `${ publicationHomeUrl( handle, slug ) }${ articlePath( rkey ) }`;
+}
+
+/**
+ * The trailing slug segment of a publication `url` (the resolution key, Decision 0010),
+ * or null for a slugless/legacy/malformed url. Matching by this segment (rather than the
+ * full url) keeps resolution robust if the writer's handle later changes.
+ */
+export function publicationSlugFromUrl( url: string ): string | null {
+	try {
+		const segments = new URL( url ).pathname.split( '/' ).filter( Boolean );
+		return segments.length >= 2 ? decodeURIComponent( segments[ segments.length - 1 ] ) : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Whether a `site.standard.publication` url belongs to SkyPress (its origin === `SITE_BASE`).
+ * SkyPress lists/edits/deletes/renders only its OWN publications — a writer may hold records
+ * from other tools sharing the lexicon (Leaflet, …) and we must not touch those (Decision 0010).
+ */
+export function isSkyPressPublicationUrl( url: string ): boolean {
+	try {
+		return new URL( url ).origin === new URL( SITE_BASE ).origin;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Derive a URL-safe slug from a publication name (Decision 0010): NFKD-normalise (so accents
+ * fold to their base letter) → lowercase → trim → spaces to `-` → strip to `[a-z0-9-]` →
+ * collapse and trim dashes. Returns '' for empty / emoji-only names; the caller then applies
+ * the `pub-{rkey}` fallback.
+ */
+export function slugify( name: string ): string {
+	return name
+		.normalize( 'NFKD' )
+		.replace( /[\u0300-\u036f]/g, '' )
+		.toLowerCase()
+		.trim()
+		.replace( /\s+/g, '-' )
+		.replace( /[^a-z0-9-]/g, '' )
+		.replace( /-+/g, '-' )
+		.replace( /^-+|-+$/g, '' );
+}
+
+/**
+ * The frozen slug for a new publication: `slugify(name)`, de-duplicated against the writer's
+ * existing SkyPress slugs by appending `-2`, `-3`, … (uniqueness is per-repo only — no global
+ * registry, Decision 0010). Returns '' for an unslugifiable name so the caller can fall back
+ * to `pub-{rkey}`.
+ */
+export function uniquePublicationSlug( name: string, existingSlugs: Iterable< string > ): string {
+	const base = slugify( name );
+	if ( ! base ) {
+		return '';
+	}
+	const taken = new Set( existingSlugs );
+	if ( ! taken.has( base ) ) {
+		return base;
+	}
+	for ( let n = 2; ; n++ ) {
+		const candidate = `${ base }-${ n }`;
+		if ( ! taken.has( candidate ) ) {
+			return candidate;
+		}
+	}
 }
 
 /**
@@ -77,18 +146,26 @@ export interface PublicationRecord {
 	url: string;
 	name: string;
 	description?: string;
+	/** The publication logo (≤1MB, image/*) — the lexicon's `icon` blob (Decision 0010). */
+	icon?: BlobRefJson;
 }
 
 export function buildPublicationRecord( input: {
 	handle: string;
+	/** Frozen at creation; preserved verbatim on edit so the url never breaks. */
+	slug: string;
 	name?: string;
 	description?: string;
+	icon?: BlobRefJson;
 } ): PublicationRecord {
+	const trimmedName = input.name?.trim();
+	const description = input.description?.trim();
 	return {
 		$type: 'site.standard.publication',
-		url: publicationHomeUrl( input.handle ),
-		name: input.name ?? input.handle,
-		...( input.description ? { description: input.description } : {} ),
+		url: publicationHomeUrl( input.handle, input.slug ),
+		name: trimmedName || input.handle,
+		...( description ? { description } : {} ),
+		...( input.icon ? { icon: input.icon } : {} ),
 	};
 }
 

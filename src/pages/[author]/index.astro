@@ -2,22 +2,11 @@
 import Base from '../../layouts/Base.astro';
 import Logo from '../../components/Logo.astro';
 import { resolveAuthor } from '../../lib/reader/identity';
-import { listRecords } from '../../lib/reader/records';
-import { publicationHomeUrl } from '../../lib/publish/records';
+import { listReaderPublications } from '../../lib/reader/publications';
+import { fetchActorProfile } from '../../lib/reader/profile';
+import { buildGetBlobUrl } from '../../lib/media/blob';
 
 export const prerender = false;
-
-interface PublicationValue {
-	url?: string;
-	name?: string;
-	description?: string;
-}
-interface DocumentValue {
-	title?: string;
-	description?: string;
-	site?: string;
-	publishedAt?: string;
-}
 
 const { author } = Astro.params;
 if ( ! author || ! author.startsWith( '@' ) ) {
@@ -31,63 +20,64 @@ if ( ! resolved ) {
 }
 const { did, pdsUrl } = resolved;
 
-const wantUrl = publicationHomeUrl( handle );
-const publications = await listRecords< PublicationValue >(
-	pdsUrl,
-	did,
-	'site.standard.publication'
-);
-const publication = publications.find( ( record ) => record.value.url === wantUrl );
+const [ profile, publications ] = await Promise.all( [
+	fetchActorProfile( pdsUrl, did ),
+	listReaderPublications( pdsUrl, did ),
+] );
 
-const allDocs = await listRecords< DocumentValue >(
-	pdsUrl,
-	did,
-	'site.standard.document',
-	100
-);
-const docs = publication
-	? allDocs.filter( ( record ) => record.value.site === publication.uri )
-	: [];
-
-const pubName = publication?.value.name ?? `@${ handle }`;
-const pubUri = publication?.uri;
-
-const articles = docs.map( ( record ) => ( {
-	rkey: record.uri.split( '/' ).pop() as string,
-	title: record.value.title ?? 'Untitled',
-	description: record.value.description,
-	publishedLabel: record.value.publishedAt?.slice( 0, 10 ) ?? null,
-} ) );
+const authorName = profile.displayName ?? `@${ handle }`;
+const initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
 ---
 
-<Base title={`${ pubName } — SkyPress`} description={publication?.value.description}>
-	<Fragment slot="head">
-		{pubUri && <link rel="site.standard.publication" href={pubUri} />}
-	</Fragment>
-
+<Base title={`${ authorName } — SkyPress`} description={profile.description ?? undefined}>
 	<header class="masthead">
 		<a href="/"><Logo /></a>
 	</header>
-	<main class="home">
-		<p class="home__handle eyebrow">@{handle}</p>
-		<h1 class="home__title">{pubName}</h1>
-		{publication?.value.description && (
-			<p class="home__lede">{publication.value.description}</p>
-		)}
 
-		{articles.length === 0 ? (
-			<p class="home__empty">No SkyPress articles published yet.</p>
+	<main class="author">
+		<div class="author__hero">
+			{profile.banner && (
+				<div class="author__cover" style={`background-image:url("${ profile.banner }")`} aria-hidden="true"></div>
+			)}
+			<div class={`author__identity${ profile.banner ? ' author__identity--overlap' : '' }`}>
+				{profile.avatar ? (
+					<img class="author__avatar" src={profile.avatar} alt="" width="96" height="96" />
+				) : (
+					<span class="author__avatar author__avatar--fallback" aria-hidden="true">{initial}</span>
+				)}
+				<h1 class="author__name">{authorName}</h1>
+				<p class="author__handle">@{handle}</p>
+				{profile.description && <p class="author__bio">{profile.description}</p>}
+			</div>
+		</div>
+
+		<h2 class="author__heading">Publications</h2>
+		{publications.length === 0 ? (
+			<p class="author__empty">No SkyPress publications yet.</p>
 		) : (
-			<ul class="home__list">
-				{articles.map( ( article ) => (
-					<li class="home__item">
-						<a href={`/@${ handle }/${ article.rkey }`}>{article.title}</a>
-						{article.publishedLabel && (
-							<span class="home__date">{article.publishedLabel}</span>
-						)}
-						{article.description && <p class="home__desc">{article.description}</p>}
-					</li>
-				) )}
+			<ul class="author__list">
+				{publications.map( ( pub ) => {
+					const logoUrl = pub.icon
+						? buildGetBlobUrl( pdsUrl, did, pub.icon.ref.$link )
+						: null;
+					return (
+						<li class="author__item">
+							<a class="author__pub" href={`/@${ handle }/${ pub.slug }`}>
+								{logoUrl ? (
+									<img class="author__publogo" src={logoUrl} alt="" width="52" height="52" />
+								) : (
+									<span class="author__publogo author__publogo--fallback" aria-hidden="true">
+										{pub.name.charAt( 0 ).toUpperCase()}
+									</span>
+								)}
+								<span class="author__pubtext">
+									<span class="author__pubname">{pub.name}</span>
+									{pub.description && <span class="author__pubdesc">{pub.description}</span>}
+								</span>
+							</a>
+						</li>
+					);
+				} )}
 			</ul>
 		)}
 	</main>
@@ -101,53 +91,121 @@ const articles = docs.map( ( record ) => ( {
 	.masthead a {
 		text-decoration: none;
 	}
-	.home {
-		max-width: 42rem;
+	.author {
+		max-width: 44rem;
 		margin: 0 auto;
-		padding: clamp(2.5rem, 6vw, 4.5rem) 1.5rem 6rem;
+		padding: 0 1.5rem 6rem;
 	}
-	.home__handle {
-		margin: 0;
+	.author__hero {
+		margin: 0 0 2rem;
 	}
-	.home__title {
-		font-size: clamp(2.2rem, 6vw, 3.6rem);
-		margin: 0.4rem 0 1rem;
+	.author__cover {
+		height: clamp(8rem, 26vw, 14rem);
+		margin: 0 calc(-1 * clamp(1.5rem, 5vw, 4rem));
+		background-size: cover;
+		background-position: center;
+		border-bottom: 1px solid var(--line);
 	}
-	.home__lede {
-		color: var(--ink-soft);
-		font-size: 1.2rem;
-		max-width: 42ch;
+	.author__identity {
+		text-align: center;
+		padding-top: 2.5rem;
 	}
-	.home__empty {
-		color: var(--muted);
+	.author__identity--overlap {
+		margin-top: -3.5rem;
 	}
-	.home__list {
-		list-style: none;
-		padding: 0;
-		margin: 2.5rem 0 0;
+	.author__avatar {
+		width: 96px;
+		height: 96px;
+		border-radius: 50%;
+		object-fit: cover;
+		border: 3px solid var(--paper);
+		box-shadow: var(--shadow);
+		background: var(--paper-raised);
 	}
-	.home__item {
-		padding: 1.35rem 0;
-		border-top: 1px solid var(--line);
-	}
-	.home__item a {
+	.author__avatar--fallback {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		font-family: var(--font-display);
-		font-size: 1.4rem;
-		font-weight: 560;
-		color: var(--ink);
-		text-decoration: none;
-	}
-	.home__item a:hover {
+		font-size: 2.6rem;
+		font-weight: 700;
 		color: var(--sun);
+		background: var(--sun-tint);
 	}
-	.home__date {
+	.author__name {
+		font-size: clamp(2rem, 5.5vw, 3rem);
+		margin: 0.75rem 0 0.1rem;
+	}
+	.author__handle {
 		color: var(--muted);
 		font-family: var(--font-mono);
-		font-size: 0.72rem;
-		margin-left: 0.75rem;
+		font-size: 0.85rem;
+		margin: 0;
 	}
-	.home__desc {
+	.author__bio {
 		color: var(--ink-soft);
-		margin: 0.4rem 0 0;
+		max-width: 46ch;
+		margin: 1rem auto 0;
+	}
+	.author__heading {
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--muted);
+		margin: 0 0 0.75rem;
+	}
+	.author__empty {
+		color: var(--muted);
+	}
+	.author__list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+	.author__item {
+		border-top: 1px solid var(--line);
+	}
+	.author__pub {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1.1rem 0;
+		text-decoration: none;
+		color: var(--ink);
+	}
+	.author__publogo {
+		width: 52px;
+		height: 52px;
+		border-radius: 12px;
+		object-fit: cover;
+		flex: none;
+		background: var(--paper-raised);
+	}
+	.author__publogo--fallback {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 1.4rem;
+		color: var(--sun);
+		background: var(--sun-tint);
+	}
+	.author__pubtext {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+	.author__pubname {
+		font-family: var(--font-display);
+		font-size: 1.3rem;
+		font-weight: 560;
+	}
+	.author__pub:hover .author__pubname {
+		color: var(--sun);
+	}
+	.author__pubdesc {
+		color: var(--ink-soft);
+		font-size: 0.95rem;
 	}
 </style>

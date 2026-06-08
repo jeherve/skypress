@@ -1,30 +1,29 @@
 import { useEffect, useState } from 'react';
 import type { Agent } from '@atproto/api';
-import { listMyArticles, unpublish, type MyArticle } from '../lib/publish/publisher';
+import { listAllMyArticles, unpublish, type MyArticle } from '../lib/publish/publisher';
 
 interface Props {
 	agent: Agent;
 	did: string;
-	handle: string;
 	/** Bump to re-fetch after a publish/update. */
 	refreshKey: number;
 	onEdit: ( article: MyArticle ) => void;
 }
 
-/** Lists the signed-in writer's SkyPress articles with edit + unpublish actions (SP5). */
-export default function MyArticles( { agent, did, handle, refreshKey, onEdit }: Props ) {
+/** Lists the signed-in writer's SkyPress articles across all their publications (SP5/SP10). */
+export default function MyArticles( { agent, did, refreshKey, onEdit }: Props ) {
 	const [ articles, setArticles ] = useState< MyArticle[] | null >( null );
 	const [ busy, setBusy ] = useState< string | null >( null );
 
 	useEffect( () => {
 		let cancelled = false;
-		listMyArticles( agent, did, handle )
+		listAllMyArticles( agent, did )
 			.then( ( list ) => ! cancelled && setArticles( list ) )
 			.catch( () => ! cancelled && setArticles( [] ) );
 		return () => {
 			cancelled = true;
 		};
-	}, [ agent, did, handle, refreshKey ] );
+	}, [ agent, did, refreshKey ] );
 
 	async function onDelete( article: MyArticle ) {
 		const ok = window.confirm(
@@ -60,6 +59,7 @@ export default function MyArticles( { agent, did, handle, refreshKey, onEdit }: 
 					<li className="myarticles__item" key={ article.rkey }>
 						<span className="myarticles__title">
 							{ article.title }
+							<em className="myarticles__pub"> · { article.siteSlug }</em>
 							{ article.updatedAt && <em className="myarticles__edited"> · edited</em> }
 						</span>
 						<span className="myarticles__actions">

@@ -6,6 +6,7 @@ import {
 	updateDocument,
 	type Identity,
 } from '../lib/publish/publisher';
+import type { Publication } from '../lib/publish/publications';
 import { normalizeBlocks, type StrongRef } from '../lib/publish/records';
 import { attachBlobRefs } from '../lib/media/blob';
 import type { BlobRegistry } from '../lib/media/mediaUpload';
@@ -15,6 +16,8 @@ type Phase = 'idle' | 'confirm' | 'working' | 'done' | 'error';
 export interface EditingTarget {
 	rkey: string;
 	siteUri: string;
+	/** The owning publication's frozen slug (for the article URL on update). */
+	siteSlug: string;
 	publishedAt: string;
 	bskyPostRef?: StrongRef;
 }
@@ -24,6 +27,8 @@ interface Props {
 	identity: Identity;
 	blocks: BlockInstance[];
 	blobRegistry: BlobRegistry;
+	/** The writer's SkyPress publications — the publish target is chosen from these. */
+	publications: Publication[];
 	/** When set, the panel updates an existing article instead of publishing a new one. */
 	editing?: EditingTarget;
 	initialTitle?: string;
@@ -32,28 +37,54 @@ interface Props {
 }
 
 /**
- * Title + publish/update control. Publishing a NEW article creates a public Bluesky
- * post, so it requires an explicit confirmation (brief §10). Editing updates the
- * existing record in place and does NOT create a new post (Decision 0008).
+ * Title + publish/update control. Publishing a NEW article targets a CHOSEN publication
+ * (Decision 0010) and creates a public Bluesky post, so it requires an explicit confirmation
+ * (brief §10). Editing updates the existing record in place, in its own publication, and does
+ * NOT create a new post (Decision 0008).
  */
 export default function PublishPanel( {
 	agent,
 	identity,
 	blocks,
 	blobRegistry,
+	publications,
 	editing,
 	initialTitle,
 	onComplete,
 }: Props ) {
 	const [ title, setTitle ] = useState( initialTitle ?? '' );
+	const [ targetUri, setTargetUri ] = useState(
+		() => editing?.siteUri ?? publications[ 0 ]?.uri ?? ''
+	);
 	const [ phase, setPhase ] = useState< Phase >( 'idle' );
 	const [ resultUrl, setResultUrl ] = useState< string | null >( null );
 	const [ error, setError ] = useState< string | null >( null );
 
 	const isEditing = Boolean( editing );
-	const canSubmit = title.trim().length > 0 && blocks.length > 0;
+	const target = isEditing
+		? { uri: editing!.siteUri, slug: editing!.siteSlug }
+		: publications.find( ( pub ) => pub.uri === targetUri );
+	const editingPubName =
+		isEditing && publications.find( ( pub ) => pub.uri === editing!.siteUri )?.name;
+	const hasTarget = Boolean( target );
+	const canSubmit = title.trim().length > 0 && blocks.length > 0 && hasTarget;
+
+	// New article, but the writer has no publication to publish into yet.
+	if ( ! isEditing && publications.length === 0 ) {
+		return (
+			<section className="publish" aria-label="Publish">
+				<p className="publish__status">
+					You don't have a publication yet.{ ' ' }
+					<a href="/dashboard">Create one in your dashboard</a> to start publishing.
+				</p>
+			</section>
+		);
+	}
 
 	async function run() {
+		if ( ! target ) {
+			return;
+		}
 		setPhase( 'working' );
 		setError( null );
 		try {
@@ -64,6 +95,7 @@ export default function PublishPanel( {
 				const res = await updateDocument( agent, identity, {
 					rkey: editing.rkey,
 					siteUri: editing.siteUri,
+					publicationSlug: editing.siteSlug,
 					publishedAt: editing.publishedAt,
 					bskyPostRef: editing.bskyPostRef,
 					title: title.trim(),
@@ -74,6 +106,8 @@ export default function PublishPanel( {
 				const res = await publish( agent, identity, {
 					title: title.trim(),
 					blocks: prepared,
+					publicationUri: target.uri,
+					publicationSlug: target.slug,
 				} );
 				setResultUrl( res.articleUrl );
 			}
@@ -95,6 +129,28 @@ export default function PublishPanel( {
 				onChange={ ( event ) => setTitle( event.target.value ) }
 				disabled={ phase === 'working' }
 			/>
+
+			{ isEditing ? (
+				<span className="publish__target publish__target--fixed">
+					In <strong>{ editingPubName ?? 'this publication' }</strong>
+				</span>
+			) : (
+				<label className="publish__target">
+					<span className="publish__target-label">Publish to</span>
+					<select
+						className="publish__select"
+						value={ targetUri }
+						onChange={ ( event ) => setTargetUri( event.target.value ) }
+						disabled={ phase === 'working' }
+					>
+						{ publications.map( ( pub ) => (
+							<option key={ pub.uri } value={ pub.uri }>
+								{ pub.name }
+							</option>
+						) ) }
+					</select>
+				</label>
+			) }
 
 			{ ( phase === 'idle' || phase === 'error' || phase === 'done' ) && (
 				<button

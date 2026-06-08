@@ -190,6 +190,24 @@ import Studio from '../components/Studio.tsx';
 		font: inherit;
 		font-size: 1.05rem;
 	}
+	.publish__target {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.85rem;
+		color: var(--muted);
+	}
+	.publish__target--fixed strong {
+		color: var(--ink);
+	}
+	.publish__select {
+		padding: 0.45rem 0.6rem;
+		border: 1px solid var(--line-strong);
+		border-radius: 8px;
+		background: var(--paper-raised);
+		font: inherit;
+		font-size: 0.9rem;
+	}
 	.publish__button {
 		padding: 0.5rem 1rem;
 		border: 0;
@@ -272,10 +290,15 @@ import Studio from '../components/Studio.tsx';
 		gap: 1rem;
 		padding: 0.4rem 0;
 	}
-	.myarticles__edited {
+	.myarticles__edited,
+	.myarticles__pub {
 		color: var(--muted);
 		font-style: normal;
 		font-size: 0.85rem;
+	}
+	.myarticles__pub {
+		font-family: var(--font-mono);
+		font-size: 0.78rem;
 	}
 	.myarticles__actions {
 		display: flex;

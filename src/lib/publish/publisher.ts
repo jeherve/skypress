@@ -1,22 +1,25 @@
 import type { Agent } from '@atproto/api';
 import { TID } from '@atproto/common-web';
 import {
-	buildPublicationRecord,
 	buildDocumentRecord,
 	buildBskyPost,
 	canonicalArticleUrl,
-	publicationHomeUrl,
 	type StrongRef,
 } from './records';
+import { listPublications } from './publications';
 import { blocksToText, type BlockNode } from '../blocks/render';
 
-const PUBLICATION_COLLECTION = 'site.standard.publication';
 const DOCUMENT_COLLECTION = 'site.standard.document';
 const POST_COLLECTION = 'app.bsky.feed.post';
 
 /** createRecord types `record` as an open index signature; our records are precise. */
 function asRecord( value: object ): Record< string, unknown > {
 	return value as Record< string, unknown >;
+}
+
+/** rkey is the last segment of an AT-URI. */
+function rkeyFromUri( uri: string ): string {
+	return uri.split( '/' ).pop() ?? '';
 }
 
 export interface Identity {
@@ -29,6 +32,10 @@ export interface PublishInput {
 	title: string;
 	blocks: BlockNode[];
 	description?: string;
+	/** The chosen target publication's AT-URI (Decision 0010 — no more auto-create). */
+	publicationUri: string;
+	/** Its frozen slug, needed to build the article URL. */
+	publicationSlug: string;
 }
 
 export interface PublishResult {
@@ -39,45 +46,12 @@ export interface PublishResult {
 }
 
 /**
- * Find SkyPress's OWN publication (matched by its `url` = the writer's SkyPress
- * homepage), or create one. Returns its `at://` URI.
+ * The two-record publish (Decision 0005), now targeting a CHOSEN publication (Decision 0010).
+ * Order avoids a circular dependency: the article URL is known from handle+slug+rkey, so we
+ * create the Bluesky post first, then the document with `bskyPostRef`.
  *
- * Matching by URL matters: a writer may already have `site.standard.publication`
- * records from OTHER tools (Leaflet, Pocketblog, …). We must not attach SkyPress
- * documents to a foreign publication.
- */
-async function ensurePublication(
-	agent: Agent,
-	did: string,
-	handle: string
-): Promise< string > {
-	const wantUrl = publicationHomeUrl( handle );
-	const existing = await agent.com.atproto.repo.listRecords( {
-		repo: did,
-		collection: PUBLICATION_COLLECTION,
-		limit: 100,
-	} );
-	const ours = existing.data.records.find(
-		( record ) => ( record.value as { url?: string } )?.url === wantUrl
-	);
-	if ( ours ) {
-		return ours.uri;
-	}
-	const created = await agent.com.atproto.repo.createRecord( {
-		repo: did,
-		collection: PUBLICATION_COLLECTION,
-		record: asRecord( buildPublicationRecord( { handle } ) ),
-	} );
-	return created.data.uri;
-}
-
-/**
- * The two-record publish (Decision 0005). Order avoids a circular dependency:
- * the article URL is known from handle+slug, so we create the Bluesky post first,
- * then the document with `bskyPostRef`.
- *
- * NOTE: this also creates a PUBLIC Bluesky post. Callers must have made that
- * unmistakable to the user first (brief §10).
+ * NOTE: this also creates a PUBLIC Bluesky post. Callers must have made that unmistakable to
+ * the user first (brief §10).
  */
 export async function publish(
 	agent: Agent,
@@ -90,10 +64,8 @@ export async function publish(
 	// Generate the document's rkey up front so the article URL (which the Bluesky post
 	// embeds) is known before either record is written — no circular dependency.
 	const rkey = TID.nextStr();
-	const articleUrl = canonicalArticleUrl( handle, rkey );
+	const articleUrl = canonicalArticleUrl( handle, input.publicationSlug, rkey );
 	const textContent = blocksToText( input.blocks );
-
-	const publicationUri = await ensurePublication( agent, did, handle );
 
 	const postRes = await agent.com.atproto.repo.createRecord( {
 		repo: did,
@@ -122,7 +94,7 @@ export async function publish(
 				rkey,
 				blocks: input.blocks,
 				textContent,
-				siteUri: publicationUri,
+				siteUri: input.publicationUri,
 				publishedAt: now,
 				description: input.description,
 				bskyPostRef,
@@ -131,26 +103,31 @@ export async function publish(
 	} );
 
 	return {
-		publicationUri,
+		publicationUri: input.publicationUri,
 		documentUri: docRes.data.uri,
 		postUri: postRes.data.uri,
 		articleUrl,
 	};
 }
 
-export interface UpdateInput extends PublishInput {
+export interface UpdateInput {
+	title: string;
+	blocks: BlockNode[];
+	description?: string;
 	/** The existing document's record key (URL stays stable, Decision 0008). */
 	rkey: string;
 	/** Preserved from the original publish. */
 	siteUri: string;
+	/** The owning publication's frozen slug, for the article URL. */
+	publicationSlug: string;
 	publishedAt: string;
 	bskyPostRef?: StrongRef;
 }
 
 /**
- * Edit a published article in place (Decision 0008): `putRecord` on the SAME rkey,
- * stamping `updatedAt` while preserving `publishedAt` + `bskyPostRef`. Does NOT create a
- * new Bluesky post — the original post keeps pointing at the (now-updated) URL.
+ * Edit a published article in place (Decision 0008): `putRecord` on the SAME rkey, stamping
+ * `updatedAt` while preserving `publishedAt` + `bskyPostRef`. Does NOT create a new Bluesky
+ * post — the original post keeps pointing at the (now-updated) URL.
  */
 export async function updateDocument(
 	agent: Agent,
@@ -160,7 +137,7 @@ export async function updateDocument(
 	const { did } = identity;
 	const handle = identity.handle ?? did;
 	const now = new Date().toISOString();
-	const articleUrl = canonicalArticleUrl( handle, input.rkey );
+	const articleUrl = canonicalArticleUrl( handle, input.publicationSlug, input.rkey );
 
 	const res = await agent.com.atproto.repo.putRecord( {
 		repo: did,
@@ -183,14 +160,9 @@ export async function updateDocument(
 	return { documentUri: res.data.uri, articleUrl };
 }
 
-/** rkey is the last segment of an AT-URI. */
-function rkeyFromUri( uri: string ): string {
-	return uri.split( '/' ).pop() ?? '';
-}
-
 /**
- * Unpublish an article (Decision 0008): delete the document AND its companion Bluesky
- * post. The publication record is left intact.
+ * Unpublish an article (Decision 0008): delete the document AND its companion Bluesky post.
+ * The publication record is left intact.
  */
 export async function unpublish(
 	agent: Agent,
@@ -221,55 +193,77 @@ export interface MyArticle {
 	description?: string;
 	publishedAt?: string;
 	updatedAt?: string;
+	/** The owning publication's AT-URI (`doc.site`). */
 	siteUri: string;
+	/** The owning publication's frozen slug (for building URLs + the update call). */
+	siteSlug: string;
 	bskyPostRef?: StrongRef;
 	blocks: BlockNode[];
 }
 
-/** List the signed-in writer's own SkyPress articles (scoped to their publication). */
-export async function listMyArticles(
+interface RawDocValue {
+	title?: string;
+	description?: string;
+	publishedAt?: string;
+	updatedAt?: string;
+	site?: string;
+	bskyPostRef?: StrongRef;
+	content?: { blocks?: BlockNode[] };
+}
+
+function toMyArticle(
+	record: { uri: string; value: unknown },
+	siteUri: string,
+	siteSlug: string
+): MyArticle {
+	const value = record.value as RawDocValue;
+	return {
+		rkey: rkeyFromUri( record.uri ),
+		title: value.title ?? 'Untitled',
+		description: value.description,
+		publishedAt: value.publishedAt,
+		updatedAt: value.updatedAt,
+		siteUri,
+		siteSlug,
+		bskyPostRef: value.bskyPostRef,
+		blocks: value.content?.blocks ?? [],
+	};
+}
+
+/** List one publication's documents, annotated with its slug (the per-publication Posts tab). */
+export async function listPublicationArticles(
 	agent: Agent,
 	did: string,
-	handle: string
+	publication: { uri: string; slug: string }
 ): Promise< MyArticle[] > {
-	const wantUrl = publicationHomeUrl( handle );
-	const pubs = await agent.com.atproto.repo.listRecords( {
-		repo: did,
-		collection: PUBLICATION_COLLECTION,
-		limit: 100,
-	} );
-	const ours = pubs.data.records.find(
-		( record ) => ( record.value as { url?: string } )?.url === wantUrl
-	);
-	if ( ! ours ) {
-		return [];
-	}
 	const docs = await agent.com.atproto.repo.listRecords( {
 		repo: did,
 		collection: DOCUMENT_COLLECTION,
 		limit: 100,
 	} );
 	return docs.data.records
-		.filter( ( record ) => ( record.value as { site?: string } )?.site === ours.uri )
+		.filter( ( record ) => ( record.value as RawDocValue )?.site === publication.uri )
+		.map( ( record ) => toMyArticle( record, publication.uri, publication.slug ) );
+}
+
+/**
+ * List ALL the writer's SkyPress articles across their publications, each annotated with its
+ * publication slug. Documents whose `site` isn't one of the writer's known SkyPress
+ * publications (orphans, or another tool's) are dropped — the editor only edits its own.
+ */
+export async function listAllMyArticles( agent: Agent, did: string ): Promise< MyArticle[] > {
+	const pubs = await listPublications( agent, did );
+	const bySite = new Map( pubs.map( ( pub ) => [ pub.uri, pub ] as const ) );
+	const docs = await agent.com.atproto.repo.listRecords( {
+		repo: did,
+		collection: DOCUMENT_COLLECTION,
+		limit: 100,
+	} );
+	return docs.data.records
 		.map( ( record ) => {
-			const value = record.value as {
-				title?: string;
-				description?: string;
-				publishedAt?: string;
-				updatedAt?: string;
-				site?: string;
-				bskyPostRef?: StrongRef;
-				content?: { blocks?: BlockNode[] };
-			};
-			return {
-				rkey: rkeyFromUri( record.uri ),
-				title: value.title ?? 'Untitled',
-				description: value.description,
-				publishedAt: value.publishedAt,
-				updatedAt: value.updatedAt,
-				siteUri: value.site ?? ours.uri,
-				bskyPostRef: value.bskyPostRef,
-				blocks: value.content?.blocks ?? [],
-			};
-		} );
+			const site = ( record.value as RawDocValue )?.site;
+			const pub = site ? bySite.get( site ) : undefined;
+			return pub ? toMyArticle( record, pub.uri, pub.slug ) : null;
+		} )
+		.filter( ( article ): article is MyArticle => article !== null );
 }

@@ -3,6 +3,10 @@ import {
 	publicationHomeUrl,
 	articlePath,
 	canonicalArticleUrl,
+	publicationSlugFromUrl,
+	isSkyPressPublicationUrl,
+	slugify,
+	uniquePublicationSlug,
 	buildContentObject,
 	buildPublicationRecord,
 	buildDocumentRecord,
@@ -13,6 +17,7 @@ import {
 	SITE_BASE,
 } from './records';
 import type { BlockNode } from '../blocks/render';
+import type { BlobRefJson } from '../media/blob';
 
 const BLOCKS: BlockNode[] = [
 	{ name: 'core/heading', attributes: { level: 1, content: 'Hi' }, innerBlocks: [] },
@@ -20,14 +25,66 @@ const BLOCKS: BlockNode[] = [
 ];
 
 describe( 'URLs', () => {
-	it( 'prefixes the handle with @ and addresses documents by rkey', () => {
-		expect( publicationHomeUrl( 'alice.bsky.social' ) ).toBe(
-			`${ SITE_BASE }/@alice.bsky.social`
+	it( 'namespaces publications under @handle/slug and documents under that', () => {
+		expect( publicationHomeUrl( 'alice.bsky.social', 'my-blog' ) ).toBe(
+			`${ SITE_BASE }/@alice.bsky.social/my-blog`
 		);
 		expect( articlePath( '3kabcrkey' ) ).toBe( '/3kabcrkey' );
-		expect( canonicalArticleUrl( 'alice.bsky.social', '3kabcrkey' ) ).toBe(
-			`${ SITE_BASE }/@alice.bsky.social/3kabcrkey`
+		expect( canonicalArticleUrl( 'alice.bsky.social', 'my-blog', '3kabcrkey' ) ).toBe(
+			`${ SITE_BASE }/@alice.bsky.social/my-blog/3kabcrkey`
 		);
+	} );
+} );
+
+describe( 'publicationSlugFromUrl', () => {
+	it( 'returns the trailing slug segment of a publication url', () => {
+		expect( publicationSlugFromUrl( `${ SITE_BASE }/@alice.bsky.social/my-blog` ) ).toBe(
+			'my-blog'
+		);
+	} );
+	it( 'returns null for a slugless (legacy) or malformed url', () => {
+		expect( publicationSlugFromUrl( `${ SITE_BASE }/@alice.bsky.social` ) ).toBeNull();
+		expect( publicationSlugFromUrl( 'not a url' ) ).toBeNull();
+	} );
+} );
+
+describe( 'isSkyPressPublicationUrl', () => {
+	it( 'accepts only urls on the SkyPress origin', () => {
+		expect( isSkyPressPublicationUrl( `${ SITE_BASE }/@alice.bsky.social/my-blog` ) ).toBe(
+			true
+		);
+		expect( isSkyPressPublicationUrl( 'https://leaflet.pub/lish/did/abc' ) ).toBe( false );
+		expect( isSkyPressPublicationUrl( 'garbage' ) ).toBe( false );
+	} );
+} );
+
+describe( 'slugify', () => {
+	it( 'lowercases, dashes spaces, strips to [a-z0-9-] and trims/collapses dashes', () => {
+		expect( slugify( '  My  Great Blog! ' ) ).toBe( 'my-great-blog' );
+		expect( slugify( 'Hello---World' ) ).toBe( 'hello-world' );
+		expect( slugify( '___weird@@@name___' ) ).toBe( 'weirdname' );
+	} );
+	it( 'normalises accents to their base letters', () => {
+		expect( slugify( 'Café Life' ) ).toBe( 'cafe-life' );
+	} );
+	it( 'returns empty string for empty / emoji-only names', () => {
+		expect( slugify( '🎉🎉' ) ).toBe( '' );
+		expect( slugify( '   ' ) ).toBe( '' );
+	} );
+} );
+
+describe( 'uniquePublicationSlug', () => {
+	it( 'returns the bare slug when free', () => {
+		expect( uniquePublicationSlug( 'My Blog', [] ) ).toBe( 'my-blog' );
+	} );
+	it( 'appends -2, -3 … on collision within the repo', () => {
+		expect( uniquePublicationSlug( 'My Blog', [ 'my-blog' ] ) ).toBe( 'my-blog-2' );
+		expect( uniquePublicationSlug( 'My Blog', [ 'my-blog', 'my-blog-2' ] ) ).toBe(
+			'my-blog-3'
+		);
+	} );
+	it( 'returns empty string for an unslugifiable name (caller applies pub-{rkey})', () => {
+		expect( uniquePublicationSlug( '🎉', [] ) ).toBe( '' );
 	} );
 } );
 
@@ -65,11 +122,42 @@ describe( 'buildContentObject', () => {
 } );
 
 describe( 'buildPublicationRecord', () => {
-	it( 'sets the required url + name', () => {
-		const pub = buildPublicationRecord( { handle: 'alice.bsky.social' } );
+	it( 'bakes the slug into the required url + name', () => {
+		const pub = buildPublicationRecord( {
+			handle: 'alice.bsky.social',
+			slug: 'my-blog',
+			name: 'My Blog',
+		} );
 		expect( pub.$type ).toBe( 'site.standard.publication' );
-		expect( pub.url ).toBe( `${ SITE_BASE }/@alice.bsky.social` );
-		expect( pub.name ).toBeTruthy();
+		expect( pub.url ).toBe( `${ SITE_BASE }/@alice.bsky.social/my-blog` );
+		expect( pub.name ).toBe( 'My Blog' );
+	} );
+
+	it( 'falls back to the handle when no name is given', () => {
+		const pub = buildPublicationRecord( { handle: 'alice.bsky.social', slug: 'pub-x' } );
+		expect( pub.name ).toBe( 'alice.bsky.social' );
+	} );
+
+	it( 'includes description and icon only when provided', () => {
+		const bare = buildPublicationRecord( { handle: 'a.b', slug: 's', name: 'N' } );
+		expect( 'description' in bare ).toBe( false );
+		expect( 'icon' in bare ).toBe( false );
+
+		const icon: BlobRefJson = {
+			$type: 'blob',
+			ref: { $link: 'bafyicon' },
+			mimeType: 'image/png',
+			size: 1234,
+		};
+		const full = buildPublicationRecord( {
+			handle: 'a.b',
+			slug: 's',
+			name: 'N',
+			description: 'A blog',
+			icon,
+		} );
+		expect( full.description ).toBe( 'A blog' );
+		expect( full.icon ).toEqual( icon );
 	} );
 } );
 
@@ -112,7 +200,7 @@ describe( 'buildBskyPost', () => {
 	it( 'creates a post with an external embed pointing at the article', () => {
 		const post = buildBskyPost( {
 			title: 'Hello, World!',
-			articleUrl: 'https://skypress.blog/@alice.bsky.social/3kabcrkey',
+			articleUrl: 'https://skypress.blog/@alice.bsky.social/my-blog/3kabcrkey',
 			description: 'An excerpt',
 			createdAt: '2026-06-08T12:00:00.000Z',
 		} );
@@ -121,7 +209,7 @@ describe( 'buildBskyPost', () => {
 		expect( post.createdAt ).toBe( '2026-06-08T12:00:00.000Z' );
 		expect( post.embed.$type ).toBe( 'app.bsky.embed.external' );
 		expect( post.embed.external.uri ).toBe(
-			'https://skypress.blog/@alice.bsky.social/3kabcrkey'
+			'https://skypress.blog/@alice.bsky.social/my-blog/3kabcrkey'
 		);
 		expect( post.embed.external.title ).toBe( 'Hello, World!' );
 		expect( typeof post.embed.external.description ).toBe( 'string' );

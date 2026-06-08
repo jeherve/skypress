@@ -1,0 +1,221 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Logo from '../../../components/Logo.astro';
+import { resolveAuthor } from '../../../lib/reader/identity';
+import { listRecords } from '../../../lib/reader/records';
+import { resolveReaderPublication } from '../../../lib/reader/publications';
+import { fetchActorProfile } from '../../../lib/reader/profile';
+import { buildGetBlobUrl } from '../../../lib/media/blob';
+
+export const prerender = false;
+
+interface DocumentValue {
+	title?: string;
+	description?: string;
+	site?: string;
+	publishedAt?: string;
+}
+
+const { author, slug } = Astro.params;
+if ( ! author || ! author.startsWith( '@' ) || ! slug ) {
+	return new Response( 'Not found', { status: 404 } );
+}
+const handle = author.slice( 1 );
+
+const resolved = await resolveAuthor( handle );
+if ( ! resolved ) {
+	return new Response( `Could not resolve @${ handle }`, { status: 404 } );
+}
+const { did, pdsUrl } = resolved;
+
+const publication = await resolveReaderPublication( pdsUrl, did, slug );
+if ( ! publication ) {
+	return new Response( 'Publication not found', { status: 404 } );
+}
+
+const profile = await fetchActorProfile( pdsUrl, did );
+
+const allDocs = await listRecords< DocumentValue >(
+	pdsUrl,
+	did,
+	'site.standard.document',
+	100
+);
+const articles = allDocs
+	.filter( ( record ) => record.value.site === publication.uri )
+	.map( ( record ) => ( {
+		rkey: record.uri.split( '/' ).pop() as string,
+		title: record.value.title ?? 'Untitled',
+		description: record.value.description,
+		publishedLabel: record.value.publishedAt?.slice( 0, 10 ) ?? null,
+	} ) );
+
+const logoUrl = publication.icon
+	? buildGetBlobUrl( pdsUrl, did, publication.icon.ref.$link )
+	: null;
+const authorName = profile.displayName ?? `@${ handle }`;
+const initial = publication.name.charAt( 0 ).toUpperCase();
+---
+
+<Base title={`${ publication.name } — SkyPress`} description={publication.description ?? undefined}>
+	<Fragment slot="head">
+		<link rel="site.standard.publication" href={publication.uri} />
+	</Fragment>
+
+	<header class="masthead">
+		<a href="/"><Logo /></a>
+	</header>
+
+	<main class="pub">
+		<div class="pub__hero">
+			{profile.banner && (
+				<div class="pub__cover" style={`background-image:url("${ profile.banner }")`} aria-hidden="true"></div>
+			)}
+			<div class={`pub__identity${ profile.banner ? ' pub__identity--overlap' : '' }`}>
+				{logoUrl ? (
+					<img class="pub__logo" src={logoUrl} alt="" width="88" height="88" />
+				) : (
+					<span class="pub__logo pub__logo--fallback" aria-hidden="true">{initial}</span>
+				)}
+				<h1 class="pub__title">{publication.name}</h1>
+				<p class="pub__byline">
+					<a href={`/@${ handle }`}>
+						{profile.avatar && (
+							<img class="pub__byavatar" src={profile.avatar} alt="" width="22" height="22" />
+						)}
+						by {authorName}
+					</a>
+				</p>
+				{publication.description && <p class="pub__lede">{publication.description}</p>}
+			</div>
+		</div>
+
+		{articles.length === 0 ? (
+			<p class="pub__empty">No articles published in this publication yet.</p>
+		) : (
+			<ul class="pub__list">
+				{articles.map( ( article ) => (
+					<li class="pub__item">
+						<a href={`/@${ handle }/${ slug }/${ article.rkey }`}>{article.title}</a>
+						{article.publishedLabel && <span class="pub__date">{article.publishedLabel}</span>}
+						{article.description && <p class="pub__desc">{article.description}</p>}
+					</li>
+				) )}
+			</ul>
+		)}
+	</main>
+</Base>
+
+<style>
+	.masthead {
+		padding: 1.5rem clamp(1.25rem, 5vw, 4rem);
+		border-bottom: 1px solid var(--line);
+	}
+	.masthead a {
+		text-decoration: none;
+	}
+	.pub {
+		max-width: 44rem;
+		margin: 0 auto;
+		padding: 0 1.5rem 6rem;
+	}
+	.pub__hero {
+		margin: 0 0 2rem;
+	}
+	.pub__cover {
+		height: clamp(8rem, 26vw, 14rem);
+		margin: 0 calc(-1 * clamp(1.5rem, 5vw, 4rem));
+		background-size: cover;
+		background-position: center;
+		border-bottom: 1px solid var(--line);
+	}
+	.pub__identity {
+		text-align: center;
+		padding-top: 2.5rem;
+	}
+	.pub__identity--overlap {
+		margin-top: -3.25rem;
+	}
+	.pub__logo {
+		width: 88px;
+		height: 88px;
+		border-radius: 20px;
+		object-fit: cover;
+		border: 3px solid var(--paper);
+		box-shadow: var(--shadow);
+		background: var(--paper-raised);
+	}
+	.pub__logo--fallback {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-family: var(--font-display);
+		font-size: 2.4rem;
+		font-weight: 700;
+		color: var(--sun);
+		background: var(--sun-tint);
+	}
+	.pub__title {
+		font-size: clamp(2.2rem, 6vw, 3.4rem);
+		margin: 0.75rem 0 0.4rem;
+	}
+	.pub__byline {
+		margin: 0;
+		font-size: 0.95rem;
+	}
+	.pub__byline a {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		color: var(--ink-soft);
+		text-decoration: none;
+	}
+	.pub__byline a:hover {
+		color: var(--sun);
+	}
+	.pub__byavatar {
+		width: 22px;
+		height: 22px;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+	.pub__lede {
+		color: var(--ink-soft);
+		font-size: 1.15rem;
+		max-width: 42ch;
+		margin: 1rem auto 0;
+	}
+	.pub__empty {
+		color: var(--muted);
+		text-align: center;
+	}
+	.pub__list {
+		list-style: none;
+		padding: 0;
+		margin: 1rem 0 0;
+	}
+	.pub__item {
+		padding: 1.35rem 0;
+		border-top: 1px solid var(--line);
+	}
+	.pub__item a {
+		font-family: var(--font-display);
+		font-size: 1.4rem;
+		font-weight: 560;
+		color: var(--ink);
+		text-decoration: none;
+	}
+	.pub__item a:hover {
+		color: var(--sun);
+	}
+	.pub__date {
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+		margin-left: 0.75rem;
+	}
+	.pub__desc {
+		color: var(--ink-soft);
+		margin: 0.4rem 0 0;
+	}
+</style>

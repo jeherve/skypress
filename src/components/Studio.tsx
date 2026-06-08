@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { BlockInstance } from '@wordpress/blocks';
 import { AuthProvider } from '../lib/auth/AuthProvider';
 import { useAuth } from '../lib/auth/useAuth';
@@ -9,6 +9,7 @@ import MyArticles from './MyArticles';
 import { createMediaUpload, type BlobRegistry } from '../lib/media/mediaUpload';
 import { displayNameFor, authorPath } from '../lib/auth/profile';
 import type { MyArticle } from '../lib/publish/publisher';
+import { listPublications, type Publication } from '../lib/publish/publications';
 
 /**
  * The authenticated writing surface. Gates the editor behind atproto OAuth:
@@ -20,8 +21,23 @@ function StudioGate() {
 	const [ editing, setEditing ] = useState< MyArticle | null >( null );
 	const [ refreshKey, setRefreshKey ] = useState( 0 );
 	const [ avatarOk, setAvatarOk ] = useState( true );
+	const [ publications, setPublications ] = useState< Publication[] >( [] );
 	// Shared between mediaUpload (writes blob refs) and publish (reads them).
 	const registry = useRef< BlobRegistry >( new Map() ).current;
+
+	// Load the writer's SkyPress publications (the publish targets / selector).
+	useEffect( () => {
+		if ( ! agent || ! did ) {
+			return;
+		}
+		let cancelled = false;
+		listPublications( agent, did )
+			.then( ( list ) => ! cancelled && setPublications( list ) )
+			.catch( () => ! cancelled && setPublications( [] ) );
+		return () => {
+			cancelled = true;
+		};
+	}, [ agent, did, refreshKey ] );
 
 	const mediaUpload = useMemo( () => {
 		if ( ! agent || ! did || ! pdsUrl ) {
@@ -73,6 +89,9 @@ function StudioGate() {
 						</span>
 					</span>
 					<span className="studio__account-actions">
+						<a className="studio__viewpage" href="/dashboard">
+							Dashboard
+						</a>
 						{ publicPath && (
 							<a className="studio__viewpage" href={ publicPath }>
 								View my public page
@@ -91,7 +110,6 @@ function StudioGate() {
 				<MyArticles
 					agent={ agent }
 					did={ did }
-					handle={ handle ?? did }
 					refreshKey={ refreshKey }
 					onEdit={ startEdit }
 				/>
@@ -111,11 +129,13 @@ function StudioGate() {
 						identity={ { did, handle } }
 						blocks={ blocks }
 						blobRegistry={ registry }
+						publications={ publications }
 						editing={
 							editing
 								? {
 										rkey: editing.rkey,
 										siteUri: editing.siteUri,
+										siteSlug: editing.siteSlug,
 										publishedAt: editing.publishedAt ?? new Date().toISOString(),
 										bskyPostRef: editing.bskyPostRef,
 								  }

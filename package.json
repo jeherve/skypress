@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "A standalone long-form writing studio for the AT Protocol.",
-  "license": "GPL-2.0-only",
+  "license": "GPL-2.0-or-later",
   "type": "module",
   "engines": {
     "node": ">=20"

@@ -47,7 +47,7 @@ Read the relevant `docs/decisions/*` and `docs/specs/*` before working in an are
 - **OAuth only** (no app passwords). Secrets never in the client.
 - **Don't surprise users**: publishing also creates a Bluesky post — the UI must say so.
 - Lexicon discipline: prefer optional fields + open unions; treat shipped constraints as
-  frozen (additions only, else `-v2`). License: **GPL-2.0-only**.
+  frozen (additions only, else `-v2`). License: **GPL-2.0-or-later**.
 
 ## Commands
 

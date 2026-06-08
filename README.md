@@ -156,5 +156,5 @@ astro.config.mjs · wrangler.toml
 
 ## License
 
-[GPL-2.0-only](./LICENSE) — WordPress/Gutenberg lineage; aligns with the open-source,
+[GPL-2.0-or-later](./LICENSE) — WordPress/Gutenberg lineage; aligns with the open-source,
 your-data-is-yours ethos.

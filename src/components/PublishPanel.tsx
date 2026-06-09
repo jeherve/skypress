@@ -36,7 +36,6 @@ interface Props {
 	editing?: EditingTarget;
 	/** Controlled title (lifted to the editor so it can render as a heading above the canvas). */
 	title: string;
-	onTitleChange: ( value: string ) => void;
 	/** Called after a successful publish/update so the parent can refresh. */
 	onComplete?: () => void;
 }
@@ -55,7 +54,6 @@ export default function PublishPanel( {
 	publications,
 	editing,
 	title,
-	onTitleChange,
 	onComplete,
 }: Props ) {
 	const pubs = publications ?? [];

@@ -131,7 +131,6 @@ function StudioGate() {
 								: undefined
 						}
 						title={ title }
-						onTitleChange={ setTitle }
 						onComplete={ () => setRefreshKey( ( k ) => k + 1 ) }
 					/>
 					<input

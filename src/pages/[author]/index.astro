@@ -4,6 +4,7 @@ import Logo from '../../components/Logo.astro';
 import { resolveAuthor } from '../../lib/reader/identity';
 import { listReaderPublications } from '../../lib/reader/publications';
 import { fetchActorProfile } from '../../lib/reader/profile';
+import { detectBioSegments } from '../../lib/reader/rich-text';
 import { buildGetBlobUrl } from '../../lib/media/blob';
 import CreatePublicationCta from '../../components/CreatePublicationCta.tsx';
 import ErrorScene from '../../components/ErrorScene.astro';
@@ -23,6 +24,7 @@ let profile: Awaited< ReturnType< typeof fetchActorProfile > > | null = null;
 let publications: Awaited< ReturnType< typeof listReaderPublications > > = [];
 let authorName = '';
 let initial = '';
+let bioSegments: ReturnType< typeof detectBioSegments > = [];
 
 if ( ! author || ! author.startsWith( '@' ) ) {
 	error = errorScene( 'not-found' );
@@ -44,6 +46,7 @@ if ( ! error && resolved ) {
 
 	authorName = profile.displayName ?? `@${ handle }`;
 	initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
+	bioSegments = profile.description ? detectBioSegments( profile.description ) : [];
 }
 
 if ( error ) {
@@ -98,7 +101,19 @@ if ( error ) {
 								</svg>
 							</a>
 						</p>
-						{profile!.description && <p class="author__bio">{profile!.description}</p>}
+						{bioSegments.length > 0 && (
+							<p class="author__bio">
+								{bioSegments.map( ( seg ) =>
+									seg.type === 'link' ? (
+										<a href={seg.href} target="_blank" rel="noopener noreferrer nofollow">
+											{seg.text}
+										</a>
+									) : (
+										seg.text
+									)
+								)}
+							</p>
+						)}
 					</div>
 				</div>
 
@@ -226,6 +241,9 @@ if ( error ) {
 		color: var(--ink-soft);
 		max-width: 46ch;
 		margin: 1rem auto 0;
+	}
+	.author__bio a {
+		color: var(--sun);
 	}
 	.author__heading {
 		font-size: 0.75rem;

@@ -8,6 +8,8 @@ const BASE = {
 	image: 'https://skypress.blog/og-default.png',
 	siteName: 'SkyPress',
 	imageAlt: 'SkyPress',
+	imageWidth: 1200,
+	imageHeight: 630,
 };
 
 const byProperty = ( tags: MetaTag[], property: string ) =>
@@ -63,5 +65,25 @@ describe( 'buildMetaTags', () => {
 	it( 'omits og:image:alt when no alt is given', () => {
 		const tags = buildMetaTags( { ...BASE, imageAlt: undefined } );
 		expect( byProperty( tags, 'og:image:alt' ) ).toBeUndefined();
+	} );
+
+	it( 'omits og:image dimensions when width/height are not given', () => {
+		const tags = buildMetaTags( {
+			...BASE,
+			imageWidth: undefined,
+			imageHeight: undefined,
+		} );
+		expect( byProperty( tags, 'og:image:width' ) ).toBeUndefined();
+		expect( byProperty( tags, 'og:image:height' ) ).toBeUndefined();
+		// The image itself is still present.
+		expect( byProperty( tags, 'og:image' )?.content ).toBe(
+			'https://skypress.blog/og-default.png'
+		);
+	} );
+
+	it( 'omits og:image dimensions when only one of width/height is given', () => {
+		const tags = buildMetaTags( { ...BASE, imageHeight: undefined } );
+		expect( byProperty( tags, 'og:image:width' ) ).toBeUndefined();
+		expect( byProperty( tags, 'og:image:height' ) ).toBeUndefined();
 	} );
 } );

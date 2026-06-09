@@ -66,6 +66,18 @@ describe( 'landing page sky phase carrier', () => {
 		expect( global, 'every [data-phase=...] selector must be :global()-wrapped' ).toBe( total );
 	} );
 
+	// At night the sky is the bare starfield: the sun-driven layers (.bloom glow, .halo ring,
+	// .horizon line) must be switched off so no sun gradient or halo bleeds into the dark sky.
+	it( 'hides every sun layer at night, leaving only the stars', () => {
+		const style = index.match( /<style>([\s\S]*?)<\/style>/ )?.[ 1 ] ?? '';
+		for ( const layer of [ 'bloom', 'halo', 'horizon' ] ) {
+			const rule = new RegExp(
+				`:global\\(\\s*\\[data-phase='night'\\]\\s*\\)\\s*\\.${ layer }\\b`
+			);
+			expect( style, `night must silence the .${ layer } sun layer` ).toMatch( rule );
+		}
+	} );
+
 	// The inline head script must run before any module loads (for a no-flash sky), so it
 	// can't import phaseForHour — it hand-mirrors the same hour->phase boundaries. This guard
 	// keeps that copy honest: extract its `var p = <ternary>` expression straight from source

@@ -1,6 +1,7 @@
 ---
 import Base from '../../../layouts/Base.astro';
 import Logo from '../../../components/Logo.astro';
+import PublicationFooter from '../../../components/PublicationFooter.astro';
 import { resolveAuthor } from '../../../lib/reader/identity';
 import { listRecords } from '../../../lib/reader/records';
 import { resolveReaderPublication } from '../../../lib/reader/publications';
@@ -128,16 +129,6 @@ if ( error ) {
 							</a>
 						</p>
 						{publication!.description && <p class="pub__lede">{publication!.description}</p>}
-						<p class="pub__feed">
-							<a href={feedHref}>
-								<svg class="pub__feedicon" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-									<circle cx="4.5" cy="19.5" r="2.5" />
-									<path d="M2 10.5v3.2a7.3 7.3 0 0 1 7.3 7.3h3.2A10.5 10.5 0 0 0 2 10.5Z" />
-									<path d="M2 3.6v3.2A14.2 14.2 0 0 1 16.2 21h3.2A17.4 17.4 0 0 0 2 3.6Z" />
-								</svg>
-								RSS
-							</a>
-						</p>
 					</div>
 				</div>
 
@@ -154,6 +145,8 @@ if ( error ) {
 						) )}
 					</ul>
 				)}
+
+				<PublicationFooter name={publication!.name} pubUrl={`/${ author }/${ slug }`} feedHref={feedHref} />
 			</main>
 		</Base>
 	)
@@ -237,26 +230,6 @@ if ( error ) {
 		font-size: 1.15rem;
 		max-width: 42ch;
 		margin: 1rem auto 0;
-	}
-	.pub__feed {
-		margin: 1.1rem 0 0;
-	}
-	.pub__feed a {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.35rem;
-		font-family: var(--font-mono);
-		font-size: 0.72rem;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		color: var(--muted);
-		text-decoration: none;
-	}
-	.pub__feed a:hover {
-		color: var(--sun);
-	}
-	.pub__feedicon {
-		color: var(--sun);
 	}
 	.pub__empty {
 		color: var(--muted);

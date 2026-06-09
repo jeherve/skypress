@@ -1,0 +1,101 @@
+---
+/**
+ * Shared site footer — used on the landing page and the lexicon page so both
+ * stay in sync (same tagline, same license line, same links). Sits above the
+ * landing sky via position/z-index; harmless on plain pages.
+ *
+ * The logo links point "elsewhere on the open web": the SkyPress publication
+ * and Jeremy's, both as on-site profiles, plus WordPress.org (the block editor
+ * SkyPress is built on).
+ */
+---
+
+<footer class="site-footer">
+	<div class="site-footer__text">
+		<span>Your words, your account, the open web.</span>
+		<span class="site-footer__mark">GPL-2.0-or-later</span>
+	</div>
+
+	<nav class="site-footer__links" aria-label="Elsewhere on the open web">
+		<a class="site-footer__link" href="/@skypress.blog" title="@skypress.blog" aria-label="The SkyPress profile, @skypress.blog">
+			<svg class="site-footer__icon" viewBox="0 0 568 501" fill="currentColor" aria-hidden="true">
+				<path d="M123.121 33.664C188.241 82.553 258.281 144.21 284 177.272c25.719-33.061 95.759-94.719 160.879-143.608C491.866-1.611 568-28.906 568 57.947c0 17.346-9.945 145.713-15.778 166.555-20.275 72.453-94.155 90.933-159.875 79.748C507.222 323.8 536.444 388.56 473.333 453.32c-119.86 122.992-172.272-30.859-185.702-70.281-2.462-7.227-3.614-10.608-3.631-7.733-.017-2.875-1.169.506-3.631 7.733-13.43 39.422-65.842 193.273-185.702 70.281-63.111-64.76-33.889-129.52 80.986-149.071-65.72 11.185-139.6-7.295-159.875-79.748C9.945 203.66 0 75.293 0 57.947 0-28.906 76.134-1.611 123.121 33.664Z" />
+			</svg>
+		</a>
+		<a class="site-footer__link" href="/@jeremy.herve.bzh" title="@jeremy.herve.bzh" aria-label="Jeremy Herve's profile, @jeremy.herve.bzh">
+			<img class="site-footer__avatar" src="/jeremy-herve.svg" alt="" width="28" height="28" />
+		</a>
+		<a class="site-footer__link" href="https://wordpress.org" target="_blank" rel="noopener noreferrer" title="Built with the WordPress block editor" aria-label="WordPress.org">
+			<svg class="site-footer__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+				<path d="M21.469 6.825c.84 1.537 1.318 3.3 1.318 5.175 0 3.979-2.156 7.456-5.363 9.325l3.295-9.527c.615-1.54.82-2.771.82-3.864 0-.405-.026-.78-.07-1.11m-7.981.105c.647-.03 1.232-.105 1.232-.105.582-.075.514-.93-.067-.899 0 0-1.755.135-2.88.135-1.064 0-2.85-.15-2.85-.15-.585-.03-.661.855-.075.885 0 0 .54.061 1.125.09l1.68 4.605-2.37 7.08L5.354 6.9c.649-.03 1.234-.1 1.234-.1.585-.075.516-.93-.065-.896 0 0-1.746.138-2.874.138-.2 0-.438-.008-.69-.015C4.911 3.15 8.235 1.215 12 1.215c2.809 0 5.365 1.072 7.286 2.833-.046-.003-.091-.009-.141-.009-1.06 0-1.812.923-1.812 1.914 0 .89.513 1.643 1.06 2.531.411.72.89 1.643.89 2.977 0 .915-.354 1.994-.821 3.479l-1.075 3.585-3.9-11.61.001.014zM12 22.784c-1.059 0-2.081-.153-3.048-.437l3.237-9.406 3.315 9.087c.024.053.05.101.078.149-1.12.393-2.325.609-3.582.609M1.211 12c0-1.564.336-3.05.935-4.39L7.29 21.709C3.694 19.96 1.212 16.271 1.211 12M12 0C5.385 0 0 5.385 0 12s5.385 12 12 12 12-5.385 12-12S18.615 0 12 0" />
+			</svg>
+		</a>
+	</nav>
+</footer>
+
+<style>
+	.site-footer {
+		position: relative;
+		z-index: 2;
+		background: var(--paper);
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem 1.5rem;
+		flex-wrap: wrap;
+		padding: 1.5rem clamp(1.25rem, 5vw, 4rem);
+		border-top: 1px solid var(--line);
+	}
+
+	.site-footer__text {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+		letter-spacing: 0.04em;
+	}
+	.site-footer__text a {
+		color: var(--muted);
+		text-underline-offset: 0.2em;
+	}
+	.site-footer__text a:hover {
+		color: var(--sun);
+	}
+
+	.site-footer__links {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	.site-footer__link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.25rem;
+		height: 2.25rem;
+		border-radius: 50%;
+		color: var(--muted);
+		border: 1px solid transparent;
+		transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease, transform 0.12s ease;
+	}
+	.site-footer__link:hover {
+		color: var(--sun);
+		border-color: var(--line-strong);
+		background: var(--paper-raised);
+		transform: translateY(-1px);
+	}
+	.site-footer__icon {
+		width: 1.15rem;
+		height: 1.15rem;
+		display: block;
+	}
+	.site-footer__avatar {
+		width: 1.9rem;
+		height: 1.9rem;
+		border-radius: 50%;
+		display: block;
+		object-fit: cover;
+	}
+</style>

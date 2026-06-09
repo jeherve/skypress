@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Logo from '../components/Logo.astro';
+import Footer from '../components/Footer.astro';
 import AccountMenu from '../components/AccountMenu.tsx';
 import { PHASES, DEFAULT_PHASE } from '../lib/landing/time-of-day';
 
@@ -69,10 +70,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 			<p class="how__honest">One thing worth knowing: when you publish, SkyPress also posts to Bluesky with a link back, so people can find your piece. We’ll always remind you before you hit publish&nbsp;:)</p>
 		</section>
 
-		<footer class="footer">
-			<span>Your words, your account, the open web.</span>
-			<span class="footer__mark">GPL-2.0-or-later · built with the WordPress block editor</span>
-		</footer>
+		<Footer />
 	</div>
 </Base>
 
@@ -403,22 +401,6 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		margin: 2rem auto 0;
 		color: var(--muted);
 		font-size: 0.95rem;
-	}
-
-	.footer {
-		position: relative;
-		z-index: 2;
-		background: var(--paper);
-		display: flex;
-		justify-content: space-between;
-		gap: 1rem;
-		flex-wrap: wrap;
-		padding: 1.5rem clamp(1.25rem, 5vw, 4rem);
-		border-top: 1px solid var(--line);
-		color: var(--muted);
-		font-family: var(--font-mono);
-		font-size: 0.72rem;
-		letter-spacing: 0.04em;
 	}
 
 	@media (prefers-reduced-motion: reduce) {

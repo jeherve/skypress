@@ -1,0 +1,12 @@
+---
+import ErrorScene from '../components/ErrorScene.astro';
+import { errorScene } from '../lib/reader/errors';
+
+// Astro auto-renders this page when an SSR route throws (e.g. a PDS fetch fails),
+// so no per-route try/catch is needed. Static copy, so prerender it.
+export const prerender = true;
+
+const scene = errorScene( 'server-error' );
+---
+
+<ErrorScene eyebrow={scene.eyebrow} heading={scene.heading} subline={scene.subline} />

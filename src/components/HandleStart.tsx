@@ -22,6 +22,8 @@ export default function HandleStart() {
 	useEffect( () => {
 		const trimmed = value.trim();
 		if ( ! isValidHandleOrDid( trimmed ) ) {
+			// Invalidate any in-flight lookup so a late response can't repopulate the card.
+			++reqId.current;
 			setPreview( null );
 			setLooking( false );
 			return;

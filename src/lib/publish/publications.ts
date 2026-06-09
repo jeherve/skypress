@@ -35,6 +35,8 @@ function rkeyFromUri( uri: string ): string {
 /** A SkyPress publication, resolved to the shape the dashboard + editor consume. */
 export interface Publication {
 	uri: string;
+	/** Current record cid — needed for the post's `associatedRefs` strongRef (Decision 0013). */
+	cid: string;
 	rkey: string;
 	slug: string;
 	name: string;
@@ -54,6 +56,7 @@ export interface PublicationInput {
 /** Map a raw repo record to a Publication, or null if it isn't a usable SkyPress publication. */
 function toPublication( record: {
 	uri: string;
+	cid: string;
 	value: unknown;
 } ): Publication | null {
 	const value = record.value as Partial< PublicationRecord > | undefined;
@@ -70,6 +73,7 @@ function toPublication( record: {
 	const basicTheme = parseBasicTheme( value.basicTheme );
 	return {
 		uri: record.uri,
+		cid: record.cid,
 		rkey: rkeyFromUri( record.uri ),
 		slug,
 		name: value.name ?? slug,
@@ -125,6 +129,7 @@ export async function createPublication(
 	} );
 	return {
 		uri: res.data.uri,
+		cid: res.data.cid,
 		rkey,
 		slug,
 		name: record.name,
@@ -153,7 +158,7 @@ export async function updatePublication(
 		icon: input.icon,
 		basicTheme: input.basicTheme,
 	} );
-	await agent.com.atproto.repo.putRecord( {
+	const res = await agent.com.atproto.repo.putRecord( {
 		repo: did,
 		collection: PUBLICATION_COLLECTION,
 		rkey: existing.rkey,
@@ -161,6 +166,7 @@ export async function updatePublication(
 	} );
 	return {
 		uri: existing.uri,
+		cid: res.data.cid,
 		rkey: existing.rkey,
 		slug: existing.slug,
 		name: record.name,

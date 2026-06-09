@@ -43,6 +43,11 @@ URL is known before any record is written. So:
 pre-chosen rkey (content + textContent + bskyPostRef)`. One document write, no follow-up
 update.
 
+> **Superseded by Decision 0013.** To embed the standard.site link card, the post must
+> carry the document's strongRef, so the order is now `create document (no bskyPostRef) →
+> create post (facet + associatedRefs) → putRecord document (add bskyPostRef)`. Two
+> document writes; see 0013 for why the resulting stale ref is harmless.
+
 ## The SkyPress content lexicon — `blog.skypress.content.gutenberg`
 
 Goes inside the document's open `content` union (brief §3). The block tree is canonical

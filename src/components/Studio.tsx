@@ -18,6 +18,7 @@ import { listPublications, type Publication } from '../lib/publish/publications'
 function StudioGate() {
 	const { status, agent, handle, did, pdsUrl, error } = useAuth();
 	const [ blocks, setBlocks ] = useState< BlockInstance[] >( [] );
+	const [ title, setTitle ] = useState( '' );
 	const [ editing, setEditing ] = useState< MyArticle | null >( null );
 	const [ refreshKey, setRefreshKey ] = useState( 0 );
 	// `null` = still loading; `[]` = loaded, none exist. PublishPanel needs the distinction.
@@ -57,6 +58,7 @@ function StudioGate() {
 				if ( ! cancelled && article ) {
 					setEditing( article );
 					setBlocks( article.blocks as unknown as BlockInstance[] );
+					setTitle( article.title );
 				}
 			} )
 			.catch( () => {
@@ -94,6 +96,7 @@ function StudioGate() {
 			revokeBlobRegistry( registry );
 			setEditing( null );
 			setBlocks( [] );
+			setTitle( '' );
 		};
 
 		return (
@@ -127,8 +130,17 @@ function StudioGate() {
 								  }
 								: undefined
 						}
-						initialTitle={ editing?.title }
+						title={ title }
+						onTitleChange={ setTitle }
 						onComplete={ () => setRefreshKey( ( k ) => k + 1 ) }
+					/>
+					<input
+						className="studio__title"
+						type="text"
+						placeholder="Add title"
+						aria-label="Article title"
+						value={ title }
+						onChange={ ( event ) => setTitle( event.target.value ) }
 					/>
 					<SkyEditor
 						onChange={ setBlocks }

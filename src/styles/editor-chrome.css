@@ -277,6 +277,35 @@
 	cursor: pointer;
 }
 
+/* Borderless article title, sitting above the framed editor canvas — echoes the
+   block-editor post title (large display heading, no box). */
+.studio__title {
+	display: block;
+	max-width: var(--studio-measure);
+	margin: 1.25rem auto 0;
+	padding: 0 var(--studio-gutter);
+	width: 100%;
+	box-sizing: border-box;
+	border: 0;
+	background: transparent;
+	color: var(--ink);
+	font-family: var(--font-display);
+	font-size: clamp(1.9rem, 4vw, 2.6rem);
+	font-weight: 700;
+	line-height: 1.15;
+}
+.studio__title::placeholder {
+	color: var(--muted);
+	opacity: 0.6;
+}
+.studio__title:focus {
+	outline: none;
+}
+/* Tighten the gap between the title and the editor surface below it. */
+.studio__title + .skypress-editor {
+	margin-top: 0.75rem;
+}
+
 /* Editor surface. The bundled isolated-block-editor CSS hard-codes a
    full-width white surface that ignores `prefers-color-scheme`. Constrain
    and frame it as a contained writing panel, and drive its colours from the

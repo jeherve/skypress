@@ -40,3 +40,26 @@ export function displayNameFor( profile: ViewerProfile ): string {
 export function authorPath( handle: string | null ): string | null {
 	return handle ? `/@${ handle }` : null;
 }
+
+/** One entry in the signed-in account dropdown. */
+export interface MenuItem {
+	label: string;
+	href: string;
+}
+
+/**
+ * Dropdown items for a signed-in viewer: Dashboard, Write, then Profile. The
+ * Profile entry links to the public author page and is omitted when no handle
+ * is known (so we never render a broken link).
+ */
+export function accountMenuItems( profile: ViewerProfile ): MenuItem[] {
+	const items: MenuItem[] = [
+		{ label: 'Dashboard', href: '/dashboard' },
+		{ label: 'Write', href: '/editor' },
+	];
+	const profileHref = authorPath( profile.handle );
+	if ( profileHref ) {
+		items.push( { label: 'Profile', href: profileHref } );
+	}
+	return items;
+}

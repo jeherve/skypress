@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Agent } from '@atproto/api';
 import { createMediaUpload, revokeBlobRegistry, type BlobRegistry } from './mediaUpload';
 
@@ -8,16 +8,6 @@ function fakeUploadResult( cid: string, mimeType: string, size: number ) {
 }
 
 describe( 'createMediaUpload', () => {
-	beforeEach( () => {
-		// jsdom doesn't implement object URLs; stub a deterministic one per call.
-		let n = 0;
-		vi.stubGlobal( 'URL', {
-			...URL,
-			createObjectURL: vi.fn( () => `blob:preview-${ ++n }` ),
-		} );
-	} );
-	afterEach( () => vi.unstubAllGlobals() );
-
 	function setup() {
 		const registry: BlobRegistry = new Map();
 		const uploadBlob = vi
@@ -33,7 +23,7 @@ describe( 'createMediaUpload', () => {
 		return { registry, uploadBlob, handler };
 	}
 
-	it( 'uploads to the PDS, previews via an object URL, and omits any attachment id', async () => {
+	it( 'uploads to the PDS, previews via a data URL (never a blob: URL), and omits any attachment id', async () => {
 		const { uploadBlob, handler } = setup();
 		const file = new File( [ 'x' ], 'cat.png', { type: 'image/png' } );
 		const onFileChange = vi.fn();
@@ -43,21 +33,25 @@ describe( 'createMediaUpload', () => {
 		expect( uploadBlob ).toHaveBeenCalledWith( file, { encoding: 'image/png' } );
 		expect( onFileChange ).toHaveBeenCalledTimes( 1 );
 		const [ media ] = onFileChange.mock.calls[ 0 ][ 0 ];
-		// Preview src is the local object URL — never the live getBlob URL (unreferenced
-		// blobs 500 on com.atproto.sync.getBlob until a record commits them).
-		expect( media.url ).toBe( 'blob:preview-1' );
+		// Preview src is a data: URL — NEVER a blob: URL. The Image block treats any blob:
+		// URL as "still uploading" (is-transient + Spinner) and re-runs its upload hook
+		// expecting a non-blob URL back; a blob: preview hangs the editor forever.
+		expect( media.url.startsWith( 'data:image/png;base64,' ) ).toBe( true );
+		expect( media.url.startsWith( 'blob:' ) ).toBe( false );
 		// No `id`: PDS blobs are not WP attachments, so the image block must not try to
 		// fetch /wp/v2/media/<id> (that 404s).
 		expect( 'id' in media ).toBe( false );
 	} );
 
-	it( 'registers the blob ref + canonical getBlob URL keyed by the preview URL', async () => {
+	it( 'registers the blob ref + canonical getBlob URL keyed by the preview (data) URL', async () => {
 		const { registry, handler } = setup();
 		const file = new File( [ 'x' ], 'cat.png', { type: 'image/png' } );
+		const onFileChange = vi.fn();
 
-		await handler( { filesList: [ file ], onFileChange: vi.fn() } );
+		await handler( { filesList: [ file ], onFileChange } );
 
-		expect( registry.get( 'blob:preview-1' ) ).toEqual( {
+		const [ media ] = onFileChange.mock.calls[ 0 ][ 0 ];
+		expect( registry.get( media.url ) ).toEqual( {
 			ref: {
 				$type: 'blob',
 				ref: { $link: 'bafycid123' },
@@ -88,22 +82,15 @@ describe( 'createMediaUpload', () => {
 } );
 
 describe( 'revokeBlobRegistry', () => {
-	it( 'revokes every preview object URL and empties the registry', () => {
-		const revoke = vi.fn();
-		vi.stubGlobal( 'URL', { ...URL, revokeObjectURL: revoke } );
+	it( 'empties the registry', () => {
 		const ref = { $type: 'blob' as const, ref: { $link: 'cid' }, mimeType: 'image/png', size: 1 };
 		const registry: BlobRegistry = new Map( [
-			[ 'blob:preview-1', { ref, url: 'https://pds.example.com/a' } ],
-			[ 'blob:preview-2', { ref, url: 'https://pds.example.com/b' } ],
+			[ 'data:image/png;base64,aaa', { ref, url: 'https://pds.example.com/a' } ],
+			[ 'data:image/png;base64,bbb', { ref, url: 'https://pds.example.com/b' } ],
 		] );
 
 		revokeBlobRegistry( registry );
 
-		expect( revoke ).toHaveBeenCalledTimes( 2 );
-		expect( revoke ).toHaveBeenCalledWith( 'blob:preview-1' );
-		expect( revoke ).toHaveBeenCalledWith( 'blob:preview-2' );
 		expect( registry.size ).toBe( 0 );
-
-		vi.unstubAllGlobals();
 	} );
 } );

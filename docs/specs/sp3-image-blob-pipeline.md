@@ -11,8 +11,8 @@ Design: [Decision 0006](../decisions/0006-image-blob-pipeline.md).
 ## Success criteria
 
 1. Inserting an image in the editor uploads it to the writer's PDS and previews via a
-   local object URL (a just-uploaded, unreferenced blob can't be served by `getBlob` yet
-   — see Decision 0006).
+   `data:` URL (a just-uploaded, unreferenced blob can't be served by `getBlob` yet, and a
+   `blob:` object URL would make the Image block spin forever — see Decision 0006).
 2. On publish, image blocks carry a proper `skypressBlob` ref (`{$type:'blob',…}`) in the
    stored `content`, keeping the blob in-use (not GC'd) and portable.
 3. Pure helpers (`getBlob` URL builder, blob-ref attach transform) unit-tested.
@@ -52,7 +52,7 @@ Verified by uploading an image in the editor and publishing to a **real** accoun
 | Check | Result |
 |---|---|
 | 25 unit tests (incl. blob helpers) | pass |
-| Editor upload | `mediaUpload` → `uploadBlob` → image previews via a local object URL |
+| Editor upload | `mediaUpload` → `uploadBlob` → image previews via a `data:` URL |
 | Stored content | image block carries `skypressBlob` = `{$type:'blob', ref:{$link:'bafkrei…'}, mimeType:'image/png', size:70}` |
 | Blob served | `getBlob` returns the bytes (200, 70 bytes) |
 | **Blob in-use** | the CID appears in `com.atproto.sync.listBlobs` — referenced by the record, so **not garbage-collected** (the load-bearing reason to store a typed ref, Decision 0006) |

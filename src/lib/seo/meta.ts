@@ -19,6 +19,10 @@ export interface MetaTagInput {
 	type?: string;
 	/** Alt text for the share image. Omitted when absent. */
 	imageAlt?: string;
+	/** Intrinsic image width in px. Emitted only when both width AND height are given. */
+	imageWidth?: number;
+	/** Intrinsic image height in px. Emitted only when both width AND height are given. */
+	imageHeight?: number;
 }
 
 export interface MetaTag {
@@ -36,6 +40,8 @@ export function buildMetaTags( input: MetaTagInput ): MetaTag[] {
 		siteName,
 		type = 'website',
 		imageAlt,
+		imageWidth,
+		imageHeight,
 	} = input;
 
 	const tags: MetaTag[] = [
@@ -44,12 +50,18 @@ export function buildMetaTags( input: MetaTagInput ): MetaTag[] {
 		{ property: 'og:url', content: url },
 		{ property: 'og:site_name', content: siteName },
 		{ property: 'og:image', content: image },
-		{ property: 'og:image:width', content: '1200' },
-		{ property: 'og:image:height', content: '630' },
+	];
+
+	if ( imageWidth !== undefined && imageHeight !== undefined ) {
+		tags.push( { property: 'og:image:width', content: String( imageWidth ) } );
+		tags.push( { property: 'og:image:height', content: String( imageHeight ) } );
+	}
+
+	tags.push(
 		{ name: 'twitter:card', content: 'summary_large_image' },
 		{ name: 'twitter:title', content: title },
-		{ name: 'twitter:image', content: image },
-	];
+		{ name: 'twitter:image', content: image }
+	);
 
 	if ( description ) {
 		tags.push( { property: 'og:description', content: description } );

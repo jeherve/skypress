@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Agent } from '@atproto/api';
-import { publish, updateDocument, listAllMyArticles, listPublicationArticles } from './publisher';
+import { publish, updateDocument, listAllMyArticles, listPublicationArticles, getMyArticle } from './publisher';
 import { SITE_BASE } from './records';
 import type { BlockNode } from '../blocks/render';
 
@@ -227,5 +227,48 @@ describe( 'listAllMyArticles', () => {
 		const articles = await listAllMyArticles( agent, DID );
 		expect( articles ).toHaveLength( 1 );
 		expect( articles[ 0 ] ).toMatchObject( { rkey: 'd1', siteSlug: 'blog-a' } );
+	} );
+} );
+
+describe( 'getMyArticle', () => {
+	function repo() {
+		return mockAgent( {
+			'site.standard.publication': [
+				{
+					uri: `at://${ DID }/site.standard.publication/pub1`,
+					value: {
+						$type: 'site.standard.publication',
+						url: `${ SITE_BASE }/@${ HANDLE }/blog-a`,
+						name: 'Blog A',
+					},
+				},
+			],
+			'site.standard.document': [
+				{
+					uri: `at://${ DID }/site.standard.document/d1`,
+					value: { title: 'In A', site: `at://${ DID }/site.standard.publication/pub1` },
+				},
+				{
+					uri: `at://${ DID }/site.standard.document/d2`,
+					value: { title: 'Orphan', site: `at://${ DID }/site.standard.publication/gone` },
+				},
+			],
+		} );
+	}
+
+	it( 'returns the writer’s article by rkey, slug-annotated', async () => {
+		const { agent } = repo();
+		const article = await getMyArticle( agent, DID, 'd1' );
+		expect( article ).toMatchObject( { rkey: 'd1', title: 'In A', siteSlug: 'blog-a' } );
+	} );
+
+	it( 'returns null for an unknown rkey', async () => {
+		const { agent } = repo();
+		expect( await getMyArticle( agent, DID, 'nope' ) ).toBeNull();
+	} );
+
+	it( 'returns null for a foreign/orphan document', async () => {
+		const { agent } = repo();
+		expect( await getMyArticle( agent, DID, 'd2' ) ).toBeNull();
 	} );
 } );

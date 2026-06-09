@@ -41,6 +41,15 @@ export interface Publication {
 	icon?: BlobRefJson;
 }
 
+/** A publication record written by another app sharing the lexicon (Leaflet, …). Read-only. */
+export interface ForeignPublication {
+	uri: string;
+	name: string;
+	hostname: string;
+	url: string;
+	icon?: BlobRefJson;
+}
+
 /** Fields a writer can set/change on a publication (the slug is derived, never entered). */
 export interface PublicationInput {
 	name: string;
@@ -74,16 +83,71 @@ function toPublication( record: {
 	};
 }
 
-/** List the writer's SkyPress publications (newest first), filtered to this app's origin. */
-export async function listPublications( agent: Agent, did: string ): Promise< Publication[] > {
+/** Map a raw repo record to a ForeignPublication, or null if its url isn't a usable http(s) link. */
+function toForeignPublication( record: {
+	uri: string;
+	value: unknown;
+} ): ForeignPublication | null {
+	const value = record.value as Partial< PublicationRecord > | undefined;
+	if ( ! value?.url ) {
+		return null;
+	}
+	let parsed: URL;
+	try {
+		parsed = new URL( value.url );
+	} catch {
+		return null;
+	}
+	if ( parsed.protocol !== 'http:' && parsed.protocol !== 'https:' ) {
+		return null;
+	}
+	const icon = normalizeBlobRefJson( value.icon );
+	return {
+		uri: record.uri,
+		name: value.name ?? parsed.hostname,
+		hostname: parsed.hostname,
+		url: value.url,
+		...( icon ? { icon } : {} ),
+	};
+}
+
+/**
+ * Fetch the writer's publication records once and partition them: those SkyPress OWNS
+ * (origin === SITE_BASE, with a slug) versus FOREIGN records another app wrote into the same
+ * collection (Leaflet, …), which SkyPress only ever displays read-only (Decision 0010).
+ */
+export async function listAllPublications(
+	agent: Agent,
+	did: string
+): Promise< { owned: Publication[]; foreign: ForeignPublication[] } > {
 	const res = await agent.com.atproto.repo.listRecords( {
 		repo: did,
 		collection: PUBLICATION_COLLECTION,
 		limit: 100,
 	} );
-	return res.data.records
-		.map( ( record ) => toPublication( record ) )
-		.filter( ( pub ): pub is Publication => pub !== null );
+	const owned: Publication[] = [];
+	const foreign: ForeignPublication[] = [];
+	for ( const record of res.data.records ) {
+		const url = ( record.value as Partial< PublicationRecord > | undefined )?.url;
+		if ( url && isSkyPressPublicationUrl( url ) ) {
+			// Ours: owned if it has a slug, otherwise a malformed/legacy own-record we drop entirely.
+			const pub = toPublication( record );
+			if ( pub ) {
+				owned.push( pub );
+			}
+			continue;
+		}
+		const fp = toForeignPublication( record );
+		if ( fp ) {
+			foreign.push( fp );
+		}
+	}
+	return { owned, foreign };
+}
+
+/** List the writer's SkyPress publications (newest first), filtered to this app's origin. */
+export async function listPublications( agent: Agent, did: string ): Promise< Publication[] > {
+	return ( await listAllPublications( agent, did ) ).owned;
 }
 
 /**

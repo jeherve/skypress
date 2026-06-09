@@ -89,7 +89,10 @@ function StudioGate() {
 	}
 
 	if ( status === 'signed-in' && agent && did ) {
-		// Re-mount the editor + panel when switching article so onLoad + the title reset.
+		// Re-mount the editor when switching article (or after a new publish) so the
+		// SkyEditor canvas resets via onLoad/initialBlocks. The title is Studio-owned
+		// state now, so it doesn't reset on remount — the title/blocks reset for a new
+		// publish happens in PublishPanel's `onComplete` below.
 		const editorKey = editing ? `edit-${ editing.rkey }` : `new-${ refreshKey }`;
 
 		const startNew = () => {
@@ -131,7 +134,16 @@ function StudioGate() {
 								: undefined
 						}
 						title={ title }
-						onComplete={ () => setRefreshKey( ( k ) => k + 1 ) }
+						onComplete={ () => {
+							setRefreshKey( ( k ) => k + 1 );
+							// A new publish leaves the editor on a fresh "new article": clear the
+							// title + blocks (the editorKey bump remounts SkyEditor empty). On an
+							// update we stay on the same article, so keep its content in place.
+							if ( ! editing ) {
+								setTitle( '' );
+								setBlocks( [] );
+							}
+						} }
 					/>
 					<input
 						className="studio__title"

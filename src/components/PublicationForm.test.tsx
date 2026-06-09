@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { createElement } from 'react';
+import { act, createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { createRoot } from 'react-dom/client';
 import type { Agent } from '@atproto/api';
+
+// react-dom/client + act need this flag so React treats vitest's jsdom as a test environment.
+( globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean } ).IS_REACT_ACT_ENVIRONMENT = true;
 import PublicationForm from './PublicationForm';
 import { THEME_PRESETS } from '../lib/publish/themes';
 import type { Publication } from '../lib/publish/publications';
@@ -87,5 +91,66 @@ describe( 'PublicationForm theme picker', () => {
 		const markup = renderForm( existing );
 		expect( radios( markup ) ).toHaveLength( THEME_PRESETS.length + 1 );
 		expect( checkedValue( markup ) ).toBe( '' );
+	} );
+} );
+
+describe( 'PublicationForm save lifecycle', () => {
+	it( 'clears the "Saving…" state after a successful save even when the form stays mounted', async () => {
+		// The Settings tab keeps the SAME PublicationForm instance mounted across a save:
+		// onSaved just re-renders the manager on the same tab, so the form never unmounts.
+		// onSubmit must therefore reset `saving` on the success path — relying on unmount left
+		// the button stuck on "Saving…" forever despite the PDS returning 200 (the reported bug).
+		const existing: Publication = {
+			uri: 'at://did:plc:alice/site.standard.publication/abc',
+			rkey: 'abc',
+			slug: 'blog',
+			name: 'Blog',
+		};
+		let resolvePut: ( ( value: unknown ) => void ) | null = null;
+		const agent = {
+			com: {
+				atproto: {
+					repo: {
+						putRecord: () =>
+							new Promise( ( resolve ) => {
+								resolvePut = resolve;
+							} ),
+					},
+				},
+			},
+		} as unknown as Agent;
+
+		const container = document.createElement( 'div' );
+		document.body.appendChild( container );
+		const root = createRoot( container );
+		await act( async () => {
+			root.render(
+				createElement( PublicationForm, { ...baseProps, agent, existing, onSaved: () => {} } )
+			);
+		} );
+
+		const form = container.querySelector( 'form' ) as HTMLFormElement;
+		const button = container.querySelector( '.pubform__save' ) as HTMLButtonElement;
+		expect( button.textContent ).toBe( 'Save changes' );
+
+		await act( async () => {
+			form.dispatchEvent( new Event( 'submit', { bubbles: true, cancelable: true } ) );
+		} );
+		expect( button.textContent ).toBe( 'Saving…' );
+		expect( button.disabled ).toBe( true );
+
+		// The PDS write resolves (the 200 the user saw). The button must return to normal.
+		// Flush the microtask chain (putRecord resolve → updatePublication resolve → onSubmit
+		// continuation → setSaving) inside act so React applies the state update.
+		await act( async () => {
+			resolvePut?.( { data: {} } );
+			await Promise.resolve();
+			await Promise.resolve();
+		} );
+		expect( button.textContent ).toBe( 'Save changes' );
+		expect( button.disabled ).toBe( false );
+
+		root.unmount();
+		container.remove();
 	} );
 } );

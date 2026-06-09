@@ -195,6 +195,18 @@ describe( 'themeStyleBlock', () => {
 		expect( themeStyleBlock( undefined ) ).toBe( '' );
 	} );
 
+	it( 'outranks the global :root defaults so the theme wins regardless of load order', () => {
+		// The light + dark design tokens live on `:root` in global.css, which Astro bundles and
+		// links into the head AFTER the page's injected <style>. A bare `:root` override has
+		// identical specificity (0,1,0), so the cascade falls to source order — and the later
+		// global.css wins, silently dropping the publication theme in BOTH colour schemes
+		// (verified on production; Decision 0012). The override must therefore outrank a single
+		// `:root`: `:root:root` (0,2,0) beats both the plain and the
+		// `@media (prefers-color-scheme: dark) :root` defaults (0,1,0) in any order.
+		const html = themeStyleBlock( THEME_PRESETS[ 4 ].colors ); // twilight
+		expect( html ).toMatch( /<style>:root:root\s*\{/ );
+	} );
+
 	it( 'never emits anything but digits/commas inside rgb() (no injection surface)', () => {
 		const html = themeStyleBlock( THEME_PRESETS[ 2 ].colors );
 		const matches = html.match( /rgb\([^)]*\)/g ) ?? [];

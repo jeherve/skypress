@@ -184,6 +184,13 @@ export function themeToCssVars( theme: BasicTheme ): Record< string, string > {
  * A `<style>` block overriding the design tokens for a themed publication, or '' when there is
  * no theme. Also re-points `.btn--primary` text at `--btn-primary-fg` so button text follows the
  * theme's accentForeground. All values are app-built `rgb()` strings — no record text reaches CSS.
+ *
+ * The token override targets `:root:root` (not a bare `:root`) on purpose: global.css defines the
+ * light defaults on `:root` and the dark defaults on `@media (prefers-color-scheme: dark) :root`,
+ * both specificity (0,1,0). Astro bundles global.css and links it into the head AFTER this injected
+ * <style>, so a bare `:root` override — equal specificity, earlier in source — loses the cascade in
+ * both colour schemes and the theme silently vanishes. `:root:root` (0,2,0) outranks both defaults
+ * regardless of load order. (Decision 0012.)
  */
 export function themeStyleBlock( theme: BasicTheme | null | undefined ): string {
 	if ( ! theme ) {
@@ -192,5 +199,5 @@ export function themeStyleBlock( theme: BasicTheme | null | undefined ): string 
 	const decls = Object.entries( themeToCssVars( theme ) )
 		.map( ( [ key, value ] ) => `${ key }: ${ value };` )
 		.join( ' ' );
-	return `<style>:root { ${ decls } } .btn--primary, .btn--primary:hover { color: var(--btn-primary-fg); }</style>`;
+	return `<style>:root:root { ${ decls } } .btn--primary, .btn--primary:hover { color: var(--btn-primary-fg); }</style>`;
 }

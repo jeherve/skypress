@@ -132,6 +132,10 @@ export default function PublicationForm( {
 			const saved = existing
 				? await updatePublication( agent, did, handle, existing, input )
 				: await createPublication( agent, did, handle, input );
+			// Clear `saving` before handing off: the Settings tab keeps this form mounted across a
+			// save (onSaved just re-renders the manager on the same tab), so relying on unmount left
+			// the button stuck on "Saving…" forever despite a successful write.
+			setSaving( false );
 			onSaved( saved );
 		} catch ( err ) {
 			setError( err instanceof Error ? err.message : String( err ) );

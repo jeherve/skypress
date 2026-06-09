@@ -1,10 +1,11 @@
 ---
 import Base from '../../../layouts/Base.astro';
-import Logo from '../../../components/Logo.astro';
 import PublicationFooter from '../../../components/PublicationFooter.astro';
 import { resolveAuthor } from '../../../lib/reader/identity';
 import { getRecord } from '../../../lib/reader/records';
 import { resolveReaderPublication } from '../../../lib/reader/publications';
+import { fetchActorProfile } from '../../../lib/reader/profile';
+import { formatLongDate } from '../../../lib/reader/dates';
 import { resolveBlobImageUrls, buildGetBlobUrl } from '../../../lib/media/blob';
 import { renderBlocks, blocksToText, type BlockNode } from '../../../lib/blocks/render';
 import { sanitizeArticleHtml } from '../../../lib/reader/sanitize';
@@ -51,6 +52,11 @@ let html = '';
 let readingMinutes = 1;
 let publishedLabel: string | null = null;
 let updatedLabel: string | null = null;
+let authorName = '';
+let authorHandle: string | null = null;
+let authorAvatar: string | null = null;
+let logoUrl: string | null = null;
+let initial = '';
 let themeStyle = '';
 let ogImage = '';
 
@@ -95,15 +101,23 @@ if ( ! error && resolved ) {
 
 			const words = textContent.split( /\s+/ ).filter( Boolean ).length;
 			readingMinutes = Math.max( 1, Math.round( words / 200 ) );
-			publishedLabel = doc.publishedAt ? doc.publishedAt.slice( 0, 10 ) : null;
-			updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
+			publishedLabel = doc.publishedAt ? formatLongDate( doc.publishedAt ) : null;
+			updatedLabel = doc.updatedAt ? formatLongDate( doc.updatedAt ) : null;
 			themeStyle = themeStyleBlock( publication.basicTheme );
+
+			const profile = await fetchActorProfile( pdsUrl, did );
+			authorName = profile.displayName ?? `@${ handle }`;
+			// Only show a separate @handle chip when there's a distinct display name.
+			authorHandle = profile.displayName ? `@${ handle }` : null;
+			authorAvatar = profile.avatar;
+			logoUrl = publication.icon
+				? buildGetBlobUrl( pdsUrl, did, publication.icon.ref.$link )
+				: null;
+			initial = publication.name.charAt( 0 ).toUpperCase();
 
 			// Share image: the publication logo, else the shared default. Only the
 			// default image has known 1200x630 dimensions; a square logo omits them.
-			ogImage = publication.icon
-				? buildGetBlobUrl( pdsUrl, did, publication.icon.ref.$link )
-				: new URL( '/og-default.png', Astro.site ).href;
+			ogImage = logoUrl ?? new URL( '/og-default.png', Astro.site ).href;
 			const ogDimensions = publication.icon
 				? {}
 				: { imageWidth: 1200, imageHeight: 630 };
@@ -148,11 +162,24 @@ if ( error ) {
 	</Fragment>
 
 	<header class="masthead">
-		<a href="/"><Logo /></a>
+		<a class="masthead__pub" href={pubUrl}>
+			{logoUrl ? (
+				<img class="masthead__logo" src={logoUrl} alt="" width="36" height="36" />
+			) : (
+				<span class="masthead__logo masthead__logo--fallback" aria-hidden="true">{initial}</span>
+			)}
+			<span class="masthead__title">{publication!.name}</span>
+		</a>
 	</header>
 	<main class="reader">
 		<p class="reader__meta eyebrow">
-			<a class="reader__author" href={pubUrl}>{publication!.name}</a>
+			<a class="reader__author" href={`/@${ handle }`}>
+				{authorAvatar && (
+					<img class="reader__avatar" src={authorAvatar} alt="" width="22" height="22" />
+				)}
+				<span class="reader__authorname">{authorName}</span>
+				{authorHandle && <span class="reader__handle">{authorHandle}</span>}
+			</a>
 			{publishedLabel && <> · {publishedLabel}</>}
 			{updatedLabel && <> · updated {updatedLabel}</>}
 			· {readingMinutes} min read
@@ -173,6 +200,34 @@ if ( error ) {
 	.masthead a {
 		text-decoration: none;
 	}
+	.masthead__pub {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6rem;
+		color: var(--ink);
+	}
+	.masthead__logo {
+		width: 36px;
+		height: 36px;
+		border-radius: 9px;
+		object-fit: cover;
+		background: var(--paper-raised);
+	}
+	.masthead__logo--fallback {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-family: var(--font-display);
+		font-weight: 700;
+		color: var(--sun);
+		background: var(--sun-tint);
+	}
+	.masthead__title {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 1.18rem;
+		letter-spacing: -0.015em;
+	}
 	.reader {
 		max-width: 40rem;
 		margin: 0 auto;
@@ -182,8 +237,23 @@ if ( error ) {
 		margin-bottom: 1.25rem;
 	}
 	.reader__author {
-		color: var(--sun);
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		color: var(--ink-soft);
 		text-decoration: none;
+	}
+	.reader__author:hover {
+		color: var(--sun);
+	}
+	.reader__avatar {
+		width: 22px;
+		height: 22px;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+	.reader__handle {
+		color: var(--muted);
 	}
 	.reader__title {
 		font-size: clamp(2.2rem, 5.5vw, 3.4rem);

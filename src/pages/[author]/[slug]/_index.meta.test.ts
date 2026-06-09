@@ -39,3 +39,19 @@ describe( 'publication page error wiring', () => {
 		expect( page ).toMatch( /Astro\.response\.status\s*=/ );
 	} );
 } );
+
+describe( 'publication page focuses on the publication', () => {
+	it( 'no longer renders the SkyPress masthead/logo', () => {
+		expect( page ).not.toMatch( /class="masthead"/ );
+		expect( page ).not.toMatch( /import Logo from/ );
+	} );
+
+	it( 'renders article dates in long format via formatLongDate', () => {
+		expect( page ).toMatch(
+			/import\s*\{\s*formatLongDate\s*\}\s*from\s*'[^']*lib\/reader\/dates'/
+		);
+		expect( page ).toMatch( /formatLongDate\(/ );
+		// The old ISO-slice date format is gone.
+		expect( page ).not.toMatch( /publishedAt\?\.slice\(\s*0,\s*10\s*\)/ );
+	} );
+} );

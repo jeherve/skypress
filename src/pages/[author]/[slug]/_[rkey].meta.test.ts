@@ -58,3 +58,35 @@ describe( 'document page Open Graph wiring', () => {
 		expect( page ).toMatch( /Astro\.response\.status\s*=/ );
 	} );
 } );
+
+describe( 'document page focuses on publication + author', () => {
+	it( 'replaces the SkyPress logo header with the publication logo + title linking to the publication', () => {
+		expect( page ).not.toMatch( /import Logo from/ );
+		expect( page ).not.toMatch( /<a href="\/"><Logo \/><\/a>/ );
+		expect( page ).toMatch( /class="masthead__pub"\s+href=\{pubUrl\}/ );
+		expect( page ).toMatch( /class="masthead__title">\{publication!?\.name\}/ );
+	} );
+
+	it( 'fetches the author profile for the eyebrow', () => {
+		expect( page ).toMatch(
+			/import\s*\{\s*fetchActorProfile\s*\}\s*from\s*'[^']*lib\/reader\/profile'/
+		);
+		expect( page ).toMatch( /fetchActorProfile\(/ );
+	} );
+
+	it( 'shows the author (name, avatar, handle) in the eyebrow, linked to the profile', () => {
+		expect( page ).toMatch( /class="reader__author"\s+href=\{`\/@\$\{\s*handle\s*\}`\}/ );
+		expect( page ).toMatch( /reader__avatar/ );
+		expect( page ).toMatch( /authorName/ );
+		// The publication name no longer stands in for the byline in the eyebrow.
+		expect( page ).not.toMatch( /class="reader__author"\s+href=\{pubUrl\}/ );
+	} );
+
+	it( 'renders dates in long format via formatLongDate', () => {
+		expect( page ).toMatch(
+			/import\s*\{\s*formatLongDate\s*\}\s*from\s*'[^']*lib\/reader\/dates'/
+		);
+		expect( page ).toMatch( /formatLongDate\(/ );
+		expect( page ).not.toMatch( /\.slice\(\s*0,\s*10\s*\)/ );
+	} );
+} );

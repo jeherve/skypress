@@ -35,6 +35,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 	<div class="page">
 		<div class="sky" aria-hidden="true">
 			<div class="stars"></div>
+			<span class="shootingstar"></span>
 			<div class="bloom"></div>
 			<div class="halo"></div>
 			<div class="horizon"></div>
@@ -151,6 +152,30 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 			radial-gradient(1.5px 1.5px at 12% 38%, #fff, transparent),
 			radial-gradient(1px 1px at 90% 40%, #fff, transparent),
 			radial-gradient(1px 1px at 33% 9%, #fff, transparent);
+	}
+
+	/* Playful: a rare shooting star, dark phases only (silenced under reduced motion below). */
+	.shootingstar {
+		position: absolute;
+		top: 12%;
+		left: -8%;
+		width: 90px;
+		height: 2px;
+		background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9));
+		border-radius: 2px;
+		transform: rotate(16deg);
+		opacity: 0;
+	}
+	:global([data-phase='night']) .shootingstar,
+	:global([data-phase='dusk']) .shootingstar,
+	:global([data-phase='dawn']) .shootingstar {
+		animation: shoot 12s ease-in 4s infinite;
+	}
+	@keyframes shoot {
+		0% { left: -8%; top: 12%; opacity: 0; }
+		2% { opacity: 1; }
+		9% { left: 78%; top: 40%; opacity: 0; }
+		100% { left: 78%; top: 40%; opacity: 0; }
 	}
 
 	/* Per-phase sky gradient + star visibility + hero text colour */
@@ -441,6 +466,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 	@keyframes handlestart-spin { to { transform: rotate(360deg); } }
 
 	@media (prefers-reduced-motion: reduce) {
+		.shootingstar { animation: none; opacity: 0; }
 		.sky .stars, .sky .bloom, .sky .halo { transition: none; }
 		.hero :global(.handlestart__spinner) { animation: none; }
 	}

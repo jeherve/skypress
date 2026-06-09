@@ -72,3 +72,22 @@ describe( 'landing hero redesign', () => {
 		expect( index ).not.toMatch( /class="steps"/ );
 	} );
 } );
+
+describe( 'playful: shooting star', () => {
+	const index = read( '../../pages/index.astro' );
+
+	it( 'renders a shooting-star element inside the decorative sky', () => {
+		expect( index ).toMatch( /class="shootingstar"/ );
+	} );
+
+	it( 'animates only in dark phases', () => {
+		const style = index.match( /<style>([\s\S]*?)<\/style>/ )?.[ 1 ] ?? '';
+		expect( style ).toMatch( /:global\(\s*\[data-phase='night'\]\s*\)\s*\.shootingstar/ );
+	} );
+
+	it( 'is silenced under reduced motion', () => {
+		const style = index.match( /<style>([\s\S]*?)<\/style>/ )?.[ 1 ] ?? '';
+		const reduced = style.match( /@media \(prefers-reduced-motion: reduce\) \{([\s\S]*?)\}/ )?.[ 1 ] ?? '';
+		expect( reduced ).toMatch( /\.shootingstar/ );
+	} );
+} );

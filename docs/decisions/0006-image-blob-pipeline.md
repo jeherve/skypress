@@ -19,27 +19,41 @@ Use Gutenberg's stable **`mediaUpload`** seam (passed through
 
 1. Upload to the writer's PDS: `agent.uploadBlob(file, { encoding: file.type })` →
    `BlobRef`.
-2. Hand the editor a **local object URL** (`URL.createObjectURL(file)`) via
+2. Hand the editor a **`data:` URL** (`FileReader.readAsDataURL(file)`) via
    `onFileChange([{ url, alt }])` so the image previews immediately. **No `id`** — PDS
    blobs aren't WP attachments; an `id` makes the Image block fetch `/wp/v2/media/<id>`,
    which 404s.
 3. **Retain the blob ref + the canonical `getBlob` URL** in an in-memory registry keyed
    by the object URL.
 
-### Preview via object URL, not the live `getBlob` URL (corrected 2026-06-08)
+### Preview via a `data:` URL, not the live `getBlob` URL (corrected 2026-06-08)
 A just-uploaded blob is **unreferenced** (temporary on the PDS) until a record commits a
 reference to it; `com.atproto.sync.getBlob` fails for it (observed: **500** on a
 bsky.network PDS). So the original "preview from the live `getBlob` URL" plan below is
-wrong for in-editor preview — it only resolves *after* publish. We preview from a local
-object URL instead, and `attachBlobRefs` rewrites that transient `blob:` URL to the
-canonical `getBlob` URL at publish (so the stored record stays portable, never a dead
-object URL). The reader (SP4) still reconstructs the URL from `skypressBlob` + the
-author's current PDS.
+wrong for in-editor preview — it only resolves *after* publish. We preview from a `data:`
+URL instead, and `attachBlobRefs` rewrites that transient `data:` URL to the canonical
+`getBlob` URL at publish (so the stored record stays portable, never a dead preview URL).
+The reader (SP4) still reconstructs the URL from `skypressBlob` + the author's current PDS.
 
-Each object URL pins its `File` in memory until revoked, so the registry releases them
-(`revokeBlobRegistry`) at the points where the editor is torn down and the previews leave
-the DOM — switching/starting an article and Studio unmount — never mid-edit, which would
-blank a still-displayed preview.
+### Why a `data:` URL and NOT a `blob:` object URL (corrected 2026-06-09)
+The first cut used `URL.createObjectURL(file)`, a `blob:` URL. That **hangs the editor**:
+the Image block (`@wordpress/block-library@9.24.0`) treats *any* `blob:` URL as a
+still-uploading image — it sets `temporaryURL` (`is-transient` + a `<Spinner/>`) and runs
+`useUploadMediaFromBlobURL`, which re-invokes `mediaUpload` for the file behind that URL
+and only clears the transient state when `onChange` returns a **non-`blob:`** URL. Stock
+WordPress satisfies this by calling `onFileChange` twice (temporary `blob:`, then the
+final `http(s)` URL+id); our handler calls it once. Handing back another `blob:` URL means
+the spinner never clears (and `uploadBlob` may fire twice). A `data:` URL is not a `blob:`
+URL, so the block renders it as an ordinary inline image immediately — no transient state,
+no re-upload loop. (Unit tests assert the preview is a `data:` URL and never `blob:`.)
+
+A `data:` URL is a plain string (no `File` pinned in memory), so there is nothing to
+revoke; `revokeBlobRegistry` just clears the map at teardown — switching/starting an
+article and Studio unmount — so a later article can't resolve a stale preview at publish.
+The trade-off is that `data:` URLs are base64, so they bloat the block tree and the
+localStorage draft; a large image can approach the ~5MB localStorage quota. Acceptable for
+v1 — drafts-with-images is already a known stopgap (see Consequences) — and revisited if
+quota becomes a real problem (e.g. strip preview URLs from the persisted draft).
 
 The "Media Library" button (Gutenberg's `editor.MediaUpload`, which opens the legacy
 `wp.media` Backbone frame) is **disabled** via a filter override — SkyPress has no media

@@ -13,8 +13,8 @@ export interface BlobRefJson {
 
 /**
  * What a session upload records for each previewed image. The editor previews from a
- * transient object URL (`blob:…`); `attachBlobRefs` looks that key up at publish and
- * persists the portable `url` (a `getBlob` URL) plus the typed `ref` (`skypressBlob`).
+ * transient `data:` URL; `attachBlobRefs` looks that key up at publish and persists the
+ * portable `url` (a `getBlob` URL) plus the typed `ref` (`skypressBlob`).
  */
 export interface BlobUpload {
 	ref: BlobRefJson;

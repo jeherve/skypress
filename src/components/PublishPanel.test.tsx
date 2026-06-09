@@ -8,7 +8,12 @@ import type { Agent } from '@atproto/api';
 // Hoist the mock fns so vi.mock (which is hoisted) can reference them safely.
 const { updateDocument, publish } = vi.hoisted( () => {
 	return {
-		updateDocument: vi.fn( async () => ( { documentUri: 'at://x', articleUrl: 'https://x' } ) ),
+		updateDocument: vi.fn(
+			async ( _agent: unknown, _identity: unknown, _input: unknown ) => ( {
+				documentUri: 'at://x',
+				articleUrl: 'https://x',
+			} )
+		),
 		publish: vi.fn( async () => ( {
 			publicationUri: 'at://p',
 			documentUri: 'at://d',

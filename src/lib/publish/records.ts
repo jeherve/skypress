@@ -240,6 +240,8 @@ export interface BskyPostRecord {
 			uri: string;
 			title: string;
 			description: string;
+			/** An image blob (≤1MB, image/*) shown on the link card — the og:image fallback (Decision 0014). */
+			thumb?: BlobRefJson;
 			/** strongRefs to the document + publication; drives the standard.site link card. */
 			associatedRefs?: AssociatedRef[];
 		};
@@ -261,6 +263,8 @@ export function buildBskyPost( input: {
 	articleUrl: string;
 	createdAt: string;
 	description?: string;
+	/** Optional image blob for the card's `thumb` (the og:image fallback, Decision 0014). */
+	thumb?: BlobRefJson;
 	/** Document + publication strongRefs, in that order, for the standard.site card. */
 	associatedRefs?: StrongRef[];
 } ): BskyPostRecord {
@@ -285,6 +289,7 @@ export function buildBskyPost( input: {
 				uri: input.articleUrl,
 				title: input.title,
 				description: input.description ?? '',
+				...( input.thumb ? { thumb: input.thumb } : {} ),
 				...( input.associatedRefs && input.associatedRefs.length
 					? {
 							associatedRefs: input.associatedRefs.map( ( ref ) => ( {

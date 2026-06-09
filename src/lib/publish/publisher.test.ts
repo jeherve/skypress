@@ -87,6 +87,38 @@ describe( 'publish', () => {
 		expect( created.some( ( c ) => c.collection === 'site.standard.publication' ) ).toBe( false );
 	} );
 
+	it( 'sets embed.external.thumb to the first uploaded image blob (Decision 0014)', async () => {
+		const thumb = {
+			$type: 'blob',
+			ref: { $link: 'bafyimg' },
+			mimeType: 'image/jpeg',
+			size: 5000,
+		};
+		const blocksWithImage: BlockNode[] = [
+			{ name: 'core/paragraph', attributes: { content: 'Intro' }, innerBlocks: [] },
+			{ name: 'core/image', attributes: { url: 'getblob://x', skypressBlob: thumb }, innerBlocks: [] },
+		];
+		const { agent, created } = mockAgent();
+		await publish(
+			agent,
+			{ did: DID, handle: HANDLE },
+			{ title: 'Hello', blocks: blocksWithImage, ...TARGET }
+		);
+		const post = created.find( ( c ) => c.collection === 'app.bsky.feed.post' )!.record as {
+			embed: { external: { thumb?: unknown } };
+		};
+		expect( post.embed.external.thumb ).toEqual( thumb );
+	} );
+
+	it( 'omits thumb when no usable image is present', async () => {
+		const { agent, created } = mockAgent();
+		await publish( agent, { did: DID, handle: HANDLE }, { title: 'Hello', blocks: BLOCKS, ...TARGET } );
+		const post = created.find( ( c ) => c.collection === 'app.bsky.feed.post' )!.record as {
+			embed: { external: Record< string, unknown > };
+		};
+		expect( 'thumb' in post.embed.external ).toBe( false );
+	} );
+
 	it( 'writes the document first so the post can embed its strongRef (standard.site card)', async () => {
 		const { agent, created, put } = mockAgent();
 		await publish( agent, { did: DID, handle: HANDLE }, { title: 'Hello', blocks: BLOCKS, ...TARGET } );

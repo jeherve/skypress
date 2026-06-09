@@ -303,4 +303,21 @@ describe( 'buildBskyPost', () => {
 		} );
 		expect( 'associatedRefs' in post.embed.external ).toBe( false );
 	} );
+
+	it( 'includes embed.external.thumb only when a blob ref is provided (Decision 0014)', () => {
+		const base = {
+			title: 'Hello, World!',
+			articleUrl: ARTICLE_URL,
+			createdAt: '2026-06-08T12:00:00.000Z',
+		};
+		expect( 'thumb' in buildBskyPost( base ).embed.external ).toBe( false );
+
+		const thumb: BlobRefJson = {
+			$type: 'blob',
+			ref: { $link: 'bafythumb' },
+			mimeType: 'image/png',
+			size: 4242,
+		};
+		expect( buildBskyPost( { ...base, thumb } ).embed.external.thumb ).toEqual( thumb );
+	} );
 } );

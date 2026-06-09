@@ -7,6 +7,7 @@ import {
 	type StrongRef,
 } from './records';
 import { listPublications } from './publications';
+import { firstImageBlobRef } from '../media/blob';
 import { blocksToText, type BlockNode } from '../blocks/render';
 
 const DOCUMENT_COLLECTION = 'site.standard.document';
@@ -105,6 +106,8 @@ export async function publish(
 				articleUrl,
 				description: input.description,
 				createdAt: now,
+				// Reuse the first uploaded image's in-repo blob as the card thumb (Decision 0014).
+				thumb: firstImageBlobRef( input.blocks ),
 				associatedRefs: [ documentRef, publicationRef ],
 			} )
 		),

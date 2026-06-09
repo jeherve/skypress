@@ -55,7 +55,8 @@ unchanged.
 - Publish is now three PDS writes instead of two (publish is not a hot path).
 - Edit (`updateDocument`) is unchanged: it never created a post and still doesn't; the
   original post's facet + refs keep pointing at the stable URL.
-- **Thumbnail (`thumb`) is intentionally deferred** — it needs a per-post image blob
-  upload and is tracked as a follow-up. The standard.site card renders without it.
+- **Thumbnail (`thumb`) was deferred here** and is now added in **Decision 0014** (it reuses
+  the first uploaded content image's in-repo blob ref). The standard.site card renders with
+  or without it.
 - No SkyPress lexicon change: facets/`associatedRefs` are Bluesky-native fields on
   `app.bsky.feed.post`, not part of the `site.standard.*` schema.

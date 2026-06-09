@@ -29,4 +29,9 @@ describe( 'deriveExcerpt', () => {
 	it( 'honours a custom maxChars and cuts at the last space within it', () => {
 		expect( deriveExcerpt( 'alpha beta gamma', 10 ) ).toBe( 'alpha…' );
 	} );
+
+	it( 'truncates an unsplittable token at maxChars with an ellipsis', () => {
+		const result = deriveExcerpt( 'x'.repeat( 300 ) );
+		expect( result ).toBe( `${ 'x'.repeat( 200 ) }…` );
+	} );
 } );

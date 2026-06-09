@@ -5,13 +5,15 @@ import { listAllMyArticles, unpublish, type MyArticle } from '../lib/publish/pub
 interface Props {
 	agent: Agent;
 	did: string;
+	/** Writer's handle, for building public article URLs. Null if unresolved. */
+	handle: string | null;
 	/** Bump to re-fetch after a publish/update. */
 	refreshKey: number;
 	onEdit: ( article: MyArticle ) => void;
 }
 
 /** Lists the signed-in writer's SkyPress articles across all their publications (SP5/SP10). */
-export default function MyArticles( { agent, did, refreshKey, onEdit }: Props ) {
+export default function MyArticles( { agent, did, handle, refreshKey, onEdit }: Props ) {
 	const [ articles, setArticles ] = useState< MyArticle[] | null >( null );
 	const [ busy, setBusy ] = useState< string | null >( null );
 
@@ -63,6 +65,16 @@ export default function MyArticles( { agent, did, refreshKey, onEdit }: Props ) 
 							{ article.updatedAt && <em className="myarticles__edited"> · edited</em> }
 						</span>
 						<span className="myarticles__actions">
+							{ handle && (
+								<a
+									className="myarticles__view"
+									href={ `/@${ handle }/${ article.siteSlug }/${ article.rkey }` }
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									View
+								</a>
+							) }
 							<button type="button" onClick={ () => onEdit( article ) }>
 								Edit
 							</button>

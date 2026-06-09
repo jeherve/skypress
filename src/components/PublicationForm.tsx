@@ -11,6 +11,13 @@ import {
 	PUBLICATION_ICON_MAX_BYTES,
 } from '../lib/media/uploadImage';
 import { buildGetBlobUrl, type BlobRefJson } from '../lib/media/blob';
+import {
+	THEME_PRESETS,
+	findPresetByColors,
+	resolveSelectedTheme,
+	CUSTOM_THEME_SLUG,
+	type Rgb,
+} from '../lib/publish/themes';
 
 interface Props {
 	agent: Agent;
@@ -48,6 +55,20 @@ export default function PublicationForm( {
 			? buildGetBlobUrl( pdsUrl, did, existing.icon.ref.$link )
 			: null
 	);
+	// A stored theme that matches no current preset (e.g. a preset whose colours later changed):
+	// keep it verbatim and offer it as a selectable "Custom" option, so editing an unrelated field
+	// never silently erases the publisher's colours.
+	const customTheme =
+		existing?.basicTheme && ! findPresetByColors( existing.basicTheme )
+			? existing.basicTheme
+			: null;
+	const [ themeSlug, setThemeSlug ] = useState< string | null >( () => {
+		const matched = findPresetByColors( existing?.basicTheme )?.slug;
+		if ( matched ) {
+			return matched;
+		}
+		return customTheme ? CUSTOM_THEME_SLUG : null;
+	} );
 	const [ uploading, setUploading ] = useState( false );
 	const [ saving, setSaving ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
@@ -106,10 +127,15 @@ export default function PublicationForm( {
 				name: name.trim(),
 				description: description.trim() || undefined,
 				icon: icon ?? undefined,
+				basicTheme: resolveSelectedTheme( themeSlug, customTheme ),
 			};
 			const saved = existing
 				? await updatePublication( agent, did, handle, existing, input )
 				: await createPublication( agent, did, handle, input );
+			// Clear `saving` before handing off: the Settings tab keeps this form mounted across a
+			// save (onSaved just re-renders the manager on the same tab), so relying on unmount left
+			// the button stuck on "Saving…" forever despite a successful write.
+			setSaving( false );
 			onSaved( saved );
 		} catch ( err ) {
 			setError( err instanceof Error ? err.message : String( err ) );
@@ -168,6 +194,96 @@ export default function PublicationForm( {
 					disabled={ saving }
 				/>
 			</label>
+
+			<fieldset className="pubform__themes" role="radiogroup" aria-label="Theme">
+				<legend>Theme</legend>
+				<div className="pubform__theme-grid">
+					<label className={ `pubform__theme${ themeSlug === null ? ' is-selected' : '' }` }>
+						<input
+							type="radio"
+							name="pub-theme"
+							value=""
+							checked={ themeSlug === null }
+							onChange={ () => setThemeSlug( null ) }
+							disabled={ saving }
+						/>
+						<span
+							className="pubform__theme-swatch pubform__theme-swatch--none"
+							aria-hidden="true"
+						/>
+						<span className="pubform__theme-label">No theme</span>
+					</label>
+					{ customTheme && (
+						<label
+							className={ `pubform__theme${
+								themeSlug === CUSTOM_THEME_SLUG ? ' is-selected' : ''
+							}` }
+						>
+							<input
+								type="radio"
+								name="pub-theme"
+								value={ CUSTOM_THEME_SLUG }
+								checked={ themeSlug === CUSTOM_THEME_SLUG }
+								onChange={ () => setThemeSlug( CUSTOM_THEME_SLUG ) }
+								disabled={ saving }
+							/>
+							<span
+								className="pubform__theme-swatch"
+								style={ {
+									background: `rgb(${ customTheme.background.r }, ${ customTheme.background.g }, ${ customTheme.background.b })`,
+									color: `rgb(${ customTheme.foreground.r }, ${ customTheme.foreground.g }, ${ customTheme.foreground.b })`,
+								} }
+								aria-hidden="true"
+							>
+								<span
+									className="pubform__theme-dot"
+									style={ {
+										background: `rgb(${ customTheme.accent.r }, ${ customTheme.accent.g }, ${ customTheme.accent.b })`,
+									} }
+								/>
+								Aa
+							</span>
+							<span className="pubform__theme-label">Current</span>
+						</label>
+					) }
+					{ THEME_PRESETS.map( ( preset ) => {
+						const swatch = ( color: Rgb ) => `rgb(${ color.r }, ${ color.g }, ${ color.b })`;
+						return (
+							<label
+								key={ preset.slug }
+								className={ `pubform__theme${
+									themeSlug === preset.slug ? ' is-selected' : ''
+								}` }
+							>
+								<input
+									type="radio"
+									name="pub-theme"
+									value={ preset.slug }
+									checked={ themeSlug === preset.slug }
+									onChange={ () => setThemeSlug( preset.slug ) }
+									disabled={ saving }
+								/>
+								<span
+									className="pubform__theme-swatch"
+									style={ {
+										background: swatch( preset.colors.background ),
+										color: swatch( preset.colors.foreground ),
+									} }
+									aria-hidden="true"
+								>
+									<span
+										className="pubform__theme-dot"
+										style={ { background: swatch( preset.colors.accent ) } }
+									/>
+									Aa
+								</span>
+								<span className="pubform__theme-label">{ preset.label }</span>
+							</label>
+						);
+					} ) }
+				</div>
+				<small>Sets the colours readers see on your publication.</small>
+			</fieldset>
 
 			{ isEditing && (
 				<p className="pubform__note">

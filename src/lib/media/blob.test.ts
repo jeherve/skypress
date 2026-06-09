@@ -4,6 +4,8 @@ import {
 	attachBlobRefs,
 	resolveBlobImageUrls,
 	normalizeBlobRefJson,
+	firstImageBlobRef,
+	BSKY_THUMB_MAX_BYTES,
 	type BlobRefJson,
 } from './blob';
 import type { BlockNode } from '../blocks/render';
@@ -102,6 +104,79 @@ describe( 'attachBlobRefs', () => {
 		attachBlobRefs( blocks, lookup );
 		expect( 'skypressBlob' in ( blocks[ 0 ].attributes ?? {} ) ).toBe( false );
 		expect( blocks[ 0 ].attributes?.url ).toBe( 'blob:preview-1' );
+	} );
+} );
+
+describe( 'firstImageBlobRef', () => {
+	const img = ( skypressBlob?: unknown, extra: Record< string, unknown > = {} ): BlockNode => ( {
+		name: 'core/image',
+		attributes: { ...( skypressBlob ? { skypressBlob } : {} ), ...extra },
+		innerBlocks: [],
+	} );
+
+	it( 'returns the first uploaded core/image ref (depth-first, into innerBlocks)', () => {
+		const blocks: BlockNode[] = [
+			{ name: 'core/paragraph', attributes: { content: 'Intro' }, innerBlocks: [] },
+			{
+				name: 'core/gallery',
+				attributes: {},
+				innerBlocks: [ img( REF ) ],
+			},
+		];
+		expect( firstImageBlobRef( blocks ) ).toEqual( REF );
+	} );
+
+	it( 'picks the first usable image when several are present', () => {
+		const second: BlobRefJson = {
+			$type: 'blob',
+			ref: { $link: 'bafysecond' },
+			mimeType: 'image/jpeg',
+			size: 100,
+		};
+		expect( firstImageBlobRef( [ img( REF ), img( second ) ] ) ).toEqual( REF );
+	} );
+
+	it( 'skips external images (no skypressBlob) and non-image blocks', () => {
+		const blocks: BlockNode[] = [
+			{ name: 'core/heading', attributes: { content: 'Title' }, innerBlocks: [] },
+			img( undefined, { url: 'https://example.com/cat.jpg' } ),
+		];
+		expect( firstImageBlobRef( blocks ) ).toBeUndefined();
+	} );
+
+	it( 'skips images whose blob exceeds the bsky thumb size limit', () => {
+		const tooBig: BlobRefJson = {
+			$type: 'blob',
+			ref: { $link: 'bafytoobig' },
+			mimeType: 'image/png',
+			size: BSKY_THUMB_MAX_BYTES + 1,
+		};
+		const ok: BlobRefJson = {
+			$type: 'blob',
+			ref: { $link: 'bafyok' },
+			mimeType: 'image/png',
+			size: BSKY_THUMB_MAX_BYTES,
+		};
+		expect( firstImageBlobRef( [ img( tooBig ) ] ) ).toBeUndefined();
+		// The oversized one is skipped, the in-limit one after it is picked.
+		expect( firstImageBlobRef( [ img( tooBig ), img( ok ) ] ) ).toEqual( ok );
+	} );
+
+	it( 'skips non-image mime types', () => {
+		const pdf: BlobRefJson = {
+			$type: 'blob',
+			ref: { $link: 'bafypdf' },
+			mimeType: 'application/pdf',
+			size: 10,
+		};
+		expect( firstImageBlobRef( [ img( pdf ) ] ) ).toBeUndefined();
+	} );
+
+	it( 'returns undefined when there are no usable images', () => {
+		expect( firstImageBlobRef( [] ) ).toBeUndefined();
+		expect(
+			firstImageBlobRef( [ { name: 'core/paragraph', attributes: {}, innerBlocks: [] } ] )
+		).toBeUndefined();
 	} );
 } );
 

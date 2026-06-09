@@ -2,11 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Agent } from '@atproto/api';
 import {
 	listPublications,
+	listAllPublications,
 	createPublication,
 	updatePublication,
 	deletePublication,
 } from './publications';
 import { SITE_BASE } from './records';
+import { THEME_PRESETS } from './themes';
 import type { BlobRefJson } from '../media/blob';
 
 const DID = 'did:plc:me';
@@ -134,6 +136,70 @@ describe( 'listPublications', () => {
 	} );
 } );
 
+describe( 'listAllPublications', () => {
+	it( 'partitions owned publications from foreign ones', async () => {
+		const { agent } = mockAgent( {
+			'site.standard.publication': [
+				pubRecord( 'a', `${ SITE_BASE }/@me.bsky.social/my-blog` ),
+				pubRecord( 'b', 'https://leaflet.pub/lish/did:plc:me/xyz' ),
+			],
+		} );
+		const { owned, foreign } = await listAllPublications( agent, DID );
+		expect( owned ).toHaveLength( 1 );
+		expect( owned[ 0 ] ).toMatchObject( { rkey: 'a', slug: 'my-blog' } );
+		expect( foreign ).toHaveLength( 1 );
+		expect( foreign[ 0 ] ).toMatchObject( {
+			uri: `at://${ DID }/site.standard.publication/b`,
+			name: 'Pub b',
+			hostname: 'leaflet.pub',
+			url: 'https://leaflet.pub/lish/did:plc:me/xyz',
+		} );
+	} );
+
+	it( 'drops a slugless SkyPress-origin record from BOTH buckets', async () => {
+		const { agent } = mockAgent( {
+			'site.standard.publication': [ pubRecord( 'c', `${ SITE_BASE }/@me.bsky.social` ) ],
+		} );
+		const { owned, foreign } = await listAllPublications( agent, DID );
+		expect( owned ).toHaveLength( 0 );
+		expect( foreign ).toHaveLength( 0 );
+	} );
+
+	it( 'excludes records with a missing or non-http(s) url from foreign', async () => {
+		const { agent } = mockAgent( {
+			'site.standard.publication': [
+				pubRecord( 'd', 'at://did:plc:other/site.standard.publication/d' ),
+				{
+					uri: `at://${ DID }/site.standard.publication/e`,
+					cid: 'bafy-e',
+					value: { $type: 'site.standard.publication', name: 'No URL' },
+				},
+			],
+		} );
+		const { owned, foreign } = await listAllPublications( agent, DID );
+		expect( owned ).toHaveLength( 0 );
+		expect( foreign ).toHaveLength( 0 );
+	} );
+
+	it( 'normalises a foreign icon to the portable $link shape', async () => {
+		const cidObject = { toString: () => 'bafyforeign' };
+		const { agent } = mockAgent( {
+			'site.standard.publication': [
+				pubRecord( 'f', 'https://leaflet.pub/lish/did:plc:me/abc', {
+					icon: { $type: 'blob', ref: cidObject, mimeType: 'image/png', size: 9 },
+				} ),
+			],
+		} );
+		const { foreign } = await listAllPublications( agent, DID );
+		expect( foreign[ 0 ].icon ).toEqual( {
+			$type: 'blob',
+			ref: { $link: 'bafyforeign' },
+			mimeType: 'image/png',
+			size: 9,
+		} );
+	} );
+} );
+
 describe( 'createPublication', () => {
 	it( 'derives the slug from the name and writes the record under a fresh rkey', async () => {
 		const { agent, created } = mockAgent();
@@ -171,6 +237,23 @@ describe( 'createPublication', () => {
 		await createPublication( agent, DID, 'me.bsky.social', { name: 'Logo Blog', icon } );
 		expect( created[ 0 ].record.icon ).toEqual( icon );
 	} );
+
+	it( 'writes and returns basicTheme when provided', async () => {
+		const { agent, created } = mockAgent();
+		const pub = await createPublication( agent, DID, 'me.bsky.social', {
+			name: 'Themed Blog',
+			basicTheme: THEME_PRESETS[ 4 ].colors, // twilight
+		} );
+		expect( created[ 0 ].record.basicTheme ).toEqual( THEME_PRESETS[ 4 ].colors );
+		expect( pub.basicTheme ).toEqual( THEME_PRESETS[ 4 ].colors );
+	} );
+
+	it( 'omits basicTheme when none is chosen', async () => {
+		const { agent, created } = mockAgent();
+		const pub = await createPublication( agent, DID, 'me.bsky.social', { name: 'Plain Blog' } );
+		expect( 'basicTheme' in created[ 0 ].record ).toBe( false );
+		expect( pub.basicTheme ).toBeUndefined();
+	} );
 } );
 
 describe( 'updatePublication', () => {
@@ -178,6 +261,7 @@ describe( 'updatePublication', () => {
 		const { agent, put } = mockAgent();
 		const existing = {
 			uri: `at://${ DID }/site.standard.publication/a`,
+			cid: 'bafy-a',
 			rkey: 'a',
 			slug: 'my-blog',
 			name: 'My Blog',
@@ -193,6 +277,40 @@ describe( 'updatePublication', () => {
 		expect( updated.slug ).toBe( 'my-blog' );
 		expect( updated.name ).toBe( 'Renamed Blog' );
 		expect( updated.description ).toBe( 'Now with a description' );
+	} );
+
+	it( 'writes and returns a newly chosen basicTheme', async () => {
+		const { agent, put } = mockAgent();
+		const existing = {
+			uri: `at://${ DID }/site.standard.publication/a`,
+			cid: 'bafy-a',
+			rkey: 'a',
+			slug: 'my-blog',
+			name: 'My Blog',
+		};
+		const updated = await updatePublication( agent, DID, 'me.bsky.social', existing, {
+			name: 'My Blog',
+			basicTheme: THEME_PRESETS[ 1 ].colors, // noon
+		} );
+		expect( put[ 0 ].record.basicTheme ).toEqual( THEME_PRESETS[ 1 ].colors );
+		expect( updated.basicTheme ).toEqual( THEME_PRESETS[ 1 ].colors );
+	} );
+} );
+
+describe( 'toPublication basicTheme', () => {
+	it( 'surfaces a valid stored basicTheme and drops a malformed one', async () => {
+		const good = THEME_PRESETS[ 2 ].colors; // dusk
+		const { agent } = mockAgent( {
+			'site.standard.publication': [
+				pubRecord( 'a', `${ SITE_BASE }/@me.bsky.social/a`, { basicTheme: good } ),
+				pubRecord( 'b', `${ SITE_BASE }/@me.bsky.social/b`, {
+					basicTheme: { background: { r: 999 } },
+				} ),
+			],
+		} );
+		const pubs = await listPublications( agent, DID );
+		expect( pubs.find( ( p ) => p.slug === 'a' )?.basicTheme ).toEqual( good );
+		expect( pubs.find( ( p ) => p.slug === 'b' )?.basicTheme ).toBeUndefined();
 	} );
 } );
 

@@ -39,6 +39,7 @@
 	   white text. Bare --sun is too light for white text (~2.5:1). */
 	--btn-primary: #b85c12;
 	--btn-primary-hover: #9a4c0f;
+	--btn-primary-fg: #fff;
 	--ember: #bb5a36; /* rare warm accent (the ink/press counterweight) */
 
 	--radius: 12px;
@@ -63,6 +64,7 @@
 		/* Dark mode's accents are light, so white text still needs a deeper fill. */
 		--btn-primary: #aa6010;
 		--btn-primary-hover: #964f0c;
+		--btn-primary-fg: #fff;
 		--ember: #e08a63;
 		--shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -16px rgba(0, 0, 0, 0.6);
 	}
@@ -142,11 +144,11 @@ a:hover {
 }
 .btn--primary {
 	background: var(--btn-primary);
-	color: #fff;
+	color: var(--btn-primary-fg);
 }
 .btn--primary:hover {
 	background: var(--btn-primary-hover);
-	color: #fff;
+	color: var(--btn-primary-fg);
 }
 .btn--ghost {
 	background: var(--paper-raised);

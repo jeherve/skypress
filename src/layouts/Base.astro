@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { buildMetaTags } from '../lib/seo/meta';
 
 interface Props {
 	title: string;
@@ -10,8 +11,58 @@ interface Props {
 	 * from the visitor's clock. `<html>` is the single phase carrier — see index.astro.
 	 */
 	phase?: string;
+	/** Share image path (resolved to an absolute URL). Defaults to the shared OG image. */
+	image?: string;
+	/** Open Graph object type. Defaults to "website". */
+	ogType?: string;
+	/** Alt text for the share image. */
+	imageAlt?: string;
+	/**
+	 * Intrinsic share-image dimensions. Defaulted to 1200x630 only for the
+	 * built-in default image; a caller passing a custom image (e.g. a square
+	 * publication logo) leaves these unset so we don't mis-declare dimensions.
+	 */
+	imageWidth?: number;
+	imageHeight?: number;
+	/**
+	 * Whether Base emits the canonical link + Open Graph/Twitter tags. Defaults
+	 * to true. Pages that manage their own head tags (e.g. the article page,
+	 * which sets article-specific `og:*` + canonical) opt out to avoid emitting
+	 * duplicate, conflicting tags.
+	 */
+	socialMeta?: boolean;
 }
-const { title, description, phase } = Astro.props;
+const {
+	title,
+	description,
+	phase,
+	image = '/og-default.png',
+	ogType = 'website',
+	imageAlt = 'SkyPress — a writing studio for the open social web',
+	imageWidth,
+	imageHeight,
+	socialMeta = true,
+} = Astro.props;
+
+// Absolute URLs for OG/Twitter, resolved against the configured public origin
+// (astro.config.mjs `site`). Astro.url.pathname drops any query string so the
+// canonical URL stays stable.
+const canonicalUrl = new URL( Astro.url.pathname, Astro.site ).href;
+const imageUrl = new URL( image, Astro.site ).href;
+const isDefaultImage = image === '/og-default.png';
+const ogImageWidth = imageWidth ?? ( isDefaultImage ? 1200 : undefined );
+const ogImageHeight = imageHeight ?? ( isDefaultImage ? 630 : undefined );
+const metaTags = buildMetaTags( {
+	title,
+	description,
+	url: canonicalUrl,
+	image: imageUrl,
+	siteName: 'SkyPress',
+	type: ogType,
+	imageAlt,
+	imageWidth: ogImageWidth,
+	imageHeight: ogImageHeight,
+} );
 ---
 
 <!doctype html>
@@ -22,6 +73,20 @@ const { title, description, phase } = Astro.props;
 		<meta name="generator" content={Astro.generator} />
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 		{description && <meta name="description" content={description} />}
+		{
+			socialMeta && (
+				<>
+					<link rel="canonical" href={canonicalUrl} />
+					{metaTags.map( ( tag ) =>
+						tag.property ? (
+							<meta property={tag.property} content={tag.content} />
+						) : (
+							<meta name={tag.name} content={tag.content} />
+						)
+					)}
+				</>
+			)
+		}
 		<title>{title}</title>
 		<slot name="head" />
 	</head>

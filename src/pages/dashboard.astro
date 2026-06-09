@@ -186,6 +186,34 @@ import '../styles/login.css';
 		font-family: var(--font-mono);
 		font-size: 0.78rem;
 	}
+	.dash__foreign {
+		margin-top: 2.5rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--line);
+	}
+	.dash__h2 {
+		font-size: 1.15rem;
+		margin: 0 0 0.25rem;
+	}
+	.dash__foreign-note {
+		color: var(--muted);
+		font-size: 0.9rem;
+		margin: 0 0 0.5rem;
+	}
+	.dash__foreign .dash__pub {
+		opacity: 0.85;
+	}
+	.dash__pubhost {
+		display: inline-block;
+		align-self: flex-start;
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+		padding: 0.05rem 0.4rem;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		background: var(--paper-raised);
+	}
 	.dash__pubactions {
 		display: flex;
 		align-items: center;
@@ -350,6 +378,82 @@ import '../styles/login.css';
 	.pubform__error {
 		color: var(--ember);
 		font-size: 0.9rem;
+	}
+	.pubform__themes {
+		border: 0;
+		margin: 0 0 1rem;
+		padding: 0;
+		min-width: 0;
+	}
+	.pubform__themes legend {
+		font-size: 0.85rem;
+		font-weight: 600;
+		padding: 0;
+		margin-bottom: 0.4rem;
+	}
+	.pubform__themes small {
+		display: block;
+		margin-top: 0.5rem;
+		font-size: 0.82rem;
+		color: var(--muted);
+	}
+	.pubform__theme-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+		gap: 0.6rem;
+	}
+	.pubform__theme {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.35rem;
+		cursor: pointer;
+	}
+	.pubform__theme input {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		opacity: 0;
+		pointer-events: none;
+	}
+	.pubform__theme-swatch {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.3rem;
+		width: 100%;
+		aspect-ratio: 16 / 10;
+		border-radius: var(--radius-sm);
+		border: 2px solid var(--line-strong);
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 0.95rem;
+	}
+	.pubform__theme.is-selected .pubform__theme-swatch {
+		border-color: var(--sun);
+		box-shadow: 0 0 0 2px var(--sun);
+	}
+	.pubform__theme input:focus-visible + .pubform__theme-swatch {
+		outline: 2px solid var(--sun);
+		outline-offset: 2px;
+	}
+	.pubform__theme-swatch--none {
+		background: repeating-linear-gradient(
+			45deg,
+			var(--panel),
+			var(--panel) 6px,
+			var(--paper-raised) 6px,
+			var(--paper-raised) 12px
+		);
+	}
+	.pubform__theme-dot {
+		width: 0.7rem;
+		height: 0.7rem;
+		border-radius: 50%;
+	}
+	.pubform__theme-label {
+		font-size: 0.8rem;
+		color: var(--ink-soft);
 	}
 	.pubform__actions {
 		display: flex;

@@ -16,6 +16,7 @@ import {
 	type PublicationRecord,
 } from './records';
 import { normalizeBlobRefJson, type BlobRefJson } from '../media/blob';
+import { parseBasicTheme, type BasicTheme } from './themes';
 
 const PUBLICATION_COLLECTION = 'site.standard.publication';
 const DOCUMENT_COLLECTION = 'site.standard.document';
@@ -34,10 +35,22 @@ function rkeyFromUri( uri: string ): string {
 /** A SkyPress publication, resolved to the shape the dashboard + editor consume. */
 export interface Publication {
 	uri: string;
+	/** Current record cid — needed for the post's `associatedRefs` strongRef (Decision 0013). */
+	cid: string;
 	rkey: string;
 	slug: string;
 	name: string;
 	description?: string;
+	icon?: BlobRefJson;
+	basicTheme?: BasicTheme;
+}
+
+/** A publication record written by another app sharing the lexicon (Leaflet, …). Read-only. */
+export interface ForeignPublication {
+	uri: string;
+	name: string;
+	hostname: string;
+	url: string;
 	icon?: BlobRefJson;
 }
 
@@ -46,11 +59,13 @@ export interface PublicationInput {
 	name: string;
 	description?: string;
 	icon?: BlobRefJson;
+	basicTheme?: BasicTheme;
 }
 
 /** Map a raw repo record to a Publication, or null if it isn't a usable SkyPress publication. */
 function toPublication( record: {
 	uri: string;
+	cid: string;
 	value: unknown;
 } ): Publication | null {
 	const value = record.value as Partial< PublicationRecord > | undefined;
@@ -64,26 +79,84 @@ function toPublication( record: {
 	// The agent deserialises the icon blob into a BlobRef (ref = CID object); normalise back to
 	// the portable `{ ref: { $link } }` shape the dashboard + form read from.
 	const icon = normalizeBlobRefJson( value.icon );
+	const basicTheme = parseBasicTheme( value.basicTheme );
 	return {
 		uri: record.uri,
+		cid: record.cid,
 		rkey: rkeyFromUri( record.uri ),
 		slug,
 		name: value.name ?? slug,
 		...( value.description ? { description: value.description } : {} ),
 		...( icon ? { icon } : {} ),
+		...( basicTheme ? { basicTheme } : {} ),
 	};
 }
 
-/** List the writer's SkyPress publications (newest first), filtered to this app's origin. */
-export async function listPublications( agent: Agent, did: string ): Promise< Publication[] > {
+/** Map a raw repo record to a ForeignPublication, or null if its url isn't a usable http(s) link. */
+function toForeignPublication( record: {
+	uri: string;
+	value: unknown;
+} ): ForeignPublication | null {
+	const value = record.value as Partial< PublicationRecord > | undefined;
+	if ( ! value?.url ) {
+		return null;
+	}
+	let parsed: URL;
+	try {
+		parsed = new URL( value.url );
+	} catch {
+		return null;
+	}
+	if ( parsed.protocol !== 'http:' && parsed.protocol !== 'https:' ) {
+		return null;
+	}
+	const icon = normalizeBlobRefJson( value.icon );
+	return {
+		uri: record.uri,
+		name: value.name ?? parsed.hostname,
+		hostname: parsed.hostname,
+		url: value.url,
+		...( icon ? { icon } : {} ),
+	};
+}
+
+/**
+ * Fetch the writer's publication records once and partition them: those SkyPress OWNS
+ * (origin === SITE_BASE, with a slug) versus FOREIGN records another app wrote into the same
+ * collection (Leaflet, …), which SkyPress only ever displays read-only (Decision 0010).
+ */
+export async function listAllPublications(
+	agent: Agent,
+	did: string
+): Promise< { owned: Publication[]; foreign: ForeignPublication[] } > {
 	const res = await agent.com.atproto.repo.listRecords( {
 		repo: did,
 		collection: PUBLICATION_COLLECTION,
 		limit: 100,
 	} );
-	return res.data.records
-		.map( ( record ) => toPublication( record ) )
-		.filter( ( pub ): pub is Publication => pub !== null );
+	const owned: Publication[] = [];
+	const foreign: ForeignPublication[] = [];
+	for ( const record of res.data.records ) {
+		const url = ( record.value as Partial< PublicationRecord > | undefined )?.url;
+		if ( url && isSkyPressPublicationUrl( url ) ) {
+			// Ours: owned if it has a slug, otherwise a malformed/legacy own-record we drop entirely.
+			const pub = toPublication( record );
+			if ( pub ) {
+				owned.push( pub );
+			}
+			continue;
+		}
+		const fp = toForeignPublication( record );
+		if ( fp ) {
+			foreign.push( fp );
+		}
+	}
+	return { owned, foreign };
+}
+
+/** List the writer's SkyPress publications (newest first), filtered to this app's origin. */
+export async function listPublications( agent: Agent, did: string ): Promise< Publication[] > {
+	return ( await listAllPublications( agent, did ) ).owned;
 }
 
 /**
@@ -110,6 +183,7 @@ export async function createPublication(
 		name: input.name,
 		description: input.description,
 		icon: input.icon,
+		basicTheme: input.basicTheme,
 	} );
 	const res = await agent.com.atproto.repo.createRecord( {
 		repo: did,
@@ -119,11 +193,13 @@ export async function createPublication(
 	} );
 	return {
 		uri: res.data.uri,
+		cid: res.data.cid,
 		rkey,
 		slug,
 		name: record.name,
 		...( record.description ? { description: record.description } : {} ),
 		...( record.icon ? { icon: record.icon } : {} ),
+		...( record.basicTheme ? { basicTheme: record.basicTheme } : {} ),
 	};
 }
 
@@ -144,8 +220,9 @@ export async function updatePublication(
 		name: input.name,
 		description: input.description,
 		icon: input.icon,
+		basicTheme: input.basicTheme,
 	} );
-	await agent.com.atproto.repo.putRecord( {
+	const res = await agent.com.atproto.repo.putRecord( {
 		repo: did,
 		collection: PUBLICATION_COLLECTION,
 		rkey: existing.rkey,
@@ -153,11 +230,13 @@ export async function updatePublication(
 	} );
 	return {
 		uri: existing.uri,
+		cid: res.data.cid,
 		rkey: existing.rkey,
 		slug: existing.slug,
 		name: record.name,
 		...( record.description ? { description: record.description } : {} ),
 		...( record.icon ? { icon: record.icon } : {} ),
+		...( record.basicTheme ? { basicTheme: record.basicTheme } : {} ),
 	};
 }
 

@@ -6,6 +6,7 @@
  */
 import type { BlockNode } from '../blocks/render';
 import type { BlobRefJson } from '../media/blob';
+import { parseBasicTheme, type BasicTheme } from './themes';
 
 /**
  * Public origin for the stored publication + article URLs (and the Bluesky post link).
@@ -148,6 +149,8 @@ export interface PublicationRecord {
 	description?: string;
 	/** The publication logo (≤1MB, image/*) — the lexicon's `icon` blob (Decision 0010). */
 	icon?: BlobRefJson;
+	/** Optional sky-phase colour theme — the lexicon's `basicTheme` object (Decision 0012). */
+	basicTheme?: BasicTheme;
 }
 
 export function buildPublicationRecord( input: {
@@ -157,15 +160,20 @@ export function buildPublicationRecord( input: {
 	name?: string;
 	description?: string;
 	icon?: BlobRefJson;
+	basicTheme?: BasicTheme;
 } ): PublicationRecord {
 	const trimmedName = input.name?.trim();
 	const description = input.description?.trim();
+	// Validate the theme at the write boundary too (symmetric with the read path): an invalid
+	// theme is dropped rather than persisted, so no out-of-range channel can ever reach storage.
+	const basicTheme = parseBasicTheme( input.basicTheme );
 	return {
 		$type: 'site.standard.publication',
 		url: publicationHomeUrl( input.handle, input.slug ),
 		name: trimmedName || input.handle,
 		...( description ? { description } : {} ),
 		...( input.icon ? { icon: input.icon } : {} ),
+		...( basicTheme ? { basicTheme } : {} ),
 	};
 }
 
@@ -208,36 +216,89 @@ export function buildDocumentRecord( input: {
 	};
 }
 
+/** A richtext link facet (`app.bsky.richtext.facet#link`) over a UTF-8 byte range of `text`. */
+export interface BskyLinkFacet {
+	$type: 'app.bsky.richtext.facet';
+	index: { byteStart: number; byteEnd: number };
+	features: Array< { $type: 'app.bsky.richtext.facet#link'; uri: string } >;
+}
+
+/** A `com.atproto.repo.strongRef` as embedded in `external.associatedRefs` (Decision 0013). */
+export interface AssociatedRef extends StrongRef {
+	$type: 'com.atproto.repo.strongRef';
+}
+
 export interface BskyPostRecord {
 	$type: 'app.bsky.feed.post';
 	text: string;
 	createdAt: string;
+	/** Always present: marks the article URL in `text` as a clickable link (Decision 0013). */
+	facets: BskyLinkFacet[];
 	embed: {
 		$type: 'app.bsky.embed.external';
 		external: {
 			uri: string;
 			title: string;
 			description: string;
+			/** An image blob (≤1MB, image/*) shown on the link card — the og:image fallback (Decision 0014). */
+			thumb?: BlobRefJson;
+			/** strongRefs to the document + publication; drives the standard.site link card. */
+			associatedRefs?: AssociatedRef[];
 		};
 	};
 }
 
+/** UTF-8 byte length — facet offsets are byte-based, not JS string-index based. */
+function utf8ByteLength( value: string ): number {
+	return new TextEncoder().encode( value ).length;
+}
+
+/**
+ * Build the companion Bluesky post (Decision 0005). The article URL is appended to the text and
+ * marked as a clickable link via a richtext facet; `associatedRefs` (the document + publication
+ * strongRefs) are embedded so Bluesky renders the rich standard.site link card (Decision 0013).
+ */
 export function buildBskyPost( input: {
 	title: string;
 	articleUrl: string;
 	createdAt: string;
 	description?: string;
+	/** Optional image blob for the card's `thumb` (the og:image fallback, Decision 0014). */
+	thumb?: BlobRefJson;
+	/** Document + publication strongRefs, in that order, for the standard.site card. */
+	associatedRefs?: StrongRef[];
 } ): BskyPostRecord {
+	const text = `${ input.title }\n\n${ input.articleUrl }`;
+	// The URL is the trailing segment of `text`; mark its byte range as a link facet.
+	const byteStart = utf8ByteLength( `${ input.title }\n\n` );
+	const byteEnd = byteStart + utf8ByteLength( input.articleUrl );
 	return {
 		$type: 'app.bsky.feed.post',
-		text: `${ input.title }\n\n${ input.articleUrl }`,
+		text,
 		createdAt: input.createdAt,
+		facets: [
+			{
+				$type: 'app.bsky.richtext.facet',
+				index: { byteStart, byteEnd },
+				features: [ { $type: 'app.bsky.richtext.facet#link', uri: input.articleUrl } ],
+			},
+		],
 		embed: {
 			$type: 'app.bsky.embed.external',
 			external: {
 				uri: input.articleUrl,
 				title: input.title,
 				description: input.description ?? '',
+				...( input.thumb ? { thumb: input.thumb } : {} ),
+				...( input.associatedRefs && input.associatedRefs.length
+					? {
+							associatedRefs: input.associatedRefs.map( ( ref ) => ( {
+								$type: 'com.atproto.repo.strongRef' as const,
+								uri: ref.uri,
+								cid: ref.cid,
+							} ) ),
+					  }
+					: {} ),
 			},
 		},
 	};

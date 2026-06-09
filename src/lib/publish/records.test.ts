@@ -18,6 +18,7 @@ import {
 } from './records';
 import type { BlockNode } from '../blocks/render';
 import type { BlobRefJson } from '../media/blob';
+import { THEME_PRESETS } from './themes';
 
 const BLOCKS: BlockNode[] = [
 	{ name: 'core/heading', attributes: { level: 1, content: 'Hi' }, innerBlocks: [] },
@@ -159,6 +160,55 @@ describe( 'buildPublicationRecord', () => {
 		expect( full.description ).toBe( 'A blog' );
 		expect( full.icon ).toEqual( icon );
 	} );
+
+	it( 'includes basicTheme when provided and omits it otherwise', () => {
+		const themed = buildPublicationRecord( {
+			handle: 'a.b',
+			slug: 's',
+			name: 'N',
+			basicTheme: THEME_PRESETS[ 0 ].colors,
+		} );
+		expect( themed.basicTheme ).toEqual( THEME_PRESETS[ 0 ].colors );
+
+		const bare = buildPublicationRecord( { handle: 'a.b', slug: 's', name: 'N' } );
+		expect( 'basicTheme' in bare ).toBe( false );
+	} );
+
+	it( 'stamps the colour union $type so the stored basicTheme validates against the lexicon', () => {
+		// `site.standard.theme.basic` colours are a union of `site.standard.theme.color#rgb`; without
+		// the `$type` discriminator the record is invalid and Bluesky drops the enhanced link card.
+		const themed = buildPublicationRecord( {
+			handle: 'a.b',
+			slug: 's',
+			name: 'N',
+			basicTheme: THEME_PRESETS[ 0 ].colors,
+		} );
+		for ( const color of [
+			themed.basicTheme!.background,
+			themed.basicTheme!.foreground,
+			themed.basicTheme!.accent,
+			themed.basicTheme!.accentForeground,
+		] ) {
+			expect( color.$type ).toBe( 'site.standard.theme.color#rgb' );
+		}
+	} );
+
+	it( 'drops an invalid basicTheme rather than persisting it (write-boundary validation)', () => {
+		const record = buildPublicationRecord( {
+			handle: 'a.b',
+			slug: 's',
+			name: 'N',
+			// Out-of-range channel — must never reach storage.
+			basicTheme: {
+				$type: 'site.standard.theme.basic',
+				background: { r: 300, g: 0, b: 0 },
+				foreground: { r: 0, g: 0, b: 0 },
+				accent: { r: 0, g: 0, b: 0 },
+				accentForeground: { r: 0, g: 0, b: 0 },
+			} as never,
+		} );
+		expect( 'basicTheme' in record ).toBe( false );
+	} );
 } );
 
 describe( 'buildDocumentRecord', () => {
@@ -197,10 +247,12 @@ describe( 'buildDocumentRecord', () => {
 } );
 
 describe( 'buildBskyPost', () => {
+	const ARTICLE_URL = 'https://skypress.blog/@alice.bsky.social/my-blog/3kabcrkey';
+
 	it( 'creates a post with an external embed pointing at the article', () => {
 		const post = buildBskyPost( {
 			title: 'Hello, World!',
-			articleUrl: 'https://skypress.blog/@alice.bsky.social/my-blog/3kabcrkey',
+			articleUrl: ARTICLE_URL,
 			description: 'An excerpt',
 			createdAt: '2026-06-08T12:00:00.000Z',
 		} );
@@ -208,10 +260,83 @@ describe( 'buildBskyPost', () => {
 		expect( post.text ).toContain( 'Hello, World!' );
 		expect( post.createdAt ).toBe( '2026-06-08T12:00:00.000Z' );
 		expect( post.embed.$type ).toBe( 'app.bsky.embed.external' );
-		expect( post.embed.external.uri ).toBe(
-			'https://skypress.blog/@alice.bsky.social/my-blog/3kabcrkey'
-		);
+		expect( post.embed.external.uri ).toBe( ARTICLE_URL );
 		expect( post.embed.external.title ).toBe( 'Hello, World!' );
 		expect( typeof post.embed.external.description ).toBe( 'string' );
+	} );
+
+	it( 'marks the article URL as a clickable link facet over its byte range', () => {
+		const post = buildBskyPost( {
+			title: 'Hello, World!',
+			articleUrl: ARTICLE_URL,
+			createdAt: '2026-06-08T12:00:00.000Z',
+		} );
+		const bytes = ( s: string ) => new TextEncoder().encode( s ).length;
+		const byteStart = bytes( `Hello, World!\n\n` );
+		expect( post.facets ).toEqual( [
+			{
+				$type: 'app.bsky.richtext.facet',
+				index: { byteStart, byteEnd: byteStart + bytes( ARTICLE_URL ) },
+				features: [ { $type: 'app.bsky.richtext.facet#link', uri: ARTICLE_URL } ],
+			},
+		] );
+	} );
+
+	it( 'computes facet byte offsets in UTF-8 (multibyte title)', () => {
+		const post = buildBskyPost( {
+			title: '🍔 Burgers',
+			articleUrl: ARTICLE_URL,
+			createdAt: '2026-06-08T12:00:00.000Z',
+		} );
+		const bytes = ( s: string ) => new TextEncoder().encode( s ).length;
+		// The emoji is 4 UTF-8 bytes, so the link starts well past its JS string index.
+		expect( post.facets[ 0 ].index.byteStart ).toBe( bytes( '🍔 Burgers\n\n' ) );
+		expect( post.facets[ 0 ].index.byteEnd ).toBe(
+			bytes( '🍔 Burgers\n\n' ) + bytes( ARTICLE_URL )
+		);
+	} );
+
+	it( 'embeds associatedRefs (document, publication strongRefs) when provided', () => {
+		const documentRef = { uri: 'at://did:plc:abc/site.standard.document/d1', cid: 'bafydoc' };
+		const publicationRef = {
+			uri: 'at://did:plc:abc/site.standard.publication/p1',
+			cid: 'bafypub',
+		};
+		const post = buildBskyPost( {
+			title: 'Hello, World!',
+			articleUrl: ARTICLE_URL,
+			createdAt: '2026-06-08T12:00:00.000Z',
+			associatedRefs: [ documentRef, publicationRef ],
+		} );
+		expect( post.embed.external.associatedRefs ).toEqual( [
+			{ $type: 'com.atproto.repo.strongRef', ...documentRef },
+			{ $type: 'com.atproto.repo.strongRef', ...publicationRef },
+		] );
+	} );
+
+	it( 'omits associatedRefs when none are provided', () => {
+		const post = buildBskyPost( {
+			title: 'Hello, World!',
+			articleUrl: ARTICLE_URL,
+			createdAt: '2026-06-08T12:00:00.000Z',
+		} );
+		expect( 'associatedRefs' in post.embed.external ).toBe( false );
+	} );
+
+	it( 'includes embed.external.thumb only when a blob ref is provided (Decision 0014)', () => {
+		const base = {
+			title: 'Hello, World!',
+			articleUrl: ARTICLE_URL,
+			createdAt: '2026-06-08T12:00:00.000Z',
+		};
+		expect( 'thumb' in buildBskyPost( base ).embed.external ).toBe( false );
+
+		const thumb: BlobRefJson = {
+			$type: 'blob',
+			ref: { $link: 'bafythumb' },
+			mimeType: 'image/png',
+			size: 4242,
+		};
+		expect( buildBskyPost( { ...base, thumb } ).embed.external.thumb ).toEqual( thumb );
 	} );
 } );

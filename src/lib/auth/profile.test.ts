@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Agent } from '@atproto/api';
-import { fetchViewerProfile, displayNameFor, authorPath } from './profile';
+import { fetchViewerProfile, displayNameFor, authorPath, accountMenuItems } from './profile';
 
 /** Minimal Agent stub: only getProfile is exercised. */
 function agentReturning( data: Record< string, unknown > ): Agent {
@@ -67,5 +67,24 @@ describe( 'authorPath', () => {
 	} );
 	it( 'returns null when there is no handle', () => {
 		expect( authorPath( null ) ).toBeNull();
+	} );
+} );
+
+describe( 'accountMenuItems', () => {
+	const base = { did: 'did:plc:abc', displayName: 'Jane Rivera', avatar: null };
+
+	it( 'returns Dashboard, Write and Profile in order for a profile with a handle', () => {
+		expect( accountMenuItems( { ...base, handle: 'jane.bsky.social' } ) ).toEqual( [
+			{ label: 'Dashboard', href: '/dashboard' },
+			{ label: 'Write', href: '/editor' },
+			{ label: 'Profile', href: '/@jane.bsky.social' },
+		] );
+	} );
+
+	it( 'omits the Profile item when no handle is known', () => {
+		expect( accountMenuItems( { ...base, handle: null } ) ).toEqual( [
+			{ label: 'Dashboard', href: '/dashboard' },
+			{ label: 'Write', href: '/editor' },
+		] );
 	} );
 } );

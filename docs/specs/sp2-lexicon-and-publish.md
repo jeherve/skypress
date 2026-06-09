@@ -16,9 +16,10 @@ and [`lexicons/`](../../lexicons/README.md).
 2. **Pure record builders** produce valid `site.standard.publication`,
    `site.standard.document` (with the Gutenberg content object + `textContent`), and
    `app.bsky.feed.post` records — unit-tested.
-3. **Publisher** orchestrates via the `Agent`: ensure-publication (list/reuse or create),
-   create post, create document with `bskyPostRef`. Returns the document URI, post URI,
-   and canonical article URL.
+3. **Publisher** orchestrates via the `Agent`: pick the target publication, create the
+   document, create the post (clickable link facet + standard.site `associatedRefs`), then
+   `putRecord` the document with `bskyPostRef` (order/why: Decision 0013). Returns the
+   document URI, post URI, and canonical article URL.
 4. **Write scope**: the dev loopback client requests `atproto transition:generic` so
    `createRecord` is authorized (one re-auth).
 5. **Publish UI**: title field + publish action that **unmistakably states it also posts

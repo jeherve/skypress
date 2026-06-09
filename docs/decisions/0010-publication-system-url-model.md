@@ -73,3 +73,17 @@ facing. Blobs (logo, images) become unreferenced and the PDS garbage-collects th
   name/bio/avatar/banner; those are rendered as **text**/images, never injected as HTML.
 - Slug freezing means a renamed publication keeps a slug derived from its old name. Accepted:
   URL stability beats prettiness, and there is no slug registry to rename against.
+
+## Amendment (2026-06-09): foreign publications are displayed read-only
+
+Section 3 originally hid every non-owned `site.standard.publication` record from the
+dashboard. Writers found this confusing: Leaflet's home shows all their publications, so
+SkyPress appeared to have "lost" the ones created elsewhere.
+
+SkyPress now **displays** foreign publications (origin ≠ `SITE_BASE`) on the dashboard in a
+separate read-only "From other apps" section — name, logo, a hostname badge, and an outbound
+link to the publication's own `url`. They are modelled with a distinct `ForeignPublication`
+type so they are structurally incapable of reaching the manage/edit/delete paths.
+
+The ownership guards are **unchanged**: SkyPress still manages, renders, and resolves only
+publications it owns (`isSkyPressPublicationUrl`). Only listing/visibility expanded.

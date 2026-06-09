@@ -4,10 +4,12 @@ import Logo from '../../../components/Logo.astro';
 import { resolveAuthor } from '../../../lib/reader/identity';
 import { getRecord } from '../../../lib/reader/records';
 import { resolveReaderPublication } from '../../../lib/reader/publications';
-import { resolveBlobImageUrls } from '../../../lib/media/blob';
+import { resolveBlobImageUrls, buildGetBlobUrl } from '../../../lib/media/blob';
 import { renderBlocks, blocksToText, type BlockNode } from '../../../lib/blocks/render';
 import { sanitizeArticleHtml } from '../../../lib/reader/sanitize';
 import { canonicalArticleUrl } from '../../../lib/publish/records';
+import { themeStyleBlock } from '../../../lib/publish/themes';
+import { buildMetaTags } from '../../../lib/seo/meta';
 
 // Frontend block styles only — no editor chrome, no JS.
 import '@wordpress/block-library/build-style/common.css';
@@ -72,19 +74,43 @@ const words = textContent.split( /\s+/ ).filter( Boolean ).length;
 const readingMinutes = Math.max( 1, Math.round( words / 200 ) );
 const publishedLabel = doc.publishedAt ? doc.publishedAt.slice( 0, 10 ) : null;
 const updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
+const themeStyle = themeStyleBlock( publication.basicTheme );
+
+// Share image: the publication logo, else the shared default. Only the default
+// image has known 1200x630 dimensions; a square logo omits them.
+const ogImage = publication.icon
+	? buildGetBlobUrl( pdsUrl, did, publication.icon.ref.$link )
+	: new URL( '/og-default.png', Astro.site ).href;
+const ogDimensions = publication.icon
+	? {}
+	: { imageWidth: 1200, imageHeight: 630 };
+const metaTags = buildMetaTags( {
+	title,
+	description,
+	url: canonical,
+	image: ogImage,
+	siteName: 'SkyPress',
+	type: 'article',
+	imageAlt: publication.name,
+	...ogDimensions,
+} );
 ---
 
-<Base title={`${ title } — ${ publication.name }`} description={description}>
+<Base title={`${ title } — ${ publication.name }`} description={description} socialMeta={false}>
 	<Fragment slot="head">
 		{/* standard.site indexing tags (brief §3) — Bluesky cards + AppView pickup */}
 		<link rel="site.standard.document" href={docUri} />
 		<link rel="site.standard.publication" href={publication.uri} />
 		<link rel="alternate" type="application/rss+xml" title={`${ publication.name } — RSS`} href={feedHref} />
 		<link rel="canonical" href={canonical} />
-		<meta property="og:type" content="article" />
-		<meta property="og:title" content={title} />
-		<meta property="og:description" content={description} />
-		<meta property="og:url" content={canonical} />
+		{metaTags.map( ( tag ) =>
+			tag.property ? (
+				<meta property={tag.property} content={tag.content} />
+			) : (
+				<meta name={tag.name} content={tag.content} />
+			)
+		)}
+		{themeStyle && <Fragment set:html={themeStyle} />}
 	</Fragment>
 
 	<header class="masthead">

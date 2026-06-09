@@ -13,8 +13,8 @@ export interface BlobRefJson {
 
 /**
  * What a session upload records for each previewed image. The editor previews from a
- * transient object URL (`blob:…`); `attachBlobRefs` looks that key up at publish and
- * persists the portable `url` (a `getBlob` URL) plus the typed `ref` (`skypressBlob`).
+ * transient `data:` URL; `attachBlobRefs` looks that key up at publish and persists the
+ * portable `url` (a `getBlob` URL) plus the typed `ref` (`skypressBlob`).
  */
 export interface BlobUpload {
 	ref: BlobRefJson;
@@ -23,6 +23,45 @@ export interface BlobUpload {
 
 /** Block names whose `url` attribute may reference an uploaded blob. */
 const IMAGE_BLOCKS = new Set( [ 'core/image' ] );
+
+/**
+ * The `app.bsky.embed.external` thumb blob constraint: `image/*`, ≤ 1,000,000 bytes. A blob
+ * larger than this is rejected by the post lexicon, so we skip it rather than fail the publish.
+ */
+export const BSKY_THUMB_MAX_BYTES = 1_000_000;
+
+/**
+ * The blob ref to use as a companion Bluesky post's `embed.external.thumb` (Decision 0014):
+ * the first uploaded `core/image` block's `skypressBlob` (depth-first, `innerBlocks` included)
+ * that the post lexicon will accept — `image/*` and `0 < size ≤ BSKY_THUMB_MAX_BYTES`.
+ *
+ * Returns undefined when the document has no usable uploaded image; the caller then omits
+ * `thumb` (the standard.site card still renders via `associatedRefs`). External images (no
+ * `skypressBlob`) are skipped — turning a remote URL into a thumb would need a byte-fetch +
+ * the SSRF guard, deferred. Reuses the in-repo blob ref (no re-upload): atproto blobs are
+ * content-addressed and repo-scoped, and the publish flow commits the document (which
+ * references this blob) before the post, so the post can reference the same CID.
+ */
+export function firstImageBlobRef( blocks: BlockNode[] ): BlobRefJson | undefined {
+	for ( const block of blocks ) {
+		if ( IMAGE_BLOCKS.has( block.name ) ) {
+			const ref = normalizeBlobRefJson( block.attributes?.skypressBlob );
+			if (
+				ref &&
+				ref.mimeType.startsWith( 'image/' ) &&
+				ref.size > 0 &&
+				ref.size <= BSKY_THUMB_MAX_BYTES
+			) {
+				return ref;
+			}
+		}
+		const nested = firstImageBlobRef( block.innerBlocks ?? [] );
+		if ( nested ) {
+			return nested;
+		}
+	}
+	return undefined;
+}
 
 /**
  * Reader-side (SP4): rewrite each blob-backed image's `url` to a fresh `getBlob` URL

@@ -8,6 +8,7 @@ import { resolveBlobImageUrls } from '../../../lib/media/blob';
 import { renderBlocks, blocksToText, type BlockNode } from '../../../lib/blocks/render';
 import { sanitizeArticleHtml } from '../../../lib/reader/sanitize';
 import { canonicalArticleUrl } from '../../../lib/publish/records';
+import { themeStyleBlock } from '../../../lib/publish/themes';
 
 // Frontend block styles only — no editor chrome, no JS.
 import '@wordpress/block-library/build-style/common.css';
@@ -72,6 +73,7 @@ const words = textContent.split( /\s+/ ).filter( Boolean ).length;
 const readingMinutes = Math.max( 1, Math.round( words / 200 ) );
 const publishedLabel = doc.publishedAt ? doc.publishedAt.slice( 0, 10 ) : null;
 const updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
+const themeStyle = themeStyleBlock( publication.basicTheme );
 ---
 
 <Base title={`${ title } — ${ publication.name }`} description={description}>
@@ -85,6 +87,7 @@ const updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		<meta property="og:url" content={canonical} />
+		{themeStyle && <Fragment set:html={themeStyle} />}
 	</Fragment>
 
 	<header class="masthead">

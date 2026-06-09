@@ -15,7 +15,7 @@ import {
 	unpublish,
 	type MyArticle,
 } from '../lib/publish/publisher';
-import { buildGetBlobUrl } from '../lib/media/blob';
+import { buildGetBlobUrl, type BlobRefJson } from '../lib/media/blob';
 
 type View =
 	| { kind: 'list' }
@@ -137,6 +137,28 @@ function DashboardGate() {
 	);
 }
 
+/** A publication's 48px logo, or a letter-fallback square when it has no icon. Shared by the owned and foreign lists. */
+function PublicationLogo( {
+	icon,
+	name,
+	pdsUrl,
+	did,
+}: {
+	icon?: BlobRefJson;
+	name: string;
+	pdsUrl: string | null;
+	did: string;
+} ) {
+	const logoUrl = icon && pdsUrl ? buildGetBlobUrl( pdsUrl, did, icon.ref.$link ) : null;
+	return logoUrl ? (
+		<img className="dash__publogo" src={ logoUrl } alt="" width={ 48 } height={ 48 } />
+	) : (
+		<span className="dash__publogo dash__publogo--fallback" aria-hidden="true">
+			{ name.charAt( 0 ).toUpperCase() }
+		</span>
+	);
+}
+
 function PublicationList( {
 	publications,
 	foreign,
@@ -173,19 +195,14 @@ function PublicationList( {
 			) : (
 				<ul className="dash__pubs">
 					{ publications.map( ( pub ) => {
-						const logoUrl =
-							pub.icon && pdsUrl
-								? buildGetBlobUrl( pdsUrl, did, pub.icon.ref.$link )
-								: null;
 						return (
 							<li className="dash__pub" key={ pub.uri }>
-								{ logoUrl ? (
-									<img className="dash__publogo" src={ logoUrl } alt="" width={ 48 } height={ 48 } />
-								) : (
-									<span className="dash__publogo dash__publogo--fallback" aria-hidden="true">
-										{ pub.name.charAt( 0 ).toUpperCase() }
-									</span>
-								) }
+								<PublicationLogo
+									icon={ pub.icon }
+									name={ pub.name }
+									pdsUrl={ pdsUrl }
+									did={ did }
+								/>
 								<span className="dash__pubtext">
 									<span className="dash__pubname">{ pub.name }</span>
 									<span className="dash__pubslug">/{ pub.slug }</span>
@@ -212,28 +229,14 @@ function PublicationList( {
 					</p>
 					<ul className="dash__pubs">
 						{ foreign.map( ( pub ) => {
-							const logoUrl =
-								pub.icon && pdsUrl
-									? buildGetBlobUrl( pdsUrl, did, pub.icon.ref.$link )
-									: null;
 							return (
 								<li className="dash__pub" key={ pub.uri }>
-									{ logoUrl ? (
-										<img
-											className="dash__publogo"
-											src={ logoUrl }
-											alt=""
-											width={ 48 }
-											height={ 48 }
-										/>
-									) : (
-										<span
-											className="dash__publogo dash__publogo--fallback"
-											aria-hidden="true"
-										>
-											{ pub.name.charAt( 0 ).toUpperCase() }
-										</span>
-									) }
+									<PublicationLogo
+										icon={ pub.icon }
+										name={ pub.name }
+										pdsUrl={ pdsUrl }
+										did={ did }
+									/>
 									<span className="dash__pubtext">
 										<span className="dash__pubname">{ pub.name }</span>
 										<span className="dash__pubhost">{ pub.hostname }</span>

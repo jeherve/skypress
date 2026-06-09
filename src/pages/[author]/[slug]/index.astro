@@ -1,11 +1,11 @@
 ---
 import Base from '../../../layouts/Base.astro';
-import Logo from '../../../components/Logo.astro';
 import PublicationFooter from '../../../components/PublicationFooter.astro';
 import { resolveAuthor } from '../../../lib/reader/identity';
 import { listRecords } from '../../../lib/reader/records';
 import { resolveReaderPublication } from '../../../lib/reader/publications';
 import { fetchActorProfile } from '../../../lib/reader/profile';
+import { formatLongDate } from '../../../lib/reader/dates';
 import { buildGetBlobUrl } from '../../../lib/media/blob';
 import { themeStyleBlock } from '../../../lib/publish/themes';
 import ErrorScene from '../../../components/ErrorScene.astro';
@@ -70,7 +70,9 @@ if ( ! error && resolved ) {
 				rkey: record.uri.split( '/' ).pop() as string,
 				title: record.value.title ?? 'Untitled',
 				description: record.value.description,
-				publishedLabel: record.value.publishedAt?.slice( 0, 10 ) ?? null,
+				publishedLabel: record.value.publishedAt
+					? formatLongDate( record.value.publishedAt )
+					: null,
 			} ) );
 
 		logoUrl = publication.icon
@@ -103,10 +105,6 @@ if ( error ) {
 				<link rel="alternate" type="application/rss+xml" title={`${ publication!.name } — RSS`} href={feedHref} />
 				{themeStyle && <Fragment set:html={themeStyle} />}
 			</Fragment>
-
-			<header class="masthead">
-				<a href="/"><Logo /></a>
-			</header>
 
 			<main class="pub">
 				<div class="pub__hero">
@@ -153,13 +151,6 @@ if ( error ) {
 }
 
 <style>
-	.masthead {
-		padding: 1.5rem clamp(1.25rem, 5vw, 4rem);
-		border-bottom: 1px solid var(--line);
-	}
-	.masthead a {
-		text-decoration: none;
-	}
 	.pub {
 		max-width: 44rem;
 		margin: 0 auto;

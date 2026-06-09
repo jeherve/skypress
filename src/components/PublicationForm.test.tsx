@@ -104,6 +104,7 @@ describe( 'PublicationForm save lifecycle', () => {
 		// the button stuck on "Saving…" forever despite the PDS returning 200 (the reported bug).
 		const existing: Publication = {
 			uri: 'at://did:plc:alice/site.standard.publication/abc',
+			cid: 'bafypub',
 			rkey: 'abc',
 			slug: 'blog',
 			name: 'Blog',

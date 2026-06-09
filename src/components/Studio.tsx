@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { BlockInstance } from '@wordpress/blocks';
 import { AuthProvider } from '../lib/auth/AuthProvider';
 import { useAuth } from '../lib/auth/useAuth';
@@ -90,7 +90,9 @@ function StudioGate() {
 	useEffect( () => () => revokeBlobRegistry( registry ), [ registry ] );
 
 	// Grow the lede textarea to fit its content (and on hydrate from an edit-load).
-	useEffect( () => {
+	// Layout effect so it sizes before paint — avoids a one-row collapse flash when
+	// opening an existing article with a multi-line lede.
+	useLayoutEffect( () => {
 		const el = ledeRef.current;
 		if ( ! el ) {
 			return;

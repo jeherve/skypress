@@ -1,6 +1,6 @@
 # SP12 — Playful error pages (404 / 500)
 
-- **Status:** Planned
+- **Status:** Built
 - **Depends on:** SP4 (public renderer), SP6 (brand), SP10 (publication URL model)
 - **Decisions:** none new (reuses 0007 read-through renderer, 0009 Cloudflare deploy)
 

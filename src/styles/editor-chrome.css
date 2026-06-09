@@ -288,6 +288,13 @@
 	color: var(--ink);
 	box-shadow: var(--shadow);
 }
+/* With `has-fixed-toolbar`, the fixed toolbar sits at the top of the layout,
+   flush against the framed surface's top edge. Space it down so it isn't
+   pinned to the border. (The `.edit-post-visual-editor` rule below only spaces
+   the content beneath the toolbar.) */
+.skypress-editor .iso-editor .edit-post-layout.has-fixed-toolbar {
+	padding-top: 1rem;
+}
 .skypress-editor .iso-editor .edit-post-visual-editor {
 	background-color: transparent;
 	/* Breathing room above the first block so the toolbar isn't flush to the

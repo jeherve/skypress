@@ -294,17 +294,15 @@
 	box-shadow: var(--shadow);
 }
 /* With `has-fixed-toolbar`, the fixed toolbar sits at the top of the layout,
-   flush against the framed surface's top edge. Space it down so it isn't
-   pinned to the border. (The `.edit-post-visual-editor` rule below only spaces
-   the content beneath the toolbar.) */
-.skypress-editor .iso-editor .edit-post-layout.has-fixed-toolbar {
+   flush against the framed surface's top edge. Pad the header region (which
+   holds the toolbar) so the tools aren't pinned to the border. Keeping the
+   breathing room on the header — rather than on the layout root or the content
+   below — gives a single, predictable source of top spacing. */
+.skypress-editor .iso-editor .interface-interface-skeleton__header {
 	padding-top: 1rem;
 }
 .skypress-editor .iso-editor .edit-post-visual-editor {
 	background-color: transparent;
-	/* Breathing room above the first block so the toolbar isn't flush to the
-	   top edge of the framed surface. */
-	padding-top: 0.5rem;
 }
 /* Gutenberg sets `background: white` inline on the device-preview wrapper;
    only !important lets the paper surface show through (esp. in dark mode). */
@@ -337,6 +335,13 @@
 .skypress-editor .iso-editor .block-editor-block-contextual-toolbar {
 	padding-left: 0.75rem;
 	padding-right: 0.75rem;
+}
+/* The "Show/Hide block tools" collapse toggle (`<<`/`>>`). The header toolbar
+   stacks its rows vertically, so this toggle lands orphaned on its own line —
+   and it's redundant here anyway: the block tools auto-expand whenever a block
+   is selected, so the toggle never has a useful effect. Hide it. */
+.skypress-editor .iso-editor .edit-post-header__block-tools-toggle {
+	display: none;
 }
 
 .skypress-editor__status {

@@ -52,4 +52,15 @@ describe( 'PostActions render branches', () => {
 		expect( markup ).toContain( 'Reply' );
 		expect( markup.toLowerCase() ).toContain( 'public' );
 	} );
+
+	it( 'surfaces a sign-in error while still signed out (signIn sets error, not status)', () => {
+		// AuthProvider.signIn reports invalid handles / sign-in failures via `error`
+		// without flipping `status` to 'error', so the affordance must show it regardless.
+		const markup = renderGate( {
+			status: 'signed-out',
+			error: 'Enter a handle (alice.bsky.social), a DID, or a PDS URL.',
+		} );
+		expect( markup ).toContain( 'Enter a handle' );
+		expect( markup ).toContain( 'role="alert"' );
+	} );
 } );

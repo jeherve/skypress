@@ -192,7 +192,7 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 						Sign in to react
 					</button>
 				</form>
-				{ status === 'error' && authError && (
+				{ authError && (
 					<p className="post-actions__error" role="alert">
 						{ authError }
 					</p>

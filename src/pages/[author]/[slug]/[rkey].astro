@@ -10,6 +10,9 @@ import { sanitizeArticleHtml } from '../../../lib/reader/sanitize';
 import { canonicalArticleUrl } from '../../../lib/publish/records';
 import { themeStyleBlock } from '../../../lib/publish/themes';
 import { buildMetaTags } from '../../../lib/seo/meta';
+import ErrorScene from '../../../components/ErrorScene.astro';
+import { errorScene } from '../../../lib/reader/errors';
+import type { ErrorSceneCopy } from '../../../lib/reader/errors';
 
 // Frontend block styles only — no editor chrome, no JS.
 import '@wordpress/block-library/build-style/common.css';
@@ -31,77 +34,107 @@ interface SkyDocument {
 
 const { author, slug, rkey } = Astro.params;
 
+let error: ErrorSceneCopy | null = null;
+const handle = author?.startsWith( '@' ) ? author.slice( 1 ) : '';
+
+// Everything the happy-path template needs; populated only when there's no error.
+let publication: Awaited< ReturnType< typeof resolveReaderPublication > > = null;
+let metaTags: ReturnType< typeof buildMetaTags > = [];
+let title = '';
+let description = '';
+let canonical = '';
+let docUri = '';
+let pubUrl = '';
+let feedHref = '';
+let html = '';
+let readingMinutes = 1;
+let publishedLabel: string | null = null;
+let updatedLabel: string | null = null;
+let themeStyle = '';
+let ogImage = '';
+
 if ( ! author || ! author.startsWith( '@' ) || ! slug || ! rkey ) {
-	return new Response( 'Not found', { status: 404 } );
-}
-const handle = author.slice( 1 );
-
-const resolved = await resolveAuthor( handle );
-if ( ! resolved ) {
-	return new Response( `Could not resolve @${ handle }`, { status: 404 } );
-}
-const { did, pdsUrl } = resolved;
-
-// Resolve the publication by slug (Decision 0010), then the document by rkey.
-const publication = await resolveReaderPublication( pdsUrl, did, slug );
-if ( ! publication ) {
-	return new Response( 'Publication not found', { status: 404 } );
+	error = errorScene( 'not-found' );
 }
 
-const record = await getRecord< SkyDocument >( pdsUrl, did, 'site.standard.document', rkey );
-if ( ! record?.value ) {
-	return new Response( 'Article not found', { status: 404 } );
+const resolved = error ? null : await resolveAuthor( handle );
+if ( ! error && ! resolved ) {
+	error = errorScene( 'writer-not-found', { handle } );
 }
 
-// A document only renders under the publication it belongs to (Decision 0010, §3 step 3).
-if ( record.value.site !== publication.uri ) {
-	return new Response( 'Article not found in this publication', { status: 404 } );
+if ( ! error && resolved ) {
+	const { did, pdsUrl } = resolved;
+
+	publication = await resolveReaderPublication( pdsUrl, did, slug! );
+	if ( ! publication ) {
+		error = errorScene( 'publication-not-found', { handle, slug } );
+	} else {
+		const record = await getRecord< SkyDocument >(
+			pdsUrl,
+			did,
+			'site.standard.document',
+			rkey!
+		);
+		if ( ! record?.value || record.value.site !== publication.uri ) {
+			error = errorScene( 'article-not-found', {
+				publicationName: publication.name,
+			} );
+		} else {
+			const doc = record.value;
+			const blocks = resolveBlobImageUrls( doc.content?.blocks ?? [], { pdsUrl, did } );
+			html = sanitizeArticleHtml( renderBlocks( blocks ) );
+			const textContent = doc.textContent || blocksToText( blocks );
+
+			title = doc.title ?? 'Untitled';
+			description = doc.description || textContent.slice( 0, 200 );
+			canonical = canonicalArticleUrl( handle, slug!, rkey! );
+			docUri = `at://${ did }/site.standard.document/${ rkey }`;
+			pubUrl = `/${ author }/${ slug }`;
+			feedHref = `${ pubUrl }/rss.xml`;
+
+			const words = textContent.split( /\s+/ ).filter( Boolean ).length;
+			readingMinutes = Math.max( 1, Math.round( words / 200 ) );
+			publishedLabel = doc.publishedAt ? doc.publishedAt.slice( 0, 10 ) : null;
+			updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
+			themeStyle = themeStyleBlock( publication.basicTheme );
+
+			// Share image: the publication logo, else the shared default. Only the
+			// default image has known 1200x630 dimensions; a square logo omits them.
+			ogImage = publication.icon
+				? buildGetBlobUrl( pdsUrl, did, publication.icon.ref.$link )
+				: new URL( '/og-default.png', Astro.site ).href;
+			const ogDimensions = publication.icon
+				? {}
+				: { imageWidth: 1200, imageHeight: 630 };
+			metaTags = buildMetaTags( {
+				title,
+				description,
+				url: canonical,
+				image: ogImage,
+				siteName: 'SkyPress',
+				type: 'article',
+				imageAlt: publication.name,
+				...ogDimensions,
+			} );
+		}
+	}
 }
 
-const doc = record.value;
-const blocks = resolveBlobImageUrls( doc.content?.blocks ?? [], { pdsUrl, did } );
-const html = sanitizeArticleHtml( renderBlocks( blocks ) );
-const textContent = doc.textContent || blocksToText( blocks );
-
-const title = doc.title ?? 'Untitled';
-const description = doc.description || textContent.slice( 0, 200 );
-const canonical = canonicalArticleUrl( handle, slug, rkey );
-const docUri = `at://${ did }/site.standard.document/${ rkey }`;
-const pubUrl = `/${ author }/${ slug }`;
-const feedHref = `${ pubUrl }/rss.xml`;
-
-const words = textContent.split( /\s+/ ).filter( Boolean ).length;
-const readingMinutes = Math.max( 1, Math.round( words / 200 ) );
-const publishedLabel = doc.publishedAt ? doc.publishedAt.slice( 0, 10 ) : null;
-const updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
-const themeStyle = themeStyleBlock( publication.basicTheme );
-
-// Share image: the publication logo, else the shared default. Only the default
-// image has known 1200x630 dimensions; a square logo omits them.
-const ogImage = publication.icon
-	? buildGetBlobUrl( pdsUrl, did, publication.icon.ref.$link )
-	: new URL( '/og-default.png', Astro.site ).href;
-const ogDimensions = publication.icon
-	? {}
-	: { imageWidth: 1200, imageHeight: 630 };
-const metaTags = buildMetaTags( {
-	title,
-	description,
-	url: canonical,
-	image: ogImage,
-	siteName: 'SkyPress',
-	type: 'article',
-	imageAlt: publication.name,
-	...ogDimensions,
-} );
+if ( error ) {
+	Astro.response.status = error.status;
+}
 ---
 
-<Base title={`${ title } — ${ publication.name }`} description={description} socialMeta={false}>
+{
+	error ? (
+		<ErrorScene eyebrow={error.eyebrow} heading={error.heading} subline={error.subline} />
+	) : (
+		<Base title={`${ title } — ${ publication!.name }`} description={description} socialMeta={false}>
 	<Fragment slot="head">
 		{/* standard.site indexing tags (brief §3) — Bluesky cards + AppView pickup */}
 		<link rel="site.standard.document" href={docUri} />
-		<link rel="site.standard.publication" href={publication.uri} />
-		<link rel="alternate" type="application/rss+xml" title={`${ publication.name } — RSS`} href={feedHref} />
+		<link rel="site.standard.publication" href={publication!.uri} />
+		<link rel="alternate" type="application/rss+xml" title={`${ publication!.name } — RSS`} href={feedHref} />
 		<link rel="canonical" href={canonical} />
 		{metaTags.map( ( tag ) =>
 			tag.property ? (
@@ -118,7 +151,7 @@ const metaTags = buildMetaTags( {
 	</header>
 	<main class="reader">
 		<p class="reader__meta eyebrow">
-			<a class="reader__author" href={pubUrl}>{publication.name}</a>
+			<a class="reader__author" href={pubUrl}>{publication!.name}</a>
 			{publishedLabel && <> · {publishedLabel}</>}
 			{updatedLabel && <> · updated {updatedLabel}</>}
 			· {readingMinutes} min read
@@ -126,10 +159,12 @@ const metaTags = buildMetaTags( {
 		<h1 class="reader__title">{title}</h1>
 		<article class="reader__article" set:html={html} />
 		<footer class="reader__foot">
-			<a class="reader__author" href={pubUrl}>More from {publication.name}</a>
+			<a class="reader__author" href={pubUrl}>More from {publication!.name}</a>
 		</footer>
 	</main>
-</Base>
+		</Base>
+	)
+}
 
 <style>
 	.masthead {

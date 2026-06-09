@@ -41,4 +41,20 @@ describe( 'document page Open Graph wiring', () => {
 		expect( page ).toMatch( /socialMeta=\{false\}/ );
 		expect( page ).toMatch( /<link\s+rel="canonical"\s+href=\{canonical\}/ );
 	} );
+
+	it( 'renders the ErrorScene instead of plain-text 404 responses', () => {
+		expect( page ).toMatch( /import ErrorScene from '[^']*components\/ErrorScene.astro'/ );
+		expect( page ).toMatch( /import\s*\{\s*errorScene\s*\}\s*from\s*'[^']*lib\/reader\/errors'/ );
+		expect( page ).toMatch( /<ErrorScene/ );
+		// No more bare plain-text 404 bodies.
+		expect( page ).not.toMatch( /new Response\(\s*'Not found'/ );
+		expect( page ).not.toMatch( /new Response\(\s*'Article not found'/ );
+	} );
+
+	it( 'maps each failure to the right error kind and sets the response status', () => {
+		expect( page ).toMatch( /errorScene\(\s*'writer-not-found'/ );
+		expect( page ).toMatch( /errorScene\(\s*'publication-not-found'/ );
+		expect( page ).toMatch( /errorScene\(\s*'article-not-found'/ );
+		expect( page ).toMatch( /Astro\.response\.status\s*=/ );
+	} );
 } );

@@ -243,7 +243,8 @@
 	display: flex;
 	gap: 0.5rem;
 }
-.myarticles__actions button {
+.myarticles__actions button,
+.myarticles__actions a {
 	border: 1px solid var(--line-strong);
 	background: var(--paper-raised);
 	border-radius: 6px;
@@ -251,6 +252,10 @@
 	font: inherit;
 	font-size: 0.85rem;
 	cursor: pointer;
+}
+.myarticles__actions a {
+	color: inherit;
+	text-decoration: none;
 }
 .studio__mode {
 	display: flex;

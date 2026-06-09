@@ -118,6 +118,7 @@ function StudioGate() {
 				<MyArticles
 					agent={ agent }
 					did={ did }
+					handle={ handle }
 					refreshKey={ refreshKey }
 					onEdit={ startEdit }
 				/>

@@ -126,11 +126,17 @@ export default function PublishPanel( {
 				} );
 				setResultUrl( res.articleUrl );
 			} else {
+				// Non-editing: the target is always a full Publication picked from `pubs`.
+				const pub = pubs.find( ( candidate ) => candidate.uri === targetUri );
+				if ( ! pub ) {
+					return;
+				}
 				const res = await publish( agent, identity, {
 					title: title.trim(),
 					blocks: prepared,
-					publicationUri: target.uri,
-					publicationSlug: target.slug,
+					publicationUri: pub.uri,
+					publicationCid: pub.cid,
+					publicationSlug: pub.slug,
 				} );
 				setResultUrl( res.articleUrl );
 			}

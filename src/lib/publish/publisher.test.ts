@@ -58,6 +58,7 @@ function mockAgent( byCollection: Record< string, unknown[] > = {} ) {
 
 const TARGET = {
 	publicationUri: `at://${ DID }/site.standard.publication/pub1`,
+	publicationCid: 'bafy-pub1',
 	publicationSlug: 'my-blog',
 };
 
@@ -84,6 +85,43 @@ describe( 'publish', () => {
 
 		// It does NOT auto-create a publication (no ensurePublication anymore).
 		expect( created.some( ( c ) => c.collection === 'site.standard.publication' ) ).toBe( false );
+	} );
+
+	it( 'writes the document first so the post can embed its strongRef (standard.site card)', async () => {
+		const { agent, created, put } = mockAgent();
+		await publish( agent, { did: DID, handle: HANDLE }, { title: 'Hello', blocks: BLOCKS, ...TARGET } );
+
+		// 3-write order: document (no ref yet) → post → putRecord document with bskyPostRef.
+		expect( created.map( ( c ) => c.collection ) ).toEqual( [
+			'site.standard.document',
+			'app.bsky.feed.post',
+		] );
+		expect( created[ 0 ].record.bskyPostRef ).toBeUndefined();
+
+		const docUri = `at://${ DID }/site.standard.document/${ created[ 0 ].rkey }`;
+		const postUri = `at://${ DID }/app.bsky.feed.post/gen-2`;
+
+		// The post embeds associatedRefs to the document AND the publication.
+		const post = created[ 1 ].record as {
+			facets: unknown[];
+			embed: { external: { associatedRefs: Array< { uri: string } > } };
+		};
+		expect( post.embed.external.associatedRefs ).toEqual( [
+			{ $type: 'com.atproto.repo.strongRef', uri: docUri, cid: 'bafy-new' },
+			{
+				$type: 'com.atproto.repo.strongRef',
+				uri: TARGET.publicationUri,
+				cid: TARGET.publicationCid,
+			},
+		] );
+		// And the link is clickable.
+		expect( post.facets ).toHaveLength( 1 );
+
+		// The document is then updated to point back at the post (preserved for unpublish).
+		expect( put ).toHaveLength( 1 );
+		expect( put[ 0 ].collection ).toBe( 'site.standard.document' );
+		expect( put[ 0 ].rkey ).toBe( created[ 0 ].rkey );
+		expect( put[ 0 ].record.bskyPostRef ).toEqual( { uri: postUri, cid: 'bafy-new' } );
 	} );
 } );
 

@@ -228,10 +228,12 @@ describe( 'buildDocumentRecord', () => {
 } );
 
 describe( 'buildBskyPost', () => {
+	const ARTICLE_URL = 'https://skypress.blog/@alice.bsky.social/my-blog/3kabcrkey';
+
 	it( 'creates a post with an external embed pointing at the article', () => {
 		const post = buildBskyPost( {
 			title: 'Hello, World!',
-			articleUrl: 'https://skypress.blog/@alice.bsky.social/my-blog/3kabcrkey',
+			articleUrl: ARTICLE_URL,
 			description: 'An excerpt',
 			createdAt: '2026-06-08T12:00:00.000Z',
 		} );
@@ -239,10 +241,66 @@ describe( 'buildBskyPost', () => {
 		expect( post.text ).toContain( 'Hello, World!' );
 		expect( post.createdAt ).toBe( '2026-06-08T12:00:00.000Z' );
 		expect( post.embed.$type ).toBe( 'app.bsky.embed.external' );
-		expect( post.embed.external.uri ).toBe(
-			'https://skypress.blog/@alice.bsky.social/my-blog/3kabcrkey'
-		);
+		expect( post.embed.external.uri ).toBe( ARTICLE_URL );
 		expect( post.embed.external.title ).toBe( 'Hello, World!' );
 		expect( typeof post.embed.external.description ).toBe( 'string' );
+	} );
+
+	it( 'marks the article URL as a clickable link facet over its byte range', () => {
+		const post = buildBskyPost( {
+			title: 'Hello, World!',
+			articleUrl: ARTICLE_URL,
+			createdAt: '2026-06-08T12:00:00.000Z',
+		} );
+		const bytes = ( s: string ) => new TextEncoder().encode( s ).length;
+		const byteStart = bytes( `Hello, World!\n\n` );
+		expect( post.facets ).toEqual( [
+			{
+				$type: 'app.bsky.richtext.facet',
+				index: { byteStart, byteEnd: byteStart + bytes( ARTICLE_URL ) },
+				features: [ { $type: 'app.bsky.richtext.facet#link', uri: ARTICLE_URL } ],
+			},
+		] );
+	} );
+
+	it( 'computes facet byte offsets in UTF-8 (multibyte title)', () => {
+		const post = buildBskyPost( {
+			title: '🍔 Burgers',
+			articleUrl: ARTICLE_URL,
+			createdAt: '2026-06-08T12:00:00.000Z',
+		} );
+		const bytes = ( s: string ) => new TextEncoder().encode( s ).length;
+		// The emoji is 4 UTF-8 bytes, so the link starts well past its JS string index.
+		expect( post.facets[ 0 ].index.byteStart ).toBe( bytes( '🍔 Burgers\n\n' ) );
+		expect( post.facets[ 0 ].index.byteEnd ).toBe(
+			bytes( '🍔 Burgers\n\n' ) + bytes( ARTICLE_URL )
+		);
+	} );
+
+	it( 'embeds associatedRefs (document, publication strongRefs) when provided', () => {
+		const documentRef = { uri: 'at://did:plc:abc/site.standard.document/d1', cid: 'bafydoc' };
+		const publicationRef = {
+			uri: 'at://did:plc:abc/site.standard.publication/p1',
+			cid: 'bafypub',
+		};
+		const post = buildBskyPost( {
+			title: 'Hello, World!',
+			articleUrl: ARTICLE_URL,
+			createdAt: '2026-06-08T12:00:00.000Z',
+			associatedRefs: [ documentRef, publicationRef ],
+		} );
+		expect( post.embed.external.associatedRefs ).toEqual( [
+			{ $type: 'com.atproto.repo.strongRef', ...documentRef },
+			{ $type: 'com.atproto.repo.strongRef', ...publicationRef },
+		] );
+	} );
+
+	it( 'omits associatedRefs when none are provided', () => {
+		const post = buildBskyPost( {
+			title: 'Hello, World!',
+			articleUrl: ARTICLE_URL,
+			createdAt: '2026-06-08T12:00:00.000Z',
+		} );
+		expect( 'associatedRefs' in post.embed.external ).toBe( false );
 	} );
 } );

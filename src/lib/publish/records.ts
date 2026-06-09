@@ -216,36 +216,84 @@ export function buildDocumentRecord( input: {
 	};
 }
 
+/** A richtext link facet (`app.bsky.richtext.facet#link`) over a UTF-8 byte range of `text`. */
+export interface BskyLinkFacet {
+	$type: 'app.bsky.richtext.facet';
+	index: { byteStart: number; byteEnd: number };
+	features: Array< { $type: 'app.bsky.richtext.facet#link'; uri: string } >;
+}
+
+/** A `com.atproto.repo.strongRef` as embedded in `external.associatedRefs` (Decision 0013). */
+export interface AssociatedRef extends StrongRef {
+	$type: 'com.atproto.repo.strongRef';
+}
+
 export interface BskyPostRecord {
 	$type: 'app.bsky.feed.post';
 	text: string;
 	createdAt: string;
+	/** Always present: marks the article URL in `text` as a clickable link (Decision 0013). */
+	facets: BskyLinkFacet[];
 	embed: {
 		$type: 'app.bsky.embed.external';
 		external: {
 			uri: string;
 			title: string;
 			description: string;
+			/** strongRefs to the document + publication; drives the standard.site link card. */
+			associatedRefs?: AssociatedRef[];
 		};
 	};
 }
 
+/** UTF-8 byte length — facet offsets are byte-based, not JS string-index based. */
+function utf8ByteLength( value: string ): number {
+	return new TextEncoder().encode( value ).length;
+}
+
+/**
+ * Build the companion Bluesky post (Decision 0005). The article URL is appended to the text and
+ * marked as a clickable link via a richtext facet; `associatedRefs` (the document + publication
+ * strongRefs) are embedded so Bluesky renders the rich standard.site link card (Decision 0013).
+ */
 export function buildBskyPost( input: {
 	title: string;
 	articleUrl: string;
 	createdAt: string;
 	description?: string;
+	/** Document + publication strongRefs, in that order, for the standard.site card. */
+	associatedRefs?: StrongRef[];
 } ): BskyPostRecord {
+	const text = `${ input.title }\n\n${ input.articleUrl }`;
+	// The URL is the trailing segment of `text`; mark its byte range as a link facet.
+	const byteStart = utf8ByteLength( `${ input.title }\n\n` );
+	const byteEnd = byteStart + utf8ByteLength( input.articleUrl );
 	return {
 		$type: 'app.bsky.feed.post',
-		text: `${ input.title }\n\n${ input.articleUrl }`,
+		text,
 		createdAt: input.createdAt,
+		facets: [
+			{
+				$type: 'app.bsky.richtext.facet',
+				index: { byteStart, byteEnd },
+				features: [ { $type: 'app.bsky.richtext.facet#link', uri: input.articleUrl } ],
+			},
+		],
 		embed: {
 			$type: 'app.bsky.embed.external',
 			external: {
 				uri: input.articleUrl,
 				title: input.title,
 				description: input.description ?? '',
+				...( input.associatedRefs && input.associatedRefs.length
+					? {
+							associatedRefs: input.associatedRefs.map( ( ref ) => ( {
+								$type: 'com.atproto.repo.strongRef' as const,
+								uri: ref.uri,
+								cid: ref.cid,
+							} ) ),
+					  }
+					: {} ),
 			},
 		},
 	};

@@ -56,6 +56,7 @@ describe( 'PublicationForm theme picker', () => {
 	it( 'pre-selects the matching preset when editing a themed publication', () => {
 		const existing: Publication = {
 			uri: 'at://x',
+			cid: 'bafyx',
 			rkey: 'r',
 			slug: 'blog',
 			name: 'Blog',
@@ -69,6 +70,7 @@ describe( 'PublicationForm theme picker', () => {
 		// It must remain visible + selected so an unrelated edit doesn't silently erase it.
 		const existing: Publication = {
 			uri: 'at://x',
+			cid: 'bafyx',
 			rkey: 'r',
 			slug: 'blog',
 			name: 'Blog',
@@ -87,7 +89,7 @@ describe( 'PublicationForm theme picker', () => {
 	} );
 
 	it( 'shows no "Current" option for an unthemed publication', () => {
-		const existing: Publication = { uri: 'at://x', rkey: 'r', slug: 'blog', name: 'Blog' };
+		const existing: Publication = { uri: 'at://x', cid: 'bafyx', rkey: 'r', slug: 'blog', name: 'Blog' };
 		const markup = renderForm( existing );
 		expect( radios( markup ) ).toHaveLength( THEME_PRESETS.length + 1 );
 		expect( checkedValue( markup ) ).toBe( '' );

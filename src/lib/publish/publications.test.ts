@@ -261,6 +261,7 @@ describe( 'updatePublication', () => {
 		const { agent, put } = mockAgent();
 		const existing = {
 			uri: `at://${ DID }/site.standard.publication/a`,
+			cid: 'bafy-a',
 			rkey: 'a',
 			slug: 'my-blog',
 			name: 'My Blog',
@@ -282,6 +283,7 @@ describe( 'updatePublication', () => {
 		const { agent, put } = mockAgent();
 		const existing = {
 			uri: `at://${ DID }/site.standard.publication/a`,
+			cid: 'bafy-a',
 			rkey: 'a',
 			slug: 'my-blog',
 			name: 'My Blog',

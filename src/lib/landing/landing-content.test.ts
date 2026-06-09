@@ -24,6 +24,12 @@ describe( 'site footer links', () => {
 	it( 'links the future demo publication under a News label', () => {
 		expect( footer ).toMatch( /href="\/@skypress\.blog"[^>]*>[\s\S]*?News/ );
 	} );
+
+	it( 'links the SkyPress source repo on tangled.org with an accessible label and icon', () => {
+		expect( footer ).toMatch(
+			/href="https:\/\/tangled\.org\/jeremy\.herve\.bzh\/skypress"[\s\S]*?aria-label=[\s\S]*?<svg/
+		);
+	} );
 } );
 
 describe( 'sample/preview page is retired', () => {

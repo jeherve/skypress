@@ -174,6 +174,25 @@ describe( 'buildPublicationRecord', () => {
 		expect( 'basicTheme' in bare ).toBe( false );
 	} );
 
+	it( 'stamps the colour union $type so the stored basicTheme validates against the lexicon', () => {
+		// `site.standard.theme.basic` colours are a union of `site.standard.theme.color#rgb`; without
+		// the `$type` discriminator the record is invalid and Bluesky drops the enhanced link card.
+		const themed = buildPublicationRecord( {
+			handle: 'a.b',
+			slug: 's',
+			name: 'N',
+			basicTheme: THEME_PRESETS[ 0 ].colors,
+		} );
+		for ( const color of [
+			themed.basicTheme!.background,
+			themed.basicTheme!.foreground,
+			themed.basicTheme!.accent,
+			themed.basicTheme!.accentForeground,
+		] ) {
+			expect( color.$type ).toBe( 'site.standard.theme.color#rgb' );
+		}
+	} );
+
 	it( 'drops an invalid basicTheme rather than persisting it (write-boundary validation)', () => {
 		const record = buildPublicationRecord( {
 			handle: 'a.b',

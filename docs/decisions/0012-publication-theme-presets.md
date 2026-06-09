@@ -29,6 +29,17 @@ consistent with the lexicon-discipline rule (AGENTS.md). The renderer treats sto
 untrusted PDS data: `parseBasicTheme` validates every channel is an integer 0–255 and the
 renderer emits only app-built `rgb()` strings (AGENTS.md #6).
 
+**Each colour is a union member, not a bare RGB triple.** The canonical
+`site.standard.theme.basic` lexicon types `background`/`foreground`/`accent`/`accentForeground`
+as a `union` of `site.standard.theme.color#rgb` (the colour lexicon also defines `#rgba`), so
+atproto requires a `$type: "site.standard.theme.color#rgb"` discriminator on **every** colour
+object. Omitting it makes the publication record invalid against the lexicon — and Bluesky's
+AppView, which validates these records when hydrating the post embed's `associatedRefs`, then
+silently drops the **enhanced standard.site link card** and falls back to a bare external embed
+(no avatar, theme, or reading time). `themes.ts` stamps `COLOR_TYPE` on every colour it builds
+(`rgb()`) or re-validates (`parseBasicTheme`), so the single write boundary always emits valid
+records. (Originally shipped without the discriminator; see the fix that added it.)
+
 ### 2. Curated presets only — eight "sky phases"
 
 Rather than a free-form colour picker, SkyPress ships eight presets derived from the Twenty

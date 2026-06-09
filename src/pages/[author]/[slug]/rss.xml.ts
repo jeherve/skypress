@@ -36,6 +36,10 @@ export const GET: APIRoute = async ( { params } ) => {
 		return new Response( 'Publication not found', { status: 404 } );
 	}
 
+	// Fetch the writer's 100 most recent documents (across all their publications), then
+	// `buildPublicationFeedXml` filters to this one and keeps the newest 20. A writer with
+	// >100 total documents could thus have older items in this publication omitted from the
+	// feed — the same bound the publication page (`index.astro`) already applies.
 	const documents = await listRecords< FeedDocumentValue >(
 		pdsUrl,
 		did,

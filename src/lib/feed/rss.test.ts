@@ -86,6 +86,30 @@ describe( 'buildRssFeed', () => {
 		expect( xml ).not.toContain( 'a[b]]> c' );
 	} );
 
+	it( 'strips XML-1.0-illegal control characters from text fields and body', () => {
+		// Untrusted PDS content could carry control bytes that are illegal in XML 1.0
+		// even inside CDATA; a single one would make the whole feed unparseable.
+		const xml = buildRssFeed( channel, [
+			item( {
+				title: 'Be\x00fo\x01re\x08af\x1Fter',
+				description: 'Sum\x0Cmary',
+				contentHtml: '<p>Bo\x00dy</p>',
+			} ),
+		] );
+		expect( xml ).toContain( '<title>Beforeafter</title>' );
+		expect( xml ).toContain( '<description>Summary</description>' );
+		expect( xml ).toContain( '<![CDATA[<p>Body</p>]]>' );
+		// No raw control byte survives anywhere in the document.
+		expect( /[\x00-\x08\x0B\x0C\x0E-\x1F]/.test( xml ) ).toBe( false );
+	} );
+
+	it( 'preserves legal whitespace (tab, newline, carriage return) in content', () => {
+		const xml = buildRssFeed( channel, [
+			item( { contentHtml: '<pre>a\tb\nc\rd</pre>' } ),
+		] );
+		expect( xml ).toContain( '<![CDATA[<pre>a\tb\nc\rd</pre>]]>' );
+	} );
+
 	it( 'formats pubDate as an RFC-822 date', () => {
 		const xml = buildRssFeed( channel, [ item() ] );
 		expect( xml ).toContain( '<pubDate>Tue, 09 Jun 2026 12:00:00 GMT</pubDate>' );

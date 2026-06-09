@@ -32,9 +32,19 @@ export interface FeedItem {
 	description?: string;
 }
 
+/**
+ * Drop characters that are illegal in XML 1.0 even inside CDATA (the C0 controls except
+ * the three legal whitespace ones: tab `\x09`, newline `\x0A`, carriage return `\x0D`).
+ * Untrusted, PDS-sourced titles/HTML can carry a stray control byte, and a single one would
+ * make the whole feed unparseable for every subscriber — so strip them before anything else.
+ */
+function stripControlChars( value: string ): string {
+	return value.replace( /[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '' );
+}
+
 /** Escape element-content text (`& < >`) so it can never break out of its element. */
 function escapeXml( value: string ): string {
-	return value
+	return stripControlChars( value )
 		.replace( /&/g, '&amp;' )
 		.replace( /</g, '&lt;' )
 		.replace( />/g, '&gt;' );
@@ -50,7 +60,8 @@ function escapeAttr( value: string ): string {
  * (and is the one sequence CDATA cannot contain), so split it into two sections.
  */
 function cdata( html: string ): string {
-	return `<![CDATA[${ html.replace( /]]>/g, ']]]]><![CDATA[>' ) }]]>`;
+	const safe = stripControlChars( html ).replace( /]]>/g, ']]]]><![CDATA[>' );
+	return `<![CDATA[${ safe }]]>`;
 }
 
 /** RFC-822 date (RSS pubDate format). `toUTCString()` yields a conformant `… GMT` string. */

@@ -7,7 +7,17 @@
  * (Decision 0012.)
  */
 
+/**
+ * The lexicon type id for an RGB colour. `site.standard.theme.basic` types each colour as a
+ * UNION of `site.standard.theme.color#rgb`, and atproto requires a `$type` discriminator on every
+ * union member. Omitting it makes the publication record invalid, so Bluesky's AppView can't
+ * hydrate it and silently drops the enhanced standard.site link card — falling back to a bare
+ * external embed (no avatar / theme / reading time). Every stored colour must carry this. */
+export const COLOR_TYPE = 'site.standard.theme.color#rgb';
+
 export interface Rgb {
+	/** Union discriminator required by the lexicon; always set on stored/built colours. */
+	$type?: typeof COLOR_TYPE;
 	r: number;
 	g: number;
 	b: number;
@@ -31,7 +41,7 @@ export interface ThemePreset {
 	colors: BasicTheme;
 }
 
-const rgb = ( r: number, g: number, b: number ): Rgb => ( { r, g, b } );
+const rgb = ( r: number, g: number, b: number ): Rgb => ( { $type: COLOR_TYPE, r, g, b } );
 
 const preset = (
 	slug: string,
@@ -90,12 +100,20 @@ export function parseBasicTheme( value: unknown ): BasicTheme | null {
 	) {
 		return null;
 	}
+	// Re-stamp the colour union `$type` on the way out: the lexicon requires it, and PDS-sourced
+	// input may omit it (e.g. records written before this was fixed). This is the single boundary
+	// both the write path (buildPublicationRecord) and read path (reader) funnel through.
 	return {
 		$type: 'site.standard.theme.basic',
-		background: { r: v.background.r, g: v.background.g, b: v.background.b },
-		foreground: { r: v.foreground.r, g: v.foreground.g, b: v.foreground.b },
-		accent: { r: v.accent.r, g: v.accent.g, b: v.accent.b },
-		accentForeground: { r: v.accentForeground.r, g: v.accentForeground.g, b: v.accentForeground.b },
+		background: { $type: COLOR_TYPE, r: v.background.r, g: v.background.g, b: v.background.b },
+		foreground: { $type: COLOR_TYPE, r: v.foreground.r, g: v.foreground.g, b: v.foreground.b },
+		accent: { $type: COLOR_TYPE, r: v.accent.r, g: v.accent.g, b: v.accent.b },
+		accentForeground: {
+			$type: COLOR_TYPE,
+			r: v.accentForeground.r,
+			g: v.accentForeground.g,
+			b: v.accentForeground.b,
+		},
 	};
 }
 

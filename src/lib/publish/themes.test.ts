@@ -47,6 +47,22 @@ describe( 'THEME_PRESETS', () => {
 		}
 	} );
 
+	it( 'every preset colour carries the site.standard.theme.color#rgb union $type', () => {
+		// `site.standard.theme.basic` types each colour as a union of `site.standard.theme.color#rgb`,
+		// and atproto requires a `$type` discriminator on union members. Without it the publication
+		// record is invalid and Bluesky's AppView can't hydrate the enhanced standard.site link card.
+		for ( const preset of THEME_PRESETS ) {
+			for ( const color of [
+				preset.colors.background,
+				preset.colors.foreground,
+				preset.colors.accent,
+				preset.colors.accentForeground,
+			] ) {
+				expect( color.$type ).toBe( 'site.standard.theme.color#rgb' );
+			}
+		}
+	} );
+
 	it( 'every preset color channel is an integer 0–255', () => {
 		for ( const preset of THEME_PRESETS ) {
 			for ( const color of [
@@ -71,6 +87,13 @@ describe( 'parseBasicTheme', () => {
 		expect( parsed ).not.toBeNull();
 		expect( parsed!.$type ).toBe( 'site.standard.theme.basic' );
 		expect( parsed!.accent ).toEqual( THEME_PRESETS[ 0 ].colors.accent );
+	} );
+
+	it( 'stamps the union $type discriminator on every colour (lexicon requires it)', () => {
+		const parsed = parseBasicTheme( THEME_PRESETS[ 0 ].colors )!;
+		for ( const color of [ parsed.background, parsed.foreground, parsed.accent, parsed.accentForeground ] ) {
+			expect( color.$type ).toBe( 'site.standard.theme.color#rgb' );
+		}
 	} );
 
 	it( 'rejects undefined, non-objects, and out-of-range / non-integer channels', () => {

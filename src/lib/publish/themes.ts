@@ -99,6 +99,31 @@ export function parseBasicTheme( value: unknown ): BasicTheme | null {
 	};
 }
 
+/**
+ * Sentinel slug for "keep the publication's current colours" — used when a stored theme doesn't
+ * match any preset (e.g. a future preset whose colours changed). Keeps the picker from silently
+ * erasing a theme it can't name. Not a real preset; never written as a slug.
+ */
+export const CUSTOM_THEME_SLUG = 'custom';
+
+/**
+ * Resolve the picker's selection to the colours to store. `null` slug → no theme (omit);
+ * the custom sentinel → keep `customTheme` verbatim; any other slug → that preset's colours.
+ * Pure, so the form's submit mapping is unit-testable without rendering.
+ */
+export function resolveSelectedTheme(
+	slug: string | null,
+	customTheme: BasicTheme | null | undefined
+): BasicTheme | undefined {
+	if ( slug === null ) {
+		return undefined;
+	}
+	if ( slug === CUSTOM_THEME_SLUG ) {
+		return customTheme ?? undefined;
+	}
+	return THEME_PRESETS.find( ( preset ) => preset.slug === slug )?.colors;
+}
+
 const sameRgb = ( a: Rgb, b: Rgb ): boolean => a.r === b.r && a.g === b.g && a.b === b.b;
 
 /** Reverse-match stored colours to a known preset (so the picker highlights it), or null. */

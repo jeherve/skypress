@@ -6,7 +6,7 @@
  */
 import type { BlockNode } from '../blocks/render';
 import type { BlobRefJson } from '../media/blob';
-import type { BasicTheme } from './themes';
+import { parseBasicTheme, type BasicTheme } from './themes';
 
 /**
  * Public origin for the stored publication + article URLs (and the Bluesky post link).
@@ -164,13 +164,16 @@ export function buildPublicationRecord( input: {
 } ): PublicationRecord {
 	const trimmedName = input.name?.trim();
 	const description = input.description?.trim();
+	// Validate the theme at the write boundary too (symmetric with the read path): an invalid
+	// theme is dropped rather than persisted, so no out-of-range channel can ever reach storage.
+	const basicTheme = parseBasicTheme( input.basicTheme );
 	return {
 		$type: 'site.standard.publication',
 		url: publicationHomeUrl( input.handle, input.slug ),
 		name: trimmedName || input.handle,
 		...( description ? { description } : {} ),
 		...( input.icon ? { icon: input.icon } : {} ),
-		...( input.basicTheme ? { basicTheme: input.basicTheme } : {} ),
+		...( basicTheme ? { basicTheme } : {} ),
 	};
 }
 

@@ -11,7 +11,13 @@ import {
 	PUBLICATION_ICON_MAX_BYTES,
 } from '../lib/media/uploadImage';
 import { buildGetBlobUrl, type BlobRefJson } from '../lib/media/blob';
-import { THEME_PRESETS, findPresetByColors, type Rgb } from '../lib/publish/themes';
+import {
+	THEME_PRESETS,
+	findPresetByColors,
+	resolveSelectedTheme,
+	CUSTOM_THEME_SLUG,
+	type Rgb,
+} from '../lib/publish/themes';
 
 interface Props {
 	agent: Agent;
@@ -49,9 +55,20 @@ export default function PublicationForm( {
 			? buildGetBlobUrl( pdsUrl, did, existing.icon.ref.$link )
 			: null
 	);
-	const [ themeSlug, setThemeSlug ] = useState< string | null >(
-		() => findPresetByColors( existing?.basicTheme )?.slug ?? null
-	);
+	// A stored theme that matches no current preset (e.g. a preset whose colours later changed):
+	// keep it verbatim and offer it as a selectable "Custom" option, so editing an unrelated field
+	// never silently erases the publisher's colours.
+	const customTheme =
+		existing?.basicTheme && ! findPresetByColors( existing.basicTheme )
+			? existing.basicTheme
+			: null;
+	const [ themeSlug, setThemeSlug ] = useState< string | null >( () => {
+		const matched = findPresetByColors( existing?.basicTheme )?.slug;
+		if ( matched ) {
+			return matched;
+		}
+		return customTheme ? CUSTOM_THEME_SLUG : null;
+	} );
 	const [ uploading, setUploading ] = useState( false );
 	const [ saving, setSaving ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
@@ -106,12 +123,11 @@ export default function PublicationForm( {
 		setSaving( true );
 		setError( null );
 		try {
-			const selectedPreset = THEME_PRESETS.find( ( preset ) => preset.slug === themeSlug );
 			const input = {
 				name: name.trim(),
 				description: description.trim() || undefined,
 				icon: icon ?? undefined,
-				basicTheme: selectedPreset?.colors,
+				basicTheme: resolveSelectedTheme( themeSlug, customTheme ),
 			};
 			const saved = existing
 				? await updatePublication( agent, did, handle, existing, input )
@@ -193,6 +209,39 @@ export default function PublicationForm( {
 						/>
 						<span className="pubform__theme-label">No theme</span>
 					</label>
+					{ customTheme && (
+						<label
+							className={ `pubform__theme${
+								themeSlug === CUSTOM_THEME_SLUG ? ' is-selected' : ''
+							}` }
+						>
+							<input
+								type="radio"
+								name="pub-theme"
+								value={ CUSTOM_THEME_SLUG }
+								checked={ themeSlug === CUSTOM_THEME_SLUG }
+								onChange={ () => setThemeSlug( CUSTOM_THEME_SLUG ) }
+								disabled={ saving }
+							/>
+							<span
+								className="pubform__theme-swatch"
+								style={ {
+									background: `rgb(${ customTheme.background.r }, ${ customTheme.background.g }, ${ customTheme.background.b })`,
+									color: `rgb(${ customTheme.foreground.r }, ${ customTheme.foreground.g }, ${ customTheme.foreground.b })`,
+								} }
+								aria-hidden="true"
+							>
+								<span
+									className="pubform__theme-dot"
+									style={ {
+										background: `rgb(${ customTheme.accent.r }, ${ customTheme.accent.g }, ${ customTheme.accent.b })`,
+									} }
+								/>
+								Aa
+							</span>
+							<span className="pubform__theme-label">Current</span>
+						</label>
+					) }
 					{ THEME_PRESETS.map( ( preset ) => {
 						const swatch = ( color: Rgb ) => `rgb(${ color.r }, ${ color.g }, ${ color.b })`;
 						return (

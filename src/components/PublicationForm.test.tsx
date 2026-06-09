@@ -59,4 +59,33 @@ describe( 'PublicationForm theme picker', () => {
 		};
 		expect( checkedValue( renderForm( existing ) ) ).toBe( 'dusk' );
 	} );
+
+	it( 'surfaces and pre-selects a "Current" option when the stored theme matches no preset', () => {
+		// A valid theme whose colours match no preset (e.g. a preset whose values later changed).
+		// It must remain visible + selected so an unrelated edit doesn't silently erase it.
+		const existing: Publication = {
+			uri: 'at://x',
+			rkey: 'r',
+			slug: 'blog',
+			name: 'Blog',
+			basicTheme: {
+				$type: 'site.standard.theme.basic',
+				background: { r: 10, g: 20, b: 30 },
+				foreground: { r: 240, g: 240, b: 240 },
+				accent: { r: 100, g: 50, b: 200 },
+				accentForeground: { r: 255, g: 255, b: 255 },
+			},
+		};
+		const markup = renderForm( existing );
+		expect( markup ).toContain( 'Current' );
+		expect( radios( markup ) ).toHaveLength( THEME_PRESETS.length + 2 ); // none + custom + presets
+		expect( checkedValue( markup ) ).toBe( 'custom' );
+	} );
+
+	it( 'shows no "Current" option for an unthemed publication', () => {
+		const existing: Publication = { uri: 'at://x', rkey: 'r', slug: 'blog', name: 'Blog' };
+		const markup = renderForm( existing );
+		expect( radios( markup ) ).toHaveLength( THEME_PRESETS.length + 1 );
+		expect( checkedValue( markup ) ).toBe( '' );
+	} );
 } );

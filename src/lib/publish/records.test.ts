@@ -173,6 +173,23 @@ describe( 'buildPublicationRecord', () => {
 		const bare = buildPublicationRecord( { handle: 'a.b', slug: 's', name: 'N' } );
 		expect( 'basicTheme' in bare ).toBe( false );
 	} );
+
+	it( 'drops an invalid basicTheme rather than persisting it (write-boundary validation)', () => {
+		const record = buildPublicationRecord( {
+			handle: 'a.b',
+			slug: 's',
+			name: 'N',
+			// Out-of-range channel — must never reach storage.
+			basicTheme: {
+				$type: 'site.standard.theme.basic',
+				background: { r: 300, g: 0, b: 0 },
+				foreground: { r: 0, g: 0, b: 0 },
+				accent: { r: 0, g: 0, b: 0 },
+				accentForeground: { r: 0, g: 0, b: 0 },
+			} as never,
+		} );
+		expect( 'basicTheme' in record ).toBe( false );
+	} );
 } );
 
 describe( 'buildDocumentRecord', () => {

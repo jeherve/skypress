@@ -88,18 +88,24 @@ Rewrite the derived-token mapping with explicit thresholds and worst-case backgr
 
 | token | role | target | derived against |
 |---|---|---|---|
+| `--sun` / `--ember` | accent text / links / focus rings | 4.5 | `--paper` |
+| `--sun-strong` | link hover text | 4.5 | `--paper` |
 | `--muted` | secondary text | 4.5 | `--panel` (most fg-ward surface) |
 | `--ink-soft` | secondary text | 4.5 | `--panel` |
-| `--sun-strong` | link hover / pill-on-tint text | 4.5 | `--sun-tint` |
-| `--sun` / `--ember` | accent text / links / focus rings | (already ≥ 4.5 vs paper from baked accent) | — |
 | `--btn-primary-hover` | button hover fill | 4.5 (vs `accentForeground`) | — |
 | `--paper`, `--paper-raised`, `--panel`, `--ink`, `--btn-primary`, `--btn-primary-fg`, `--sun-tint` | surfaces / body / button fill+text | unchanged | — |
 | `--line`, `--line-strong` | decorative hairline borders | **exempt** | — |
 
-`--sun` stays the raw (baked) accent — it now clears ≥ 4.5 on `--paper`, so links, the
-`border-left` editorial accent, and focus rings (which need only ≥ 3:1) are all covered.
-Pill/tag text sits on the more accent-ward `--sun-tint`, so that text path uses
-`--sun-strong`, which is derived to clear 4.5 against the tint.
+Even though the baked accents are already ≥ 4.5 on `--paper`, `--sun`/`--sun-strong` are
+still routed through `ensureContrast` so that *arbitrary* themes (the custom-theme path,
+`resolveSelectedTheme(CUSTOM_THEME_SLUG, …)`) also render accessibly. For the baked presets
+this is a no-op.
+
+`--sun` stays the raw (baked) accent — it clears ≥ 4.5 on `--paper`, so links, the
+`border-left` editorial accent, and focus rings (which need only ≥ 3:1) are covered. The
+only place `--sun` sits on the more accent-ward `--sun-tint` is the **large** display text
+of the avatar / publication-logo fallback (2.6rem / 1.4rem, weight 700) — WCAG large-text,
+so its bar is ≥ 3:1, which all baked accents clear (≥ 3.5:1). No CSS retargeting needed.
 
 ### 3. No CSS changes
 
@@ -120,10 +126,10 @@ are **out of scope** — they are not publication-themed. (The base `--sun` link
 Extend `themes.test.ts`:
 
 1. **Per-preset text-pairing audit** — for every preset, assert ≥ 4.5 for: link
-   (`--sun`/`--paper`), link hover (`--sun-strong`/`--paper`), pill text
-   (`--sun-strong`/`--sun-tint`), muted (`--muted`/`--panel`), ink-soft
-   (`--ink-soft`/`--panel`), button (`accentForeground`/`--btn-primary`), button hover
-   (`accentForeground`/`--btn-primary-hover`). This is the failing test written first.
+   (`--sun`/`--paper`), link hover (`--sun-strong`/`--paper`), muted (`--muted`/`--panel`),
+   ink-soft (`--ink-soft`/`--panel`), button (`accentForeground`/`--btn-primary`), button
+   hover (`accentForeground`/`--btn-primary-hover`); and ≥ 3:1 for the large avatar/logo
+   display text (`--sun`/`--sun-tint`). This is the failing test written first.
 2. **Stability assertion** — `dusk`, `sunrise`, `midnight` raw colors are unchanged.
 3. **`ensureContrast` unit tests** — returns input untouched when already compliant;
    reaches target otherwise; preserves hue direction.

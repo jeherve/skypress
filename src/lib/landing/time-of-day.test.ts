@@ -33,4 +33,23 @@ describe( 'phaseForHour', () => {
 			expect( p.lede.length ).toBeGreaterThan( 0 );
 		}
 	} );
+
+	// The greeting is rendered next to the live clock ("<greeting> · 10:23"), so a
+	// calendar word in it must agree with the wall clock — no "Good afternoon" before noon.
+	it( 'never greets with a time-of-day word that contradicts the hour', () => {
+		for ( let hour = 0; hour < 24; hour++ ) {
+			const { greeting } = PHASES[ phaseForHour( hour ) ];
+			const at = `"${ greeting }" shown at ${ hour }:00`;
+			if ( /morning/i.test( greeting ) ) {
+				expect( hour, at ).toBeLessThan( 12 );
+			}
+			if ( /afternoon/i.test( greeting ) ) {
+				expect( hour, at ).toBeGreaterThanOrEqual( 12 );
+				expect( hour, at ).toBeLessThan( 18 );
+			}
+			if ( /evening/i.test( greeting ) ) {
+				expect( hour, at ).toBeGreaterThanOrEqual( 17 );
+			}
+		}
+	} );
 } );

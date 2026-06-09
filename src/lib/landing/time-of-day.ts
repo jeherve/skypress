@@ -30,7 +30,7 @@ export const PHASES: Record< PhaseKey, Phase > = {
 		lede: 'A calm place to write long-form, and publish it to the open social web.',
 	},
 	midday: {
-		greeting: 'Good afternoon',
+		greeting: 'Sun’s up',
 		headlineHtml: 'Write something <em>worth keeping.</em>',
 		lede: 'A calm place to write long-form, and publish it to the open social web.',
 	},

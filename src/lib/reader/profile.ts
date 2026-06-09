@@ -6,7 +6,9 @@
  * Bluesky appview — so the page has no third-party-service dependency. `getRecord` already
  * guards the (DID-doc-derived) PDS host against SSRF and degrades to null on failure.
  *
- * `displayName`/`description` are plain text; callers render them as text, never as HTML.
+ * `displayName` is plain text. `description` is plain text in the record, but the author
+ * page linkifies it at render via `detectBioSegments` (rich-text.ts), mirroring Bluesky.
+ * Neither is ever injected as raw HTML. (Decision 0015.)
  */
 import { getRecord } from './records';
 import { buildGetBlobUrl, type BlobRefJson } from '../media/blob';

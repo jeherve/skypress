@@ -40,6 +40,12 @@ Read the relevant `docs/decisions/*` and `docs/specs/*` before working in an are
    In **dev you must serve on `http://127.0.0.1:<port>`, not `localhost`** (atproto
    loopback requirement), and the loopback `client_id` must be path-less — see
    `src/lib/auth/oauth.ts`. Auth + editor live in the `Studio` client-only island.
+8. **Colocated tests under `src/pages/` MUST be underscore-prefixed** (e.g.
+   `_index.meta.test.ts`). Astro's file router imports every `.ts` in `src/pages/` during
+   static-path collection; a `*.test.ts` there runs its top-level `import … from 'vitest'`,
+   which throws outside the vitest runner → the build's prerender server 500s
+   (`Vitest failed to access its internal state`). A leading `_` makes Astro ignore the
+   file as a route while vitest's `src/**/*.test.ts` glob still finds it.
 
 ## Product guardrails (from the brief)
 

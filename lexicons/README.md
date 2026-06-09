@@ -50,7 +50,7 @@ Record key: **TID**. ([source](https://tangled.org/standard.site/lexicons))
 | `textContent` | | **de-facto required** — plain text from the block tree; Bluesky uses it for reading-time + search and ignores `content` |
 | `content` | | open union — our `blog.skypress.content.gutenberg` object |
 | `bskyPostRef` | | strongRef (`{uri, cid}`) to the companion Bluesky post |
-| `updatedAt` | | reserved for the edit flow (SP5) |
+| `updatedAt` | | set when an article is edited in place (`publishedAt` + `bskyPostRef` are preserved); omitted on first publish |
 
 ## `site.standard.publication` — fields SkyPress writes
 

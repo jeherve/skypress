@@ -109,7 +109,11 @@ trailing-slash path) live in [`docs/specs/sp7-deploy.md`](./docs/specs/sp7-deplo
 - **Reader** (`/@<handle>/<rkey>`): resolves identity, fetches the record, and renders the
   block tree to **light HTML with zero JavaScript**, reconstructing blob image URLs and
   **sanitising** the untrusted content. Other apps that don't understand the block format
-  fall back to `textContent`.
+  fall back to `textContent`. Each writer also gets a publication page (`/@<handle>/<slug>`)
+  with a **full-content RSS feed** (`…/rss.xml`), and every public page emits Open Graph +
+  Twitter card meta.
+- **Dashboard** (`/dashboard`): a signed-in writer manages their publication (name, icon,
+  sky-phase theme) and jumps to the editor to write or edit articles.
 - **Auth:** a browser OAuth public client (PKCE/DPoP) — no backend, no secrets.
 
 The content lexicon is documented in [`lexicons/`](./lexicons/README.md); the design
@@ -121,19 +125,24 @@ rationale for each non-obvious choice is in [`docs/decisions/`](./docs/decisions
 
 ```
 src/
-  pages/        index · editor · dashboard · client-metadata.json.ts (OAuth client doc, worker route)
+  pages/        index · editor · dashboard · lexicon · 404 · 500 · client-metadata.json.ts (OAuth client doc, worker route)
                 [author]/index.astro (author index) · [author]/[slug]/index.astro (publication)
-                · [author]/[slug]/[rkey].astro (read-through document reader)
-  components/   Studio · SkyEditor · PublishPanel · AppBar · Dashboard · PublicationForm · AccountMenu · CreatePublicationCta · Logo · Footer
+                · [author]/[slug]/[rkey].astro (read-through document reader) · [author]/[slug]/rss.xml.ts (feed)
+  components/   Studio · SkyEditor · PublishPanel · AppBar · Dashboard · PublicationForm · AccountMenu · CreatePublicationCta · HandleStart · ErrorScene · Logo · Footer
   lib/
     blocks/     render.ts (dependency-free reader) · serialize.ts (@wordpress oracle) · allowlist.ts
-    auth/       oauth.ts · AuthProvider.tsx · config.ts · LoginForm.tsx
-    publish/    records.ts (pure builders) · publisher.ts (Agent orchestration) · publications.ts (publication CRUD)
+    auth/       oauth.ts · AuthProvider.tsx · config.ts · LoginForm.tsx · profile.ts · nav.ts · cta.ts
+    publish/    records.ts (pure builders) · publisher.ts (Agent orchestration) · publications.ts (publication CRUD) · themes.ts
     media/      mediaUpload.ts · uploadImage.ts (logo) · blob.ts · pds.ts
     reader/     identity.ts · records.ts · publications.ts · profile.ts · sanitize.ts
+    feed/       rss.ts · publication-feed.ts (full-content RSS, hand-rolled)
+    seo/        meta.ts (Open Graph + Twitter card tags)
+    editor/     edit-link.ts (dashboard → editor edit links)
+    landing/    time-of-day.ts (sky phase) · actor-lookup.ts (public handle lookup)
+    lexicon/    schema-doc.ts · inline-code.ts (the /lexicon reference page)
     net/        safe-fetch.ts (SSRF guard for the reader's outbound fetches)
 lexicons/       blog.skypress.content.gutenberg.json + README
-docs/           decisions/ (why) · specs/ (how) · brand/
+docs/           decisions/ (why) · specs/ (how, the SP0–SP12 build archive) · superpowers/ (later design + plan docs) · brand/
 astro.config.mjs · wrangler.toml
 ```
 

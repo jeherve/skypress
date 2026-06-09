@@ -1,10 +1,13 @@
 # SP9 — Public lexicon page
 
 - **Date:** 2026-06-08
-- **Status:** 📝 Spec — not yet built
+- **Status:** ✅ Built — `/lexicon` is live. The entry point landed as a **"Docs" link in the
+  shared site footer** rather than a home-page hero button: the landing page was later
+  rebuilt around the handle input (see `docs/superpowers/specs/2026-06-09-landing-cta-and-handle-input-design.md`),
+  which retired the multi-button hero.
 - **Goal:** Add a public, plain-spoken page at `/lexicon` that highlights and documents the
   data SkyPress writes to a writer's PDS — narrative up top, technical reference below — and
-  a third hero button on the home page (**"See the lexicon"**) linking to it.
+  link to it from the site chrome.
 
 Builds on [Decision 0005](../decisions/0005-lexicon-and-publish-model.md) (the lexicon &
 publish model) and [`lexicons/README.md`](../../lexicons/README.md), the existing internal

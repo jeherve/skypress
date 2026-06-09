@@ -10,7 +10,12 @@ Read the relevant `docs/decisions/*` and `docs/specs/*` before working in an are
 - **Record non-obvious calls** in `docs/decisions/NNNN-title.md` (context, options,
   choice, why). These are first-class deliverables.
 - **Vertical slices over horizontal layers.** Keep the app runnable at every step.
-- Each sub-project (SP0, SP1, …) gets its own spec in `docs/specs/`.
+- **Where specs live.** `docs/specs/sp0`–`sp12` are the **archive of the initial v1 build**
+  (all Built/Complete) — read them for the "how" and the cross-referenced `Depends on`
+  history, but don't extend the SP numbering. New, post-v1 work gets a dated design + plan
+  pair under `docs/superpowers/specs/` and `docs/superpowers/plans/`
+  (e.g. `2026-06-09-editor-page-rework-design.md`). Durable rationale still graduates to a
+  `docs/decisions/NNNN-*.md`.
 
 ## Hard constraints (learned the hard way — see decisions)
 

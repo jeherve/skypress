@@ -5,22 +5,21 @@ import { useAuth } from '../lib/auth/useAuth';
 import LoginForm from '../lib/auth/LoginForm';
 import SkyEditor from './SkyEditor';
 import PublishPanel from './PublishPanel';
-import MyArticles from './MyArticles';
+import AppBar from './AppBar';
 import { createMediaUpload, revokeBlobRegistry, type BlobRegistry } from '../lib/media/mediaUpload';
-import { displayNameFor, authorPath } from '../lib/auth/profile';
-import type { MyArticle } from '../lib/publish/publisher';
+import { getMyArticle, type MyArticle } from '../lib/publish/publisher';
+import { editRkeyFromSearch } from '../lib/editor/edit-link';
 import { listPublications, type Publication } from '../lib/publish/publications';
 
 /**
  * The authenticated writing surface. Gates the editor behind atproto OAuth:
- * loading → (signed-out: login form) | (signed-in: account bar + editor).
+ * loading → (signed-out: login form) | (signed-in: editor).
  */
 function StudioGate() {
-	const { status, agent, handle, displayName, avatar, did, pdsUrl, error, signOut } = useAuth();
+	const { status, agent, handle, did, pdsUrl, error } = useAuth();
 	const [ blocks, setBlocks ] = useState< BlockInstance[] >( [] );
 	const [ editing, setEditing ] = useState< MyArticle | null >( null );
 	const [ refreshKey, setRefreshKey ] = useState( 0 );
-	const [ avatarOk, setAvatarOk ] = useState( true );
 	// `null` = still loading; `[]` = loaded, none exist. PublishPanel needs the distinction.
 	const [ publications, setPublications ] = useState< Publication[] | null >( null );
 	// Shared between mediaUpload (writes blob refs) and publish (reads them).
@@ -40,6 +39,34 @@ function StudioGate() {
 		};
 	}, [ agent, did, refreshKey ] );
 
+	// One-shot: if the page was opened as /editor?edit=<rkey>, load that article.
+	const editLoadedRef = useRef( false );
+	useEffect( () => {
+		if ( editLoadedRef.current || ! agent || ! did ) {
+			return;
+		}
+		const rkey = editRkeyFromSearch( window.location.search );
+		if ( ! rkey ) {
+			editLoadedRef.current = true;
+			return;
+		}
+		editLoadedRef.current = true;
+		let cancelled = false;
+		getMyArticle( agent, did, rkey )
+			.then( ( article ) => {
+				if ( ! cancelled && article ) {
+					setEditing( article );
+					setBlocks( article.blocks as unknown as BlockInstance[] );
+				}
+			} )
+			.catch( () => {
+				/* stale/bad edit link → start a new article */
+			} );
+		return () => {
+			cancelled = true;
+		};
+	}, [ agent, did ] );
+
 	// Release the preview object URLs this session minted when the Studio unmounts.
 	useEffect( () => () => revokeBlobRegistry( registry ), [ registry ] );
 
@@ -51,22 +78,18 @@ function StudioGate() {
 	}, [ agent, did, pdsUrl, registry ] );
 
 	if ( status === 'loading' ) {
-		return <p className="studio__loading">Connecting to your identity…</p>;
+		return (
+			<>
+				<AppBar current="editor" />
+				<p className="studio__loading">Connecting to your identity…</p>
+			</>
+		);
 	}
 
 	if ( status === 'signed-in' && agent && did ) {
 		// Re-mount the editor + panel when switching article so onLoad + the title reset.
 		const editorKey = editing ? `edit-${ editing.rkey }` : `new-${ refreshKey }`;
-		const viewerName = displayNameFor( { did, handle, displayName, avatar } );
-		const publicPath = authorPath( handle );
 
-		// Switching articles re-mounts the editor, so the current previews leave the DOM —
-		// safe to release the object URLs they held before loading the next article.
-		const startEdit = ( article: MyArticle ) => {
-			revokeBlobRegistry( registry );
-			setEditing( article );
-			setBlocks( article.blocks as unknown as BlockInstance[] );
-		};
 		const startNew = () => {
 			revokeBlobRegistry( registry );
 			setEditing( null );
@@ -75,53 +98,7 @@ function StudioGate() {
 
 		return (
 			<>
-				<div className="studio__account">
-					<span className="studio__identity">
-						{ avatar && avatarOk ? (
-							<img
-								className="studio__avatar"
-								src={ avatar }
-								alt=""
-								width={ 38 }
-								height={ 38 }
-								onError={ () => setAvatarOk( false ) }
-							/>
-						) : (
-							<span className="studio__avatar studio__avatar--fallback" aria-hidden="true">
-								{ viewerName.charAt( 0 ).toUpperCase() }
-							</span>
-						) }
-						<span className="studio__who">
-							<strong className="studio__name">{ viewerName }</strong>
-							{ handle && <span className="studio__handle">@{ handle }</span> }
-						</span>
-					</span>
-					<span className="studio__account-actions">
-						<a className="studio__viewpage" href="/dashboard">
-							Dashboard
-						</a>
-						{ publicPath && (
-							<a className="studio__viewpage" href={ publicPath }>
-								View my public page
-							</a>
-						) }
-						<button
-							type="button"
-							className="studio__signout"
-							onClick={ () => void signOut() }
-						>
-							Sign out
-						</button>
-					</span>
-				</div>
-
-				<MyArticles
-					agent={ agent }
-					did={ did }
-					handle={ handle }
-					refreshKey={ refreshKey }
-					onEdit={ startEdit }
-				/>
+				<AppBar current="editor" />
 
 				<div className="studio__mode">
 					<span>{ editing ? `Editing: ${ editing.title }` : 'New article' }</span>
@@ -165,14 +142,17 @@ function StudioGate() {
 
 	// signed-out or error
 	return (
-		<div className="studio__login">
-			<LoginForm />
-			{ status === 'error' && error && (
-				<p className="studio__error" role="alert">
-					Couldn't start the auth client: { error }
-				</p>
-			) }
-		</div>
+		<>
+			<AppBar current="editor" />
+			<div className="studio__login">
+				<LoginForm />
+				{ status === 'error' && error && (
+					<p className="studio__error" role="alert">
+						Couldn't start the auth client: { error }
+					</p>
+				) }
+			</div>
+		</>
 	);
 }
 

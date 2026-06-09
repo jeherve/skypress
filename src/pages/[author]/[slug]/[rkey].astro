@@ -66,6 +66,7 @@ const description = doc.description || textContent.slice( 0, 200 );
 const canonical = canonicalArticleUrl( handle, slug, rkey );
 const docUri = `at://${ did }/site.standard.document/${ rkey }`;
 const pubUrl = `/${ author }/${ slug }`;
+const feedHref = `${ pubUrl }/rss.xml`;
 
 const words = textContent.split( /\s+/ ).filter( Boolean ).length;
 const readingMinutes = Math.max( 1, Math.round( words / 200 ) );
@@ -78,6 +79,7 @@ const updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
 		{/* standard.site indexing tags (brief §3) — Bluesky cards + AppView pickup */}
 		<link rel="site.standard.document" href={docUri} />
 		<link rel="site.standard.publication" href={publication.uri} />
+		<link rel="alternate" type="application/rss+xml" title={`${ publication.name } — RSS`} href={feedHref} />
 		<link rel="canonical" href={canonical} />
 		<meta property="og:type" content="article" />
 		<meta property="og:title" content={title} />

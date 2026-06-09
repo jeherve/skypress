@@ -68,14 +68,6 @@ describe( 'Base.astro Open Graph wiring', () => {
 	} );
 } );
 
-describe( 'preview page metadata', () => {
-	const preview = read( '../pages/preview.astro' );
-
-	it( 'passes a description so its card has body text', () => {
-		expect( preview ).toMatch( /<Base[^>]*\sdescription=/s );
-	} );
-} );
-
 describe( 'article page metadata', () => {
 	const article = read( '../pages/[author]/[slug]/[rkey].astro' );
 

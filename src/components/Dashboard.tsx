@@ -16,6 +16,8 @@ import {
 	type MyArticle,
 } from '../lib/publish/publisher';
 import { buildGetBlobUrl, type BlobRefJson } from '../lib/media/blob';
+import AppBar from './AppBar';
+import { editLinkFor } from '../lib/editor/edit-link';
 
 type View =
 	| { kind: 'list' }
@@ -24,7 +26,7 @@ type View =
 
 /** The publication dashboard (SP10, step D). Authed, client-only — no `@wordpress/*`. */
 function DashboardGate() {
-	const { status, agent, handle, did, pdsUrl, error, signOut } = useAuth();
+	const { status, agent, handle, did, pdsUrl, error } = useAuth();
 	const [ data, setData ] = useState<
 		{ owned: Publication[]; foreign: ForeignPublication[] } | null
 	>( null );
@@ -44,19 +46,27 @@ function DashboardGate() {
 	}, [ agent, did ] );
 
 	if ( status === 'loading' ) {
-		return <p className="dash__loading">Connecting to your identity…</p>;
+		return (
+			<>
+				<AppBar current="dashboard" />
+				<p className="dash__loading">Connecting to your identity…</p>
+			</>
+		);
 	}
 
 	if ( status !== 'signed-in' || ! agent || ! did ) {
 		return (
-			<div className="dash__login">
-				<LoginForm />
-				{ status === 'error' && error && (
-					<p className="dash__error" role="alert">
-						Couldn't start the auth client: { error }
-					</p>
-				) }
-			</div>
+			<>
+				<AppBar current="dashboard" />
+				<div className="dash__login">
+					<LoginForm />
+					{ status === 'error' && error && (
+						<p className="dash__error" role="alert">
+							Couldn't start the auth client: { error }
+						</p>
+					) }
+				</div>
+			</>
 		);
 	}
 
@@ -69,71 +79,66 @@ function DashboardGate() {
 	};
 
 	return (
-		<div className="dash">
-			<header className="dash__bar">
-				<button
-					type="button"
-					className="dash__crumb"
-					onClick={ () => setView( { kind: 'list' } ) }
-					disabled={ view.kind === 'list' }
-				>
-					Your publications
-				</button>
-				<span className="dash__bar-actions">
-					<a className="dash__studio" href="/editor">
-						Studio
-					</a>
-					<button type="button" className="dash__signout" onClick={ () => void signOut() }>
-						Sign out
+		<>
+			<AppBar current="dashboard" />
+			<div className="dash">
+				<header className="dash__bar">
+					<button
+						type="button"
+						className="dash__crumb"
+						onClick={ () => setView( { kind: 'list' } ) }
+						disabled={ view.kind === 'list' }
+					>
+						Your publications
 					</button>
-				</span>
-			</header>
+				</header>
 
-			{ view.kind === 'create' && (
-				<PublicationForm
-					agent={ agent }
-					did={ did }
-					pdsUrl={ pdsUrl }
-					handle={ writerHandle }
-					onSaved={ () => {
-						reload();
-						setView( { kind: 'list' } );
-					} }
-					onCancel={ () => setView( { kind: 'list' } ) }
-				/>
-			) }
+				{ view.kind === 'create' && (
+					<PublicationForm
+						agent={ agent }
+						did={ did }
+						pdsUrl={ pdsUrl }
+						handle={ writerHandle }
+						onSaved={ () => {
+							reload();
+							setView( { kind: 'list' } );
+						} }
+						onCancel={ () => setView( { kind: 'list' } ) }
+					/>
+				) }
 
-			{ view.kind === 'manage' && (
-				<PublicationManager
-					agent={ agent }
-					did={ did }
-					pdsUrl={ pdsUrl }
-					handle={ writerHandle }
-					pub={ view.pub }
-					onChanged={ ( pub ) => {
-						reload();
-						setView( { kind: 'manage', pub } );
-					} }
-					onDeleted={ () => {
-						reload();
-						setView( { kind: 'list' } );
-					} }
-					onBack={ () => setView( { kind: 'list' } ) }
-				/>
-			) }
+				{ view.kind === 'manage' && (
+					<PublicationManager
+						agent={ agent }
+						did={ did }
+						pdsUrl={ pdsUrl }
+						handle={ writerHandle }
+						pub={ view.pub }
+						onChanged={ ( pub ) => {
+							reload();
+							setView( { kind: 'manage', pub } );
+						} }
+						onDeleted={ () => {
+							reload();
+							setView( { kind: 'list' } );
+						} }
+						onBack={ () => setView( { kind: 'list' } ) }
+					/>
+				) }
 
-			{ view.kind === 'list' && (
-				<PublicationList
-					publications={ data ? data.owned : null }
-					foreign={ data?.foreign ?? [] }
-					did={ did }
-					handle={ writerHandle }
-					pdsUrl={ pdsUrl }
-					onNew={ () => setView( { kind: 'create' } ) }
-					onManage={ ( pub ) => setView( { kind: 'manage', pub } ) }
-				/>
-			) }
-		</div>
+				{ view.kind === 'list' && (
+					<PublicationList
+						publications={ data ? data.owned : null }
+						foreign={ data?.foreign ?? [] }
+						did={ did }
+						handle={ writerHandle }
+						pdsUrl={ pdsUrl }
+						onNew={ () => setView( { kind: 'create' } ) }
+						onManage={ ( pub ) => setView( { kind: 'manage', pub } ) }
+					/>
+				) }
+			</div>
+		</>
 	);
 }
 
@@ -404,6 +409,13 @@ function PublicationManager( {
 											{ article.publishedAt.slice( 0, 10 ) }
 										</span>
 									) }
+									<a
+										className="dash__edit"
+										href={ editLinkFor( article.rkey ) }
+										aria-label={ `Edit ${ article.title }` }
+									>
+										Edit
+									</a>
 									<button
 										type="button"
 										disabled={ busy === article.rkey }

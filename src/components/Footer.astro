@@ -16,6 +16,11 @@
 		<span class="site-footer__mark">GPL-2.0-or-later</span>
 	</div>
 
+	<nav class="site-footer__nav" aria-label="Site">
+		<a class="site-footer__navlink" href="/lexicon">Docs</a>
+		<a class="site-footer__navlink" href="/@skypress.blog">News</a>
+	</nav>
+
 	<nav class="site-footer__links" aria-label="Elsewhere on the open web">
 		<a class="site-footer__link" href="/@skypress.blog" title="@skypress.blog" aria-label="The SkyPress profile, @skypress.blog">
 			<svg class="site-footer__icon" viewBox="0 0 568 501" fill="currentColor" aria-hidden="true">
@@ -62,6 +67,23 @@
 	}
 	.site-footer__text a:hover {
 		color: var(--sun);
+	}
+
+	.site-footer__nav {
+		display: flex;
+		gap: 1.1rem;
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+		letter-spacing: 0.04em;
+	}
+	.site-footer__navlink {
+		color: var(--muted);
+		text-decoration: none;
+		text-underline-offset: 0.2em;
+	}
+	.site-footer__navlink:hover {
+		color: var(--sun);
+		text-decoration: underline;
 	}
 
 	.site-footer__links {

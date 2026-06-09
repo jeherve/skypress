@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Logo from '../components/Logo.astro';
 import Footer from '../components/Footer.astro';
 import AccountMenu from '../components/AccountMenu.tsx';
+import HandleStart from '../components/HandleStart';
 import { PHASES, DEFAULT_PHASE } from '../lib/landing/time-of-day';
 
 const fallback = PHASES[ DEFAULT_PHASE ];
@@ -34,6 +35,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 	<div class="page">
 		<div class="sky" aria-hidden="true">
 			<div class="stars"></div>
+			<span class="shootingstar"></span>
 			<div class="bloom"></div>
 			<div class="halo"></div>
 			<div class="horizon"></div>
@@ -51,22 +53,28 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 			<p class="eyebrow" id="greet">{fallback.greeting}</p>
 			<h1 class="hero__title" id="headline" set:html={fallback.headlineHtml} />
 			<p class="hero__lede" id="lede">{fallback.lede}</p>
-			<div class="hero__actions">
-				<a class="btn btn--primary" href="/editor">Start writing</a>
-				<a class="btn btn--ghost" href="/preview">Read a sample</a>
-				<a class="btn btn--ghost" href="/lexicon">See the lexicon</a>
+			<div class="hero__cta">
+				<HandleStart client:only="react" />
 			</div>
-			<p class="hero__note">
-				Sign in with your existing Bluesky / AT&nbsp;Protocol identity.
-			</p>
+			<p class="hero__free">Free &amp; open-source &mdash; your words live in your account, not ours.</p>
 		</main>
 
-		<section class="how">
-			<ol class="steps">
-				<li><span class="steps__n">01</span><h2>Sign in, no new account</h2><p>Use the Bluesky / AT&nbsp;Protocol account you already have.</p></li>
-				<li><span class="steps__n">02</span><h2>Write in blocks</h2><p>Rich, long-form writing, built with the WordPress block editor.</p></li>
-				<li><span class="steps__n">03</span><h2>Keep your words</h2><p>Your post lives in your AT&nbsp;Protocol account, not locked inside SkyPress.</p></li>
-			</ol>
+		<section class="showcase">
+			<p class="showcase__label">See it in action</p>
+			<div class="showcase__strip">
+				<figure class="shot">
+					<div class="shot__frame"><img src="/screenshots/editor.png" alt="The SkyPress block editor" loading="lazy" /></div>
+					<figcaption>The editor</figcaption>
+				</figure>
+				<figure class="shot">
+					<div class="shot__frame"><img src="/screenshots/published-article.png" alt="A published SkyPress article" loading="lazy" /></div>
+					<figcaption>A published piece</figcaption>
+				</figure>
+				<figure class="shot">
+					<div class="shot__frame"><img src="/screenshots/author-page.png" alt="An author's publications page" loading="lazy" /></div>
+					<figcaption>All your publications</figcaption>
+				</figure>
+			</div>
 		</section>
 
 		<Footer />
@@ -145,6 +153,30 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 			radial-gradient(1px 1px at 33% 9%, #fff, transparent);
 	}
 
+	/* Playful: a rare shooting star, dark phases only (silenced under reduced motion below). */
+	.shootingstar {
+		position: absolute;
+		top: 12%;
+		left: -8%;
+		width: 90px;
+		height: 2px;
+		background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9));
+		border-radius: 2px;
+		transform: rotate(16deg);
+		opacity: 0;
+	}
+	:global([data-phase='night']) .shootingstar,
+	:global([data-phase='dusk']) .shootingstar,
+	:global([data-phase='dawn']) .shootingstar {
+		animation: shoot 12s ease-in 4s infinite;
+	}
+	@keyframes shoot {
+		0% { left: -8%; top: 12%; opacity: 0; }
+		2% { opacity: 1; }
+		9% { left: 78%; top: 40%; opacity: 0; }
+		100% { left: 78%; top: 40%; opacity: 0; }
+	}
+
 	/* Per-phase sky gradient + star visibility + hero text colour */
 	:global([data-phase='night']) .sky { background: linear-gradient(180deg, #080611, #140f28 50%, #231a38); }
 	:global([data-phase='night']) .stars { opacity: 1; }
@@ -186,6 +218,13 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 	.masthead :global(.logo__word) {
 		color: var(--sky-ink);
 	}
+
+	/* Playful: the wordmark's sun becomes a crescent moon at night/dusk (landing only —
+	   data-phase is set on <html> only here, so other pages keep the sun). */
+	:global([data-phase='night']) .masthead :global(.logo__sun),
+	:global([data-phase='dusk']) .masthead :global(.logo__sun) { display: none; }
+	:global([data-phase='night']) .masthead :global(.logo__moon),
+	:global([data-phase='dusk']) .masthead :global(.logo__moon) { display: block; }
 
 	/* Ghost buttons sitting on the sky get a frosted chip so they read at every phase. */
 	.masthead .btn--ghost,
@@ -354,50 +393,134 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		margin: 1.25rem 0 0;
 		text-shadow: var(--sky-shadow);
 	}
-	.hero__actions {
-		display: flex;
-		gap: 0.85rem;
-		margin: 2rem 0 0;
-		flex-wrap: wrap;
-		justify-content: center;
-	}
-	.hero__note {
-		color: var(--sky-soft);
-		font-size: 0.95rem;
-		margin-top: 1.5rem;
-		text-shadow: var(--sky-shadow);
-	}
-
-	/* ===== How it works (standard themed surface, below the sky) ===== */
-	.how {
+	/* ===== See it in action (themed surface below the sky) ===== */
+	.showcase {
 		position: relative;
 		z-index: 2;
 		background: var(--paper);
 		border-top: 1px solid var(--line);
 		padding: clamp(2.5rem, 6vw, 4rem) clamp(1.25rem, 5vw, 4rem);
 	}
-	.steps {
-		list-style: none;
+	.showcase__label {
+		max-width: 64rem;
+		margin: 0 auto 1.25rem;
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--sun);
+	}
+	.showcase__strip {
+		max-width: 64rem;
 		margin: 0 auto;
-		padding: 0;
-		max-width: 60rem;
 		display: grid;
-		gap: 1.75rem;
+		gap: 1.25rem;
 		grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
 	}
-	.steps li { margin: 0; }
-	.steps__n {
-		font-family: var(--font-mono);
-		font-weight: 500;
-		color: var(--sun);
-		font-size: 1.1rem;
-		letter-spacing: 0.04em;
+	.shot { margin: 0; }
+	.shot__frame {
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius);
+		overflow: hidden;
+		background: var(--paper-raised);
+		box-shadow: var(--shadow);
+		aspect-ratio: 16 / 10;
 	}
-	.steps h2 { font-size: 1.2rem; margin: 0.4rem 0 0.3rem; }
-	.steps p { margin: 0; color: var(--ink-soft); }
+	.shot__frame img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+	.shot figcaption {
+		margin-top: 0.6rem;
+		font-size: 0.9rem;
+		color: var(--ink-soft);
+	}
+
+	/* ===== Handle input island (lives on the sky) ===== */
+	.hero__cta { width: 100%; max-width: 26rem; margin: 2rem auto 0; }
+	.hero__free {
+		color: var(--sky-soft);
+		font-size: 0.9rem;
+		margin-top: 1rem;
+		text-shadow: var(--sky-shadow);
+	}
+	.hero :global(.handlestart__row) { display: flex; gap: 0.5rem; }
+	.hero :global(.handlestart__field) {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		gap: 0.15rem;
+		background: var(--sky-chip);
+		border: 1px solid var(--sky-line);
+		border-radius: var(--radius-sm);
+		padding: 0.6rem 0.75rem;
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+	}
+	.hero :global(.handlestart__at) { color: var(--sky-soft); }
+	.hero :global(.handlestart__input) {
+		flex: 1;
+		border: none;
+		background: transparent;
+		color: var(--sky-ink);
+		font: inherit;
+		outline: none;
+	}
+	.hero :global(.handlestart__input::placeholder) { color: var(--sky-soft); opacity: 0.7; }
+	.hero :global(.handlestart__spinner) {
+		width: 14px; height: 14px; flex: none;
+		border: 2px solid var(--sky-line);
+		border-top-color: var(--sky-ink);
+		border-radius: 50%;
+		animation: handlestart-spin 0.7s linear infinite;
+	}
+	.hero :global(.handlestart__go) {
+		border: none;
+		border-radius: var(--radius-sm);
+		padding: 0.6rem 1rem;
+		font: inherit;
+		font-weight: 650;
+		white-space: nowrap;
+		color: #fff;
+		background: var(--btn-primary);
+		cursor: pointer;
+		transition: background 0.12s ease, box-shadow 0.12s ease;
+	}
+	.hero :global(.handlestart__go:hover) { background: var(--btn-primary-hover); }
+	.hero :global(.handlestart__card) {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		margin-top: 0.6rem;
+		padding: 0.45rem 0.6rem;
+		background: var(--sky-chip);
+		border: 1px solid var(--sky-line);
+		border-radius: var(--radius-sm);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		text-align: left;
+	}
+	.hero :global(.handlestart__avatar) {
+		width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: none;
+	}
+	.hero :global(.handlestart__avatar--fallback) {
+		display: inline-flex; align-items: center; justify-content: center;
+		background: var(--sun-tint); color: var(--sun); font-weight: 700;
+	}
+	.hero :global(.handlestart__who) { display: flex; flex-direction: column; line-height: 1.15; }
+	.hero :global(.handlestart__name) { font-weight: 680; font-size: 0.9rem; color: var(--sky-ink); }
+	.hero :global(.handlestart__handle) { font-size: 0.74rem; color: var(--sky-soft); }
+	.hero :global(.handlestart__check) { margin-left: auto; color: #6fce92; font-weight: 800; }
+	.hero :global(.handlestart__hint) {
+		color: var(--sky-soft);
+		font-size: 0.82rem;
+		margin: 0.6rem 0 0;
+		text-shadow: var(--sky-shadow);
+	}
+	.hero :global(.handlestart__hint--error) { color: #ffd0c4; }
+	@keyframes handlestart-spin { to { transform: rotate(360deg); } }
 
 	@media (prefers-reduced-motion: reduce) {
+		.shootingstar { animation: none; opacity: 0; }
 		.sky .stars, .sky .bloom, .sky .halo { transition: none; }
+		.hero :global(.handlestart__spinner) { animation: none; }
 		.masthead :global(.account-menu__dropdown) {
 			animation: none;
 		}

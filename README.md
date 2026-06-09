@@ -124,7 +124,7 @@ src/
   pages/        index · editor · dashboard · client-metadata.json.ts (OAuth client doc, worker route)
                 [author]/index.astro (author index) · [author]/[slug]/index.astro (publication)
                 · [author]/[slug]/[rkey].astro (read-through document reader)
-  components/   Studio · SkyEditor · PublishPanel · MyArticles · Dashboard · PublicationForm · Logo
+  components/   Studio · SkyEditor · PublishPanel · AppBar · Dashboard · PublicationForm · AccountMenu · CreatePublicationCta · Logo · Footer
   lib/
     blocks/     render.ts (dependency-free reader) · serialize.ts (@wordpress oracle) · allowlist.ts
     auth/       oauth.ts · AuthProvider.tsx · config.ts · LoginForm.tsx

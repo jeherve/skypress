@@ -1,0 +1,105 @@
+/**
+ * Shared top bar for the editor + dashboard islands. Imported globally by both
+ * page shells; the islands are client:only so Astro scoped styles can't reach
+ * the bar's DOM.
+ */
+.app-bar {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	max-width: var(--studio-measure, 60rem);
+	margin: 0 auto;
+	padding: 0.75rem 1.25rem;
+	border-bottom: 1px solid var(--line);
+	flex-wrap: wrap;
+}
+.app-bar__home {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.55rem;
+	color: var(--ink);
+	text-decoration: none;
+}
+.app-bar__mark {
+	color: var(--sun);
+	flex: none;
+}
+.app-bar__word {
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: 1.18rem;
+	letter-spacing: -0.015em;
+}
+.app-bar__spacer {
+	flex: 1;
+}
+.app-bar__nav {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	color: var(--sun);
+	background: var(--sun-tint);
+	text-decoration: none;
+	font-size: 0.85rem;
+	font-weight: 600;
+	padding: 0.35rem 0.6rem;
+	border-radius: var(--radius-sm);
+}
+.app-bar__nav:hover {
+	text-decoration: underline;
+}
+.app-bar__navicon {
+	flex: none;
+}
+.app-bar__identity {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-width: 0;
+	text-decoration: none;
+	color: inherit;
+	padding: 0.2rem 0.35rem;
+	border-radius: var(--radius-sm);
+}
+a.app-bar__identity:hover {
+	background: var(--panel);
+}
+.app-bar__avatar {
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	object-fit: cover;
+	flex: none;
+}
+.app-bar__avatar--fallback {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--sun-tint);
+	color: var(--sun);
+	font-weight: 700;
+	font-size: 0.85rem;
+}
+.app-bar__who {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.15;
+	min-width: 0;
+}
+.app-bar__name {
+	font-weight: 650;
+	font-size: 0.9rem;
+}
+.app-bar__handle {
+	color: var(--muted);
+	font-size: 0.75rem;
+}
+.app-bar__signout {
+	border: 1px solid var(--line-strong);
+	background: var(--paper-raised);
+	border-radius: var(--radius-sm);
+	padding: 0.3rem 0.7rem;
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.85rem;
+}

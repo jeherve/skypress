@@ -269,24 +269,22 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		flex-direction: column;
 		padding: 0.3rem;
 		border-radius: var(--radius-sm);
-		background: var(--sky-chip);
-		border: 1px solid var(--sky-line);
-		box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
-		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
+		background: var(--paper-raised);
+		border: 1px solid var(--line-strong);
+		box-shadow: var(--shadow);
 		z-index: 5;
 		animation: account-menu-in 0.14s ease;
 	}
 	.masthead :global(.account-menu__item) {
 		padding: 0.5rem 0.7rem;
 		border-radius: calc(var(--radius-sm) - 2px);
-		color: var(--sky-ink);
+		color: var(--ink);
 		font-size: 0.88rem;
 		text-decoration: none;
-		text-shadow: var(--sky-shadow);
 	}
 	.masthead :global(.account-menu__item:hover) {
-		background: rgba(255, 255, 255, 0.16);
+		background: var(--line);
+		color: var(--ink);
 	}
 	@keyframes account-menu-in {
 		from {

@@ -220,6 +220,13 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		color: var(--sky-ink);
 	}
 
+	/* Playful: the wordmark's sun becomes a crescent moon at night/dusk (landing only —
+	   data-phase is set on <html> only here, so other pages keep the sun). */
+	:global([data-phase='night']) .masthead :global(.logo__sun),
+	:global([data-phase='dusk']) .masthead :global(.logo__sun) { display: none; }
+	:global([data-phase='night']) .masthead :global(.logo__moon),
+	:global([data-phase='dusk']) .masthead :global(.logo__moon) { display: block; }
+
 	/* Ghost buttons sitting on the sky get a frosted chip so they read at every phase. */
 	.masthead .btn--ghost,
 	.hero .btn--ghost {

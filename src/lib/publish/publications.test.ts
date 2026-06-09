@@ -7,6 +7,7 @@ import {
 	deletePublication,
 } from './publications';
 import { SITE_BASE } from './records';
+import { THEME_PRESETS } from './themes';
 import type { BlobRefJson } from '../media/blob';
 
 const DID = 'did:plc:me';
@@ -171,6 +172,23 @@ describe( 'createPublication', () => {
 		await createPublication( agent, DID, 'me.bsky.social', { name: 'Logo Blog', icon } );
 		expect( created[ 0 ].record.icon ).toEqual( icon );
 	} );
+
+	it( 'writes and returns basicTheme when provided', async () => {
+		const { agent, created } = mockAgent();
+		const pub = await createPublication( agent, DID, 'me.bsky.social', {
+			name: 'Themed Blog',
+			basicTheme: THEME_PRESETS[ 4 ].colors, // twilight
+		} );
+		expect( created[ 0 ].record.basicTheme ).toEqual( THEME_PRESETS[ 4 ].colors );
+		expect( pub.basicTheme ).toEqual( THEME_PRESETS[ 4 ].colors );
+	} );
+
+	it( 'omits basicTheme when none is chosen', async () => {
+		const { agent, created } = mockAgent();
+		const pub = await createPublication( agent, DID, 'me.bsky.social', { name: 'Plain Blog' } );
+		expect( 'basicTheme' in created[ 0 ].record ).toBe( false );
+		expect( pub.basicTheme ).toBeUndefined();
+	} );
 } );
 
 describe( 'updatePublication', () => {
@@ -193,6 +211,39 @@ describe( 'updatePublication', () => {
 		expect( updated.slug ).toBe( 'my-blog' );
 		expect( updated.name ).toBe( 'Renamed Blog' );
 		expect( updated.description ).toBe( 'Now with a description' );
+	} );
+
+	it( 'writes and returns a newly chosen basicTheme', async () => {
+		const { agent, put } = mockAgent();
+		const existing = {
+			uri: `at://${ DID }/site.standard.publication/a`,
+			rkey: 'a',
+			slug: 'my-blog',
+			name: 'My Blog',
+		};
+		const updated = await updatePublication( agent, DID, 'me.bsky.social', existing, {
+			name: 'My Blog',
+			basicTheme: THEME_PRESETS[ 1 ].colors, // noon
+		} );
+		expect( put[ 0 ].record.basicTheme ).toEqual( THEME_PRESETS[ 1 ].colors );
+		expect( updated.basicTheme ).toEqual( THEME_PRESETS[ 1 ].colors );
+	} );
+} );
+
+describe( 'toPublication basicTheme', () => {
+	it( 'surfaces a valid stored basicTheme and drops a malformed one', async () => {
+		const good = THEME_PRESETS[ 2 ].colors; // dusk
+		const { agent } = mockAgent( {
+			'site.standard.publication': [
+				pubRecord( 'a', `${ SITE_BASE }/@me.bsky.social/a`, { basicTheme: good } ),
+				pubRecord( 'b', `${ SITE_BASE }/@me.bsky.social/b`, {
+					basicTheme: { background: { r: 999 } },
+				} ),
+			],
+		} );
+		const pubs = await listPublications( agent, DID );
+		expect( pubs.find( ( p ) => p.slug === 'a' )?.basicTheme ).toEqual( good );
+		expect( pubs.find( ( p ) => p.slug === 'b' )?.basicTheme ).toBeUndefined();
 	} );
 } );
 

@@ -62,6 +62,7 @@ Record key: **TID** (not a `self` singleton — reused by listing existing recor
 | `name` | ✓ | publication name (defaults from the handle) |
 | `description` | | optional |
 | `icon` | | optional blob (≤1MB) |
+| `basicTheme` | | optional `site.standard.theme.basic` object — a sky-phase colour theme (`background`/`foreground`/`accent`/`accentForeground` as RGB); applied on the public reader and honoured by other standard.site readers (Decision 0012) |
 
 ## `app.bsky.feed.post` — the social signal
 

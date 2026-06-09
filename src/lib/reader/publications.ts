@@ -12,6 +12,7 @@ import {
 	publicationSlugFromUrl,
 } from '../publish/records';
 import type { BlobRefJson } from '../media/blob';
+import { parseBasicTheme, type BasicTheme } from '../publish/themes';
 
 export interface ReaderPublication {
 	uri: string;
@@ -19,6 +20,7 @@ export interface ReaderPublication {
 	name: string;
 	description: string | null;
 	icon: BlobRefJson | null;
+	basicTheme: BasicTheme | null;
 }
 
 interface RawPublication {
@@ -26,6 +28,7 @@ interface RawPublication {
 	name?: string;
 	description?: string;
 	icon?: BlobRefJson;
+	basicTheme?: unknown;
 }
 
 function toReaderPublication( record: { uri: string; value: RawPublication } ): ReaderPublication | null {
@@ -43,6 +46,7 @@ function toReaderPublication( record: { uri: string; value: RawPublication } ): 
 		name: value.name ?? slug,
 		description: value.description?.trim() || null,
 		icon: value.icon ?? null,
+		basicTheme: parseBasicTheme( value.basicTheme ),
 	};
 }
 

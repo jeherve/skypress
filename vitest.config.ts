@@ -5,7 +5,7 @@ export default defineConfig( {
 		globals: true,
 		// jsdom: @wordpress/block-library block registration touches browser globals.
 		environment: 'jsdom',
-		include: [ 'src/**/*.test.ts' ],
+		include: [ 'src/**/*.test.ts', 'src/**/*.test.tsx' ],
 	},
 	resolve: {
 		dedupe: [ 'react', 'react-dom', '@wordpress/element' ],

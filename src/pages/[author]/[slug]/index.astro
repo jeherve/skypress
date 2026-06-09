@@ -6,6 +6,7 @@ import { listRecords } from '../../../lib/reader/records';
 import { resolveReaderPublication } from '../../../lib/reader/publications';
 import { fetchActorProfile } from '../../../lib/reader/profile';
 import { buildGetBlobUrl } from '../../../lib/media/blob';
+import { themeStyleBlock } from '../../../lib/publish/themes';
 
 export const prerender = false;
 
@@ -56,12 +57,14 @@ const logoUrl = publication.icon
 const authorName = profile.displayName ?? `@${ handle }`;
 const initial = publication.name.charAt( 0 ).toUpperCase();
 const feedHref = `/${ author }/${ slug }/rss.xml`;
+const themeStyle = themeStyleBlock( publication.basicTheme );
 ---
 
 <Base title={`${ publication.name } — SkyPress`} description={publication.description ?? undefined}>
 	<Fragment slot="head">
 		<link rel="site.standard.publication" href={publication.uri} />
 		<link rel="alternate" type="application/rss+xml" title={`${ publication.name } — RSS`} href={feedHref} />
+		{themeStyle && <Fragment set:html={themeStyle} />}
 	</Fragment>
 
 	<header class="masthead">

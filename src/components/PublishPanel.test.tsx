@@ -1,35 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Agent } from '@atproto/api';
 
 ( globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean } ).IS_REACT_ACT_ENVIRONMENT = true;
-
-// The publish button's onClick fires `run()` fire-and-forget, so the resulting state
-// updates (setPhase('working') → awaited updateDocument → setPhase('done')) are flushed
-// by React's scheduler on a detached task AFTER the dispatching act() returns. With raw
-// react-dom (no @testing-library/react fireEvent to patch the dispatch into act's queue),
-// no amount of act()-wrapping can adopt that detached commit, so React logs a benign
-// "not wrapped in act(...)" warning. The assertion below only reads the synchronously
-// captured mock call args, so the warning is noise — filter just this one message to keep
-// the test output clean while letting every other console.error through.
-const ACT_WARNING = 'not wrapped in act';
-let restoreConsoleError: ( () => void ) | undefined;
-beforeEach( () => {
-	const original = console.error;
-	const spy = vi
-		.spyOn( console, 'error' )
-		.mockImplementation( ( ...args: Parameters< typeof console.error > ) => {
-			if ( typeof args[ 0 ] === 'string' && args[ 0 ].includes( ACT_WARNING ) ) {
-				return;
-			}
-			original( ...args );
-		} );
-	restoreConsoleError = () => spy.mockRestore();
-} );
-afterEach( () => {
-	restoreConsoleError?.();
-} );
 
 // Hoist the mock fns so vi.mock (which is hoisted) can reference them safely.
 const { updateDocument, publish } = vi.hoisted( () => {
@@ -85,8 +59,6 @@ async function clickUpdate( description: string ) {
 	await act( async () => {
 		button.dispatchEvent( new MouseEvent( 'click', { bubbles: true } ) );
 	} );
-	// Let the async run() chain (setPhase('done')/onComplete) settle inside act.
-	await act( async () => {} );
 	root.unmount();
 	container.remove();
 }

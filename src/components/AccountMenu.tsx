@@ -21,6 +21,7 @@ export default function AccountMenu() {
 	const [ open, setOpen ] = useState( false );
 	const [ avatarOk, setAvatarOk ] = useState( true );
 	const rootRef = useRef< HTMLDivElement >( null );
+	const triggerRef = useRef< HTMLButtonElement >( null );
 
 	// Restore the OAuth session and fetch the viewer's profile.
 	useEffect( () => {
@@ -68,6 +69,7 @@ export default function AccountMenu() {
 		function onKey( event: KeyboardEvent ) {
 			if ( event.key === 'Escape' ) {
 				setOpen( false );
+				triggerRef.current?.focus();
 			}
 		}
 		document.addEventListener( 'mousedown', onDown );
@@ -98,10 +100,12 @@ export default function AccountMenu() {
 			} }
 		>
 			<button
+				ref={ triggerRef }
 				type="button"
 				className="account-menu__trigger"
 				aria-haspopup="menu"
 				aria-expanded={ open }
+				aria-controls="account-menu-dropdown"
 				onClick={ () => setOpen( ( value ) => ! value ) }
 			>
 				{ profile.avatar && avatarOk ? (
@@ -124,7 +128,7 @@ export default function AccountMenu() {
 				</span>
 			</button>
 			{ open && (
-				<div className="account-menu__dropdown" role="menu">
+				<div id="account-menu-dropdown" className="account-menu__dropdown" role="menu">
 					{ items.map( ( item ) => (
 						<a key={ item.href } className="account-menu__item" role="menuitem" href={ item.href }>
 							{ item.label }

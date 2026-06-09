@@ -5,6 +5,7 @@ import { resolveAuthor } from '../../lib/reader/identity';
 import { listReaderPublications } from '../../lib/reader/publications';
 import { fetchActorProfile } from '../../lib/reader/profile';
 import { buildGetBlobUrl } from '../../lib/media/blob';
+import CreatePublicationCta from '../../components/CreatePublicationCta.tsx';
 
 export const prerender = false;
 
@@ -78,7 +79,10 @@ const initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
 
 		<h2 class="author__heading">Publications</h2>
 		{publications.length === 0 ? (
-			<p class="author__empty">No SkyPress publications yet.</p>
+			<div class="author__emptyblock">
+				<p class="author__empty">No SkyPress publications yet.</p>
+				<CreatePublicationCta client:only="react" profileDid={did} />
+			</div>
 		) : (
 			<ul class="author__list">
 				{publications.map( ( pub ) => {
@@ -205,6 +209,12 @@ const initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
 	}
 	.author__empty {
 		color: var(--muted);
+	}
+	.author__emptyblock {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1rem;
 	}
 	.author__list {
 		list-style: none;

@@ -20,7 +20,10 @@ const words = textContent.split( /\s+/ ).filter( Boolean ).length;
 const readingMinutes = Math.max( 1, Math.round( words / 200 ) );
 ---
 
-<Base title="The open sky meets the typesetter's bench — SkyPress">
+<Base
+	title="The open sky meets the typesetter's bench — SkyPress"
+	description="A sample SkyPress article, rendered server-side from stored AT Protocol blocks — zero editor JavaScript."
+>
 	<main class="reader">
 		<p class="reader__meta">
 			{words} words · {readingMinutes} min read · rendered server-side, zero

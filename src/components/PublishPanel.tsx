@@ -36,6 +36,8 @@ interface Props {
 	editing?: EditingTarget;
 	/** Controlled title (lifted to the editor so it can render as a heading above the canvas). */
 	title: string;
+	/** The lede / excerpt for the document + Bluesky-card description (blank → auto-derived). */
+	description: string;
 	/** Called after a successful publish/update so the parent can refresh. */
 	onComplete?: () => void;
 }
@@ -54,6 +56,7 @@ export default function PublishPanel( {
 	publications,
 	editing,
 	title,
+	description,
 	onComplete,
 }: Props ) {
 	const pubs = publications ?? [];
@@ -122,6 +125,7 @@ export default function PublishPanel( {
 					publishedAt: editing.publishedAt,
 					bskyPostRef: editing.bskyPostRef,
 					title: title.trim(),
+					description,
 					blocks: prepared,
 				} );
 				setResultUrl( res.articleUrl );
@@ -133,6 +137,7 @@ export default function PublishPanel( {
 				}
 				const res = await publish( agent, identity, {
 					title: title.trim(),
+					description,
 					blocks: prepared,
 					publicationUri: pub.uri,
 					publicationCid: pub.cid,

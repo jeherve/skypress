@@ -57,6 +57,17 @@ describe( 'document page Open Graph wiring', () => {
 		expect( page ).toMatch( /errorScene\(\s*'article-not-found'/ );
 		expect( page ).toMatch( /Astro\.response\.status\s*=/ );
 	} );
+
+	it( 'derives the og:description fallback via deriveExcerpt (shared with publish)', () => {
+		expect( page ).toMatch(
+			/import\s*\{\s*deriveExcerpt\s*\}\s*from\s*'[^']*lib\/publish\/excerpt'/
+		);
+		expect( page ).toMatch( /doc\.description\s*\|\|\s*deriveExcerpt\(\s*textContent\s*\)/ );
+	} );
+
+	it( 'no longer hand-rolls the textContent.slice fallback', () => {
+		expect( page ).not.toMatch( /textContent\.slice\(\s*0,\s*200\s*\)/ );
+	} );
 } );
 
 describe( 'document page focuses on publication + author', () => {

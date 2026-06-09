@@ -10,6 +10,7 @@ import { resolveBlobImageUrls, buildGetBlobUrl } from '../../../lib/media/blob';
 import { renderBlocks, blocksToText, type BlockNode } from '../../../lib/blocks/render';
 import { sanitizeArticleHtml } from '../../../lib/reader/sanitize';
 import { canonicalArticleUrl } from '../../../lib/publish/records';
+import { deriveExcerpt } from '../../../lib/publish/excerpt';
 import { themeStyleBlock } from '../../../lib/publish/themes';
 import { buildMetaTags } from '../../../lib/seo/meta';
 import ErrorScene from '../../../components/ErrorScene.astro';
@@ -93,7 +94,7 @@ if ( ! error && resolved ) {
 			const textContent = doc.textContent || blocksToText( blocks );
 
 			title = doc.title ?? 'Untitled';
-			description = doc.description || textContent.slice( 0, 200 );
+			description = doc.description || deriveExcerpt( textContent );
 			canonical = canonicalArticleUrl( handle, slug!, rkey! );
 			docUri = `at://${ did }/site.standard.document/${ rkey }`;
 			pubUrl = `/${ author }/${ slug }`;

@@ -167,8 +167,42 @@
 .studio__title:focus {
 	outline: none;
 }
-/* Tighten the gap between the title and the editor surface below it. */
-.studio__title + .skypress-editor {
+/* Italic lede under the title — echoes the title (display face, borderless) but quieter:
+   smaller, muted, italic. Auto-grows via JS (resize/overflow off). */
+.studio__lede {
+	display: block;
+	max-width: var(--studio-measure);
+	margin: 0.5rem auto 0;
+	padding: 0 var(--studio-gutter);
+	width: 100%;
+	box-sizing: border-box;
+	border: 0;
+	background: transparent;
+	color: var(--muted);
+	font-family: var(--font-display);
+	font-size: 1.2rem;
+	font-style: italic;
+	line-height: 1.4;
+	resize: none;
+	overflow: hidden;
+}
+.studio__lede::placeholder {
+	color: var(--muted);
+	opacity: 0.6;
+}
+.studio__lede:focus {
+	outline: none;
+}
+.studio__lede-hint {
+	max-width: var(--studio-measure);
+	margin: 0.25rem auto 0;
+	padding: 0 var(--studio-gutter);
+	font-size: 0.8rem;
+	color: var(--muted);
+}
+/* Tighten the gap between the lede (or its hint) and the editor surface below. */
+.studio__lede + .skypress-editor,
+.studio__lede-hint + .skypress-editor {
 	margin-top: 0.75rem;
 }
 

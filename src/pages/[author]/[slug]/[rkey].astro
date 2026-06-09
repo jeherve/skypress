@@ -1,6 +1,7 @@
 ---
 import Base from '../../../layouts/Base.astro';
 import Logo from '../../../components/Logo.astro';
+import PublicationFooter from '../../../components/PublicationFooter.astro';
 import { resolveAuthor } from '../../../lib/reader/identity';
 import { getRecord } from '../../../lib/reader/records';
 import { resolveReaderPublication } from '../../../lib/reader/publications';
@@ -177,9 +178,7 @@ if ( error ) {
 				<p slot="fallback" class="reader__actions-loading">Loading actions…</p>
 			</PostActions>
 		)}
-		<footer class="reader__foot">
-			<a class="reader__author" href={pubUrl}>More from {publication!.name}</a>
-		</footer>
+		<PublicationFooter name={publication!.name} pubUrl={pubUrl} feedHref={feedHref} />
 	</main>
 		</Base>
 	)
@@ -259,11 +258,6 @@ if ( error ) {
 	}
 	.reader__article :global(code) {
 		font-family: var(--font-mono);
-	}
-	.reader__foot {
-		margin-top: 3.5rem;
-		padding-top: 1.5rem;
-		border-top: 1px solid var(--line);
 	}
 	.reader__actions-loading {
 		max-width: 40rem;

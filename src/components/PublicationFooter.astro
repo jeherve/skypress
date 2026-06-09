@@ -1,0 +1,79 @@
+---
+/**
+ * Shared reading-page footer — used on single posts and on the publication
+ * index so both end the same way: the publication name + its RSS feed on the
+ * left, a quiet "Powered by SkyPress" attribution on the right.
+ *
+ * Read-path component: data is passed in as props, and it pulls in none of the
+ * browser-only editor packages (see AGENTS.md).
+ */
+interface Props {
+	/** Publication name, shown as the left-hand link. */
+	name: string;
+	/** Link to the publication page (e.g. `/@handle/slug`). */
+	pubUrl: string;
+	/** That publication's RSS feed URL. */
+	feedHref: string;
+}
+
+const { name, pubUrl, feedHref } = Astro.props;
+---
+
+<footer class="pub-footer">
+	<span class="pub-footer__left">
+		<a class="pub-footer__pub" href={pubUrl}>{name}</a>
+		<a class="pub-footer__feed" href={feedHref} aria-label={`${ name } RSS feed`}>
+			<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+				<circle cx="4.5" cy="19.5" r="2.5" />
+				<path d="M2 10.5v3.2a7.3 7.3 0 0 1 7.3 7.3h3.2A10.5 10.5 0 0 0 2 10.5Z" />
+				<path d="M2 3.6v3.2A14.2 14.2 0 0 1 16.2 21h3.2A17.4 17.4 0 0 0 2 3.6Z" />
+			</svg>
+		</a>
+	</span>
+	<a class="pub-footer__powered" href="/">Powered by SkyPress</a>
+</footer>
+
+<style>
+	.pub-footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 0.5rem 1.5rem;
+		margin-top: 3.5rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--line);
+	}
+	.pub-footer__left {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.pub-footer__pub {
+		color: var(--sun);
+		text-decoration: none;
+	}
+	.pub-footer__pub:hover {
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+	.pub-footer__feed {
+		display: inline-flex;
+		align-items: center;
+		color: var(--muted);
+		transition: color 0.12s ease;
+	}
+	.pub-footer__feed:hover {
+		color: var(--sun);
+	}
+	.pub-footer__powered {
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+		letter-spacing: 0.04em;
+		text-decoration: none;
+	}
+	.pub-footer__powered:hover {
+		color: var(--sun);
+	}
+</style>

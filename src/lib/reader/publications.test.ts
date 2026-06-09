@@ -1,5 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { listReaderPublications, resolveReaderPublication } from './publications';
+import {
+	listReaderPublications,
+	listAllReaderPublications,
+	resolveReaderPublication,
+} from './publications';
 import { listRecords } from './records';
 import { SITE_BASE } from '../publish/records';
 import { THEME_PRESETS } from '../publish/themes';
@@ -31,6 +35,38 @@ describe( 'listReaderPublications', () => {
 			name: 'Pa',
 			description: 'Hi',
 		} );
+	} );
+} );
+
+describe( 'listAllReaderPublications', () => {
+	it( 'partitions owned SkyPress publications from foreign ones', async () => {
+		const icon = { ref: { $link: 'bafyicon' }, mimeType: 'image/png', size: 1 };
+		mockedList.mockResolvedValue( [
+			rec( 'a', `${ SITE_BASE }/@me.bsky.social/blog`, { description: ' Hi ' } ),
+			rec( 'b', 'https://leaflet.pub/lish/did:plc:me/xyz', { name: 'My Leaflet', icon } ),
+			rec( 'c', 'ipfs://not-a-web-url' ), // non-http(s) → excluded everywhere
+			rec( 'd', `${ SITE_BASE }/@me.bsky.social` ), // SkyPress, no slug → dropped
+		] );
+		const { owned, foreign } = await listAllReaderPublications( PDS, DID );
+
+		expect( owned ).toHaveLength( 1 );
+		expect( owned[ 0 ] ).toMatchObject( { slug: 'blog', name: 'Pa' } );
+
+		expect( foreign ).toHaveLength( 1 );
+		expect( foreign[ 0 ] ).toEqual( {
+			uri: `at://${ DID }/site.standard.publication/b`,
+			name: 'My Leaflet',
+			url: 'https://leaflet.pub/lish/did:plc:me/xyz',
+			icon,
+		} );
+	} );
+
+	it( 'falls back to the hostname when a foreign record has no name', async () => {
+		mockedList.mockResolvedValue( [
+			{ uri: `at://${ DID }/site.standard.publication/n`, cid: 'c', value: { url: 'https://leaflet.pub/x' } },
+		] );
+		const { foreign } = await listAllReaderPublications( PDS, DID );
+		expect( foreign[ 0 ] ).toMatchObject( { name: 'leaflet.pub', icon: null } );
 	} );
 } );
 

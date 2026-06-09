@@ -2,7 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import Logo from '../../components/Logo.astro';
 import { resolveAuthor } from '../../lib/reader/identity';
-import { listReaderPublications } from '../../lib/reader/publications';
+import { listAllReaderPublications } from '../../lib/reader/publications';
 import { fetchActorProfile } from '../../lib/reader/profile';
 import { buildGetBlobUrl } from '../../lib/media/blob';
 import CreatePublicationCta from '../../components/CreatePublicationCta.tsx';
@@ -20,7 +20,8 @@ const handle = author?.startsWith( '@' ) ? author.slice( 1 ) : '';
 let did = '';
 let pdsUrl = '';
 let profile: Awaited< ReturnType< typeof fetchActorProfile > > | null = null;
-let publications: Awaited< ReturnType< typeof listReaderPublications > > = [];
+let publications: Awaited< ReturnType< typeof listAllReaderPublications > >[ 'owned' ] = [];
+let foreign: Awaited< ReturnType< typeof listAllReaderPublications > >[ 'foreign' ] = [];
 let authorName = '';
 let initial = '';
 
@@ -37,10 +38,13 @@ if ( ! error && resolved ) {
 	did = resolved.did;
 	pdsUrl = resolved.pdsUrl;
 
-	[ profile, publications ] = await Promise.all( [
+	const [ fetchedProfile, allPublications ] = await Promise.all( [
 		fetchActorProfile( pdsUrl, did ),
-		listReaderPublications( pdsUrl, did ),
+		listAllReaderPublications( pdsUrl, did ),
 	] );
+	profile = fetchedProfile;
+	publications = allPublications.owned;
+	foreign = allPublications.foreign;
 
 	authorName = profile.displayName ?? `@${ handle }`;
 	initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
@@ -133,6 +137,55 @@ if ( error ) {
 							);
 						} )}
 					</ul>
+				)}
+
+				{foreign.length > 0 && (
+					<section class="author__elsewhere">
+						<h2 class="author__heading">Elsewhere</h2>
+						<ul class="author__list">
+							{foreign.map( ( pub ) => {
+								const logoUrl = pub.icon
+									? buildGetBlobUrl( pdsUrl, did, pub.icon.ref.$link )
+									: null;
+								return (
+									<li class="author__item">
+										<a
+											class="author__pub author__pub--external"
+											href={pub.url}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											{logoUrl ? (
+												<img class="author__publogo" src={logoUrl} alt="" width="52" height="52" />
+											) : (
+												<span class="author__publogo author__publogo--fallback" aria-hidden="true">
+													{pub.name.charAt( 0 ).toUpperCase()}
+												</span>
+											)}
+											<span class="author__pubtext">
+												<span class="author__pubname">{pub.name}</span>
+											</span>
+											<svg
+												class="author__pub-arrow"
+												width="13"
+												height="13"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2.5"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												aria-hidden="true"
+											>
+												<path d="M7 17 17 7" />
+												<path d="M8 7h9v9" />
+											</svg>
+										</a>
+									</li>
+								);
+							} )}
+						</ul>
+					</section>
 				)}
 			</main>
 		</Base>
@@ -293,5 +346,28 @@ if ( error ) {
 	.author__pubdesc {
 		color: var(--ink-soft);
 		font-size: 0.95rem;
+	}
+	.author__elsewhere {
+		margin-top: 2.5rem;
+	}
+	.author__pub--external {
+		justify-content: flex-start;
+	}
+	.author__pub-arrow {
+		margin-left: auto;
+		flex: none;
+		color: var(--muted);
+		opacity: 0;
+		transform: translate(-2px, 2px);
+		transition:
+			opacity 0.15s ease,
+			transform 0.15s ease,
+			color 0.15s ease;
+	}
+	.author__pub--external:hover .author__pub-arrow,
+	.author__pub--external:focus-visible .author__pub-arrow {
+		opacity: 1;
+		transform: translate(0, 0);
+		color: var(--sun);
 	}
 </style>

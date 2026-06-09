@@ -9,6 +9,7 @@ import {
 import { listPublications } from './publications';
 import { firstImageBlobRef } from '../media/blob';
 import { blocksToText, type BlockNode } from '../blocks/render';
+import { deriveExcerpt } from './excerpt';
 
 const DOCUMENT_COLLECTION = 'site.standard.document';
 const POST_COLLECTION = 'app.bsky.feed.post';
@@ -75,6 +76,10 @@ export async function publish(
 	const rkey = TID.nextStr();
 	const articleUrl = canonicalArticleUrl( handle, input.publicationSlug, rkey );
 	const textContent = blocksToText( input.blocks );
+	// When the writer leaves the lede blank, derive a brief excerpt from the body so the
+	// document description AND the Bluesky card description are never empty (the og:image's
+	// text twin). Written into the record, not just the rendered meta.
+	const description = input.description?.trim() || deriveExcerpt( textContent );
 
 	// 1. Document first (no bskyPostRef yet) so the post can embed its strongRef.
 	const docRes = await agent.com.atproto.repo.createRecord( {
@@ -89,7 +94,7 @@ export async function publish(
 				textContent,
 				siteUri: input.publicationUri,
 				publishedAt: now,
-				description: input.description,
+				description,
 			} )
 		),
 	} );
@@ -104,7 +109,7 @@ export async function publish(
 			buildBskyPost( {
 				title: input.title,
 				articleUrl,
-				description: input.description,
+				description,
 				createdAt: now,
 				// Reuse the first uploaded image's in-repo blob as the card thumb (Decision 0014).
 				thumb: firstImageBlobRef( input.blocks ),
@@ -127,7 +132,7 @@ export async function publish(
 				textContent,
 				siteUri: input.publicationUri,
 				publishedAt: now,
-				description: input.description,
+				description,
 				bskyPostRef,
 			} )
 		),
@@ -169,6 +174,8 @@ export async function updateDocument(
 	const handle = identity.handle ?? did;
 	const now = new Date().toISOString();
 	const articleUrl = canonicalArticleUrl( handle, input.publicationSlug, input.rkey );
+	const textContent = blocksToText( input.blocks );
+	const description = input.description?.trim() || deriveExcerpt( textContent );
 
 	const res = await agent.com.atproto.repo.putRecord( {
 		repo: did,
@@ -179,10 +186,10 @@ export async function updateDocument(
 				title: input.title,
 				rkey: input.rkey,
 				blocks: input.blocks,
-				textContent: blocksToText( input.blocks ),
+				textContent,
 				siteUri: input.siteUri,
 				publishedAt: input.publishedAt,
-				description: input.description,
+				description,
 				bskyPostRef: input.bskyPostRef,
 				updatedAt: now,
 			} )

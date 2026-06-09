@@ -3,6 +3,8 @@ import type { Agent } from '@atproto/api';
 import { publish, updateDocument, listAllMyArticles, listPublicationArticles, getMyArticle } from './publisher';
 import { SITE_BASE } from './records';
 import type { BlockNode } from '../blocks/render';
+import { deriveExcerpt } from './excerpt';
+import { blocksToText } from '../blocks/render';
 
 const DID = 'did:plc:me';
 const HANDLE = 'me.bsky.social';
@@ -270,5 +272,67 @@ describe( 'getMyArticle', () => {
 	it( 'returns null for a foreign/orphan document', async () => {
 		const { agent } = repo();
 		expect( await getMyArticle( agent, DID, 'd2' ) ).toBeNull();
+	} );
+} );
+
+describe( 'publish — description fallback', () => {
+	it( 'derives the description from the post text when none is provided', async () => {
+		const { agent, created } = mockAgent();
+		await publish( agent, { did: DID, handle: HANDLE }, { title: 'Hello', blocks: BLOCKS, ...TARGET } );
+
+		const expected = deriveExcerpt( blocksToText( BLOCKS ) );
+		expect( expected.length ).toBeGreaterThan( 0 );
+		const doc = created.find( ( c ) => c.collection === 'site.standard.document' )!.record;
+		const post = created.find( ( c ) => c.collection === 'app.bsky.feed.post' )!.record as {
+			embed: { external: { description: string } };
+		};
+		expect( doc.description ).toBe( expected );
+		expect( post.embed.external.description ).toBe( expected );
+	} );
+
+	it( 'uses the provided description verbatim (trimmed) in both records', async () => {
+		const { agent, created } = mockAgent();
+		await publish(
+			agent,
+			{ did: DID, handle: HANDLE },
+			{ title: 'Hello', blocks: BLOCKS, description: '  Hand-written lede  ', ...TARGET }
+		);
+		const doc = created.find( ( c ) => c.collection === 'site.standard.document' )!.record;
+		const post = created.find( ( c ) => c.collection === 'app.bsky.feed.post' )!.record as {
+			embed: { external: { description: string } };
+		};
+		expect( doc.description ).toBe( 'Hand-written lede' );
+		expect( post.embed.external.description ).toBe( 'Hand-written lede' );
+	} );
+
+	it( 'omits the document description (and posts empty) when there is no text and no lede', async () => {
+		const emptyBlocks: BlockNode[] = [
+			{ name: 'core/paragraph', attributes: { content: '' }, innerBlocks: [] },
+		];
+		const { agent, created } = mockAgent();
+		await publish( agent, { did: DID, handle: HANDLE }, { title: 'Hello', blocks: emptyBlocks, ...TARGET } );
+		const doc = created.find( ( c ) => c.collection === 'site.standard.document' )!.record;
+		const post = created.find( ( c ) => c.collection === 'app.bsky.feed.post' )!.record as {
+			embed: { external: Record< string, unknown > };
+		};
+		expect( 'description' in doc ).toBe( false );
+		expect( post.embed.external.description ).toBe( '' );
+	} );
+
+	it( 'updateDocument derives the description from the post text when none is provided', async () => {
+		const { agent, put } = mockAgent();
+		await updateDocument(
+			agent,
+			{ did: DID, handle: HANDLE },
+			{
+				rkey: '3kdoc',
+				siteUri: TARGET.publicationUri,
+				publicationSlug: 'my-blog',
+				publishedAt: '2026-06-08T00:00:00.000Z',
+				title: 'Hello again',
+				blocks: BLOCKS,
+			}
+		);
+		expect( put[ 0 ].record.description ).toBe( deriveExcerpt( blocksToText( BLOCKS ) ) );
 	} );
 } );

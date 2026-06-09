@@ -444,6 +444,9 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 	.hero :global(.handlestart__row) { display: flex; gap: 0.5rem; }
 	.hero :global(.handlestart__field) {
 		flex: 1;
+		/* Allow the field to shrink below the input's intrinsic width so the row never
+		   overflows and clips the Start button on narrow viewports. */
+		min-width: 0;
 		display: flex;
 		align-items: center;
 		gap: 0.15rem;
@@ -457,6 +460,8 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 	.hero :global(.handlestart__at) { color: var(--sky-soft); }
 	.hero :global(.handlestart__input) {
 		flex: 1;
+		/* Pair with the field's min-width: 0 — let the input collapse so the field can too. */
+		min-width: 0;
 		border: none;
 		background: transparent;
 		color: var(--sky-ink);

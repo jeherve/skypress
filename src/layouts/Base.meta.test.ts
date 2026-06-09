@@ -58,8 +58,10 @@ describe( 'Base.astro Open Graph wiring', () => {
 	it( 'only defaults the 1200x630 dimensions for the built-in default image', () => {
 		// A flag distinguishes the default image from a caller-supplied one.
 		expect( base ).toMatch( /og-default\.png/ );
-		expect( base ).toMatch( /1200/ );
-		expect( base ).toMatch( /630/ );
+		// The 1200x630 defaults must be gated behind the isDefaultImage guard, so
+		// caller-supplied images don't silently inherit the default dimensions.
+		expect( base ).toMatch( /isDefaultImage\s*\?\s*1200/ );
+		expect( base ).toMatch( /isDefaultImage\s*\?\s*630/ );
 		// Dimensions are threaded into buildMetaTags.
 		expect( base ).toMatch( /imageWidth:/ );
 		expect( base ).toMatch( /imageHeight:/ );

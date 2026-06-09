@@ -16,7 +16,7 @@ function Cta( { profileDid }: { profileDid: string } ) {
 		return null;
 	}
 	return (
-		<a className="author__cta" href="/dashboard">
+		<a className="btn btn--primary" href="/dashboard">
 			Create your first publication
 		</a>
 	);

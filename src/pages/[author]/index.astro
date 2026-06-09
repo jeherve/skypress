@@ -161,6 +161,12 @@ const initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
 	.author__empty {
 		color: var(--muted);
 	}
+	.author__emptyblock {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1rem;
+	}
 	.author__list {
 		list-style: none;
 		padding: 0;
@@ -211,29 +217,5 @@ const initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
 	.author__pubdesc {
 		color: var(--ink-soft);
 		font-size: 0.95rem;
-	}
-</style>
-
-<!-- CreatePublicationCta is a `client:only` React island, so Astro's scoped
-     styles never reach its DOM. The CTA rule must be global. -->
-<style is:global>
-	.author__emptyblock {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 1rem;
-	}
-	.author__cta {
-		display: inline-block;
-		border-radius: 8px;
-		background: var(--sun);
-		color: #fff;
-		font-weight: 600;
-		text-decoration: none;
-		padding: 0.5rem 1rem;
-	}
-	.author__cta:hover {
-		text-decoration: none;
-		opacity: 0.92;
 	}
 </style>

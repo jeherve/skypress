@@ -35,6 +35,10 @@
 	--sun: #e8920c;
 	--sun-strong: #b85c12;
 	--sun-tint: #fbe6cc;
+	/* Filled-button background: a deeper sun that clears WCAG AA (≥4.5:1) with
+	   white text. Bare --sun is too light for white text (~2.5:1). */
+	--btn-primary: #b85c12;
+	--btn-primary-hover: #9a4c0f;
 	--ember: #bb5a36; /* rare warm accent (the ink/press counterweight) */
 
 	--radius: 12px;
@@ -56,6 +60,9 @@
 		--sun: #f4b13f;
 		--sun-strong: #f7c97a;
 		--sun-tint: #2a1f12;
+		/* Dark mode's accents are light, so white text still needs a deeper fill. */
+		--btn-primary: #aa6010;
+		--btn-primary-hover: #964f0c;
 		--ember: #e08a63;
 		--shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -16px rgba(0, 0, 0, 0.6);
 	}
@@ -134,11 +141,11 @@ a:hover {
 	transform: translateY(1px);
 }
 .btn--primary {
-	background: var(--sun);
+	background: var(--btn-primary);
 	color: #fff;
 }
 .btn--primary:hover {
-	background: var(--sun-strong);
+	background: var(--btn-primary-hover);
 	color: #fff;
 }
 .btn--ghost {

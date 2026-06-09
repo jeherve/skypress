@@ -60,7 +60,12 @@ const feedHref = `/${ author }/${ slug }/rss.xml`;
 const themeStyle = themeStyleBlock( publication.basicTheme );
 ---
 
-<Base title={`${ publication.name } — SkyPress`} description={publication.description ?? undefined}>
+<Base
+	title={`${ publication.name } — SkyPress`}
+	description={publication.description ?? undefined}
+	image={logoUrl ?? undefined}
+	imageAlt={publication.name}
+>
 	<Fragment slot="head">
 		<link rel="site.standard.publication" href={publication.uri} />
 		<link rel="alternate" type="application/rss+xml" title={`${ publication.name } — RSS`} href={feedHref} />

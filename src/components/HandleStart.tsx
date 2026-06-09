@@ -80,7 +80,7 @@ export default function HandleStart() {
 			</div>
 
 			{ preview && (
-				<div className="handlestart__card">
+				<div className="handlestart__card" aria-live="polite">
 					{ preview.avatar && avatarOk ? (
 						<img
 							className="handlestart__avatar"

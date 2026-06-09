@@ -93,9 +93,8 @@ inline SVGs (feather, publications) live in `AppBar.tsx` keyed by `icon`.
 
 ```ts
 // Fetch a single SkyPress document by rkey for the editor's ?edit load.
-// getRecord the document, resolve its publication slug via listPublications,
-// and return a MyArticle. Returns null when the record is missing or its `site`
-// isn't one of the writer's SkyPress publications (foreign / orphan doc).
+// Returns the matching MyArticle, or null when the record is missing or its
+// `site` isn't one of the writer's SkyPress publications (foreign / orphan doc).
 export async function getMyArticle(
   agent: Agent,
   did: string,
@@ -103,8 +102,10 @@ export async function getMyArticle(
 ): Promise< MyArticle | null >;
 ```
 
-Reuses the existing `toMyArticle` mapper and `RawDocValue` shape. Mirrors the
-filtering rule in `listAllMyArticles` (only the writer's own SkyPress docs).
+Implemented by reusing the already-tested `listAllMyArticles` and selecting by
+`rkey` (`.find(...) ?? null`). This inherits its slug-annotation and
+foreign/orphan-doc filtering for free, rather than re-implementing a `getRecord`
++ slug-resolution path.
 
 ### Changed — `src/components/Studio.tsx`
 
@@ -190,9 +191,11 @@ component-bound.
 - **`publisher.test.ts`** (extend): `getMyArticle` returns a `MyArticle` for an
   owned SkyPress doc; returns `null` for a missing rkey and for a doc whose
   `site` is foreign/unknown. (Mirrors existing `listAllMyArticles` test setup.)
-- **Editor `?edit=` load** (`react-dom`/`act`, following `PublicationForm.test.tsx`):
-  with `?edit=<rkey>` set, `StudioGate` calls `getMyArticle` and seeds the editor
-  (title + blocks). Without the param, it starts empty.
+- **`edit-link.test.ts`** (new): `editRkeyFromSearch` returns the rkey for
+  `?edit=<rkey>`, `null` for an absent/empty param; `editLinkFor(rkey)` returns
+  `/editor?edit=<rkey>`. (The fetch+seed wiring in `StudioGate` is thin glue,
+  verified manually — `StudioGate` can't be unit-rendered because it pulls in the
+  browser-only `isolated-block-editor`.)
 - Manual verification (`npm run dev`): shared bar on both pages; contextual icon
   per page; account block → public page; sign-out; borderless title; taller
   canvas; dashboard Edit → editor loads the article.

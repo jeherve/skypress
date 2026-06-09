@@ -5,8 +5,8 @@
  * never reach its DOM — these rules must be global. Shared by the real editor
  * page (`src/pages/editor.astro`).
  *
- * The signed-in bars (account / articles / mode / publish) and the editor
- * surface share one centred content column so they line up with each other.
+ * The signed-in bars (mode / publish) and the editor surface share one centred
+ * content column so they line up with each other.
  */
 
 :root {
@@ -20,79 +20,6 @@
 	margin: 0 auto;
 	padding: 2rem var(--studio-gutter);
 	color: var(--muted);
-}
-
-/* Account bar (signed in) */
-.studio__account {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 1rem;
-	max-width: var(--studio-measure);
-	margin: 0 auto;
-	padding: 0.5rem var(--studio-gutter);
-	background: var(--panel);
-	border-radius: var(--radius);
-	font-size: 0.9rem;
-	flex-wrap: wrap;
-}
-.studio__identity {
-	display: flex;
-	align-items: center;
-	gap: 0.6rem;
-	min-width: 0;
-}
-.studio__avatar {
-	width: 38px;
-	height: 38px;
-	border-radius: 50%;
-	object-fit: cover;
-	flex: none;
-}
-.studio__avatar--fallback {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	background: var(--sun-tint);
-	color: var(--sun);
-	font-weight: 700;
-}
-.studio__who {
-	display: flex;
-	flex-direction: column;
-	line-height: 1.15;
-	min-width: 0;
-}
-.studio__name {
-	font-weight: 680;
-}
-.studio__handle {
-	color: var(--muted);
-	font-size: 0.8rem;
-}
-.studio__account-actions {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	flex-wrap: wrap;
-}
-.studio__viewpage {
-	color: var(--sun);
-	text-decoration: none;
-	font-size: 0.85rem;
-	padding: 0.3rem 0.5rem;
-	border-radius: var(--radius-sm);
-}
-.studio__viewpage:hover {
-	text-decoration: underline;
-}
-.studio__signout {
-	border: 1px solid var(--line-strong);
-	background: var(--paper-raised);
-	border-radius: var(--radius-sm);
-	padding: 0.3rem 0.7rem;
-	cursor: pointer;
-	font: inherit;
 }
 
 /* Login (signed out). The `.login__*` form rules are shared with the dashboard
@@ -116,14 +43,6 @@
 	max-width: var(--studio-measure);
 	margin: 0 auto;
 	padding: 0.75rem var(--studio-gutter);
-}
-.publish__title {
-	flex: 1 1 18rem;
-	padding: 0.5rem 0.7rem;
-	border: 1px solid var(--line-strong);
-	border-radius: 8px;
-	font: inherit;
-	font-size: 1.05rem;
 }
 .publish__target {
 	display: inline-flex;
@@ -196,67 +115,7 @@
 	color: var(--ember);
 }
 
-/* Your articles + mode bar */
-.myarticles {
-	max-width: var(--studio-measure);
-	margin: 0 auto;
-	padding: 1rem var(--studio-gutter);
-	border-bottom: 1px solid var(--line);
-}
-.myarticles__heading {
-	font-size: 0.75rem;
-	text-transform: uppercase;
-	letter-spacing: 0.1em;
-	color: var(--muted);
-	margin: 0 0 0.5rem;
-}
-.myarticles__loading {
-	max-width: var(--studio-measure);
-	margin: 0 auto;
-	padding: 1rem var(--studio-gutter);
-	color: var(--muted);
-	font-size: 0.9rem;
-}
-.myarticles__list {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-}
-.myarticles__item {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 1rem;
-	padding: 0.4rem 0;
-}
-.myarticles__edited,
-.myarticles__pub {
-	color: var(--muted);
-	font-style: normal;
-	font-size: 0.85rem;
-}
-.myarticles__pub {
-	font-family: var(--font-mono);
-	font-size: 0.78rem;
-}
-.myarticles__actions {
-	display: flex;
-	gap: 0.5rem;
-}
-.myarticles__actions button,
-.myarticles__actions a {
-	border: 1px solid var(--line-strong);
-	background: var(--paper-raised);
-	border-radius: 6px;
-	padding: 0.25rem 0.6rem;
-	font: inherit;
-	font-size: 0.85rem;
-	cursor: pointer;
-}
-.myarticles__actions a {
-	color: inherit;
-	text-decoration: none;
-}
+/* Mode bar */
 .studio__mode {
 	display: flex;
 	align-items: center;
@@ -321,6 +180,7 @@
 	border-radius: var(--radius);
 	color: var(--ink);
 	box-shadow: var(--shadow);
+	min-height: 70vh;
 }
 /* With `has-fixed-toolbar`, the fixed toolbar sits at the top of the layout,
    flush against the framed surface's top edge. Pad the header region (which

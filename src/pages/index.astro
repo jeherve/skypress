@@ -152,6 +152,10 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 	/* Per-phase sky gradient + star visibility + hero text colour */
 	:global([data-phase='night']) .sky { background: linear-gradient(180deg, #080611, #140f28 50%, #231a38); }
 	:global([data-phase='night']) .stars { opacity: 1; }
+	/* Night is the bare starfield — no sun glow, halo ring, or lit horizon. */
+	:global([data-phase='night']) .bloom,
+	:global([data-phase='night']) .halo,
+	:global([data-phase='night']) .horizon { opacity: 0; }
 	:global([data-phase='dawn']) .sky { background: linear-gradient(180deg, #231533, #7a2f63 42%, #d7613a 78%, #f4a14a); }
 	:global([data-phase='dawn']) .stars { opacity: 0.5; }
 	:global([data-phase='morning']) .sky { background: linear-gradient(180deg, #3a2752, #c0567f 34%, #f5934a 70%, #ffd98a); }

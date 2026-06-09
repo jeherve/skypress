@@ -342,7 +342,11 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 
 	.masthead {
 		position: relative;
-		z-index: 2;
+		/* Above .hero / .showcase (both z-index: 2). The account menu dropdown is confined to
+		   the masthead's stacking context, so unless the masthead outranks the later siblings it
+		   overlaps, their content paints over the open dropdown (it looks see-through) and
+		   intercepts its clicks — most visible on mobile, where the dropdown reaches the hero. */
+		z-index: 3;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;

@@ -18,6 +18,7 @@ import {
 } from './records';
 import type { BlockNode } from '../blocks/render';
 import type { BlobRefJson } from '../media/blob';
+import { THEME_PRESETS } from './themes';
 
 const BLOCKS: BlockNode[] = [
 	{ name: 'core/heading', attributes: { level: 1, content: 'Hi' }, innerBlocks: [] },
@@ -158,6 +159,19 @@ describe( 'buildPublicationRecord', () => {
 		} );
 		expect( full.description ).toBe( 'A blog' );
 		expect( full.icon ).toEqual( icon );
+	} );
+
+	it( 'includes basicTheme when provided and omits it otherwise', () => {
+		const themed = buildPublicationRecord( {
+			handle: 'a.b',
+			slug: 's',
+			name: 'N',
+			basicTheme: THEME_PRESETS[ 0 ].colors,
+		} );
+		expect( themed.basicTheme ).toEqual( THEME_PRESETS[ 0 ].colors );
+
+		const bare = buildPublicationRecord( { handle: 'a.b', slug: 's', name: 'N' } );
+		expect( 'basicTheme' in bare ).toBe( false );
 	} );
 } );
 

@@ -6,6 +6,7 @@
  */
 import type { BlockNode } from '../blocks/render';
 import type { BlobRefJson } from '../media/blob';
+import type { BasicTheme } from './themes';
 
 /**
  * Public origin for the stored publication + article URLs (and the Bluesky post link).
@@ -148,6 +149,8 @@ export interface PublicationRecord {
 	description?: string;
 	/** The publication logo (≤1MB, image/*) — the lexicon's `icon` blob (Decision 0010). */
 	icon?: BlobRefJson;
+	/** Optional sky-phase colour theme — the lexicon's `basicTheme` object (Decision 0012). */
+	basicTheme?: BasicTheme;
 }
 
 export function buildPublicationRecord( input: {
@@ -157,6 +160,7 @@ export function buildPublicationRecord( input: {
 	name?: string;
 	description?: string;
 	icon?: BlobRefJson;
+	basicTheme?: BasicTheme;
 } ): PublicationRecord {
 	const trimmedName = input.name?.trim();
 	const description = input.description?.trim();
@@ -166,6 +170,7 @@ export function buildPublicationRecord( input: {
 		name: trimmedName || input.handle,
 		...( description ? { description } : {} ),
 		...( input.icon ? { icon: input.icon } : {} ),
+		...( input.basicTheme ? { basicTheme: input.basicTheme } : {} ),
 	};
 }
 

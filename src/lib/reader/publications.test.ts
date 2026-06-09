@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { listReaderPublications, resolveReaderPublication } from './publications';
 import { listRecords } from './records';
 import { SITE_BASE } from '../publish/records';
+import { THEME_PRESETS } from '../publish/themes';
 
 vi.mock( './records', () => ( { listRecords: vi.fn() } ) );
 const mockedList = listRecords as unknown as ReturnType< typeof vi.fn >;
@@ -46,5 +47,26 @@ describe( 'resolveReaderPublication', () => {
 	it( 'returns null when no slug matches', async () => {
 		mockedList.mockResolvedValue( [ rec( 'a', `${ SITE_BASE }/@me.bsky.social/blog` ) ] );
 		expect( await resolveReaderPublication( PDS, DID, 'missing' ) ).toBeNull();
+	} );
+} );
+
+describe( 'reader basicTheme', () => {
+	it( 'surfaces a valid stored basicTheme', async () => {
+		mockedList.mockResolvedValue( [
+			rec( 'a', `${ SITE_BASE }/@me.bsky.social/blog`, {
+				basicTheme: THEME_PRESETS[ 5 ].colors, // morning
+			} ),
+		] );
+		const pub = await resolveReaderPublication( PDS, DID, 'blog' );
+		expect( pub?.basicTheme ).toEqual( THEME_PRESETS[ 5 ].colors );
+	} );
+
+	it( 'sets basicTheme to null when absent or malformed', async () => {
+		mockedList.mockResolvedValue( [
+			rec( 'a', `${ SITE_BASE }/@me.bsky.social/plain` ),
+			rec( 'b', `${ SITE_BASE }/@me.bsky.social/broken`, { basicTheme: { accent: 'red' } } ),
+		] );
+		expect( ( await resolveReaderPublication( PDS, DID, 'plain' ) )?.basicTheme ).toBeNull();
+		expect( ( await resolveReaderPublication( PDS, DID, 'broken' ) )?.basicTheme ).toBeNull();
 	} );
 } );

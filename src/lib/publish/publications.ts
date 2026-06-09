@@ -16,6 +16,7 @@ import {
 	type PublicationRecord,
 } from './records';
 import { normalizeBlobRefJson, type BlobRefJson } from '../media/blob';
+import { parseBasicTheme, type BasicTheme } from './themes';
 
 const PUBLICATION_COLLECTION = 'site.standard.publication';
 const DOCUMENT_COLLECTION = 'site.standard.document';
@@ -39,6 +40,7 @@ export interface Publication {
 	name: string;
 	description?: string;
 	icon?: BlobRefJson;
+	basicTheme?: BasicTheme;
 }
 
 /** Fields a writer can set/change on a publication (the slug is derived, never entered). */
@@ -46,6 +48,7 @@ export interface PublicationInput {
 	name: string;
 	description?: string;
 	icon?: BlobRefJson;
+	basicTheme?: BasicTheme;
 }
 
 /** Map a raw repo record to a Publication, or null if it isn't a usable SkyPress publication. */
@@ -64,6 +67,7 @@ function toPublication( record: {
 	// The agent deserialises the icon blob into a BlobRef (ref = CID object); normalise back to
 	// the portable `{ ref: { $link } }` shape the dashboard + form read from.
 	const icon = normalizeBlobRefJson( value.icon );
+	const basicTheme = parseBasicTheme( value.basicTheme );
 	return {
 		uri: record.uri,
 		rkey: rkeyFromUri( record.uri ),
@@ -71,6 +75,7 @@ function toPublication( record: {
 		name: value.name ?? slug,
 		...( value.description ? { description: value.description } : {} ),
 		...( icon ? { icon } : {} ),
+		...( basicTheme ? { basicTheme } : {} ),
 	};
 }
 
@@ -110,6 +115,7 @@ export async function createPublication(
 		name: input.name,
 		description: input.description,
 		icon: input.icon,
+		basicTheme: input.basicTheme,
 	} );
 	const res = await agent.com.atproto.repo.createRecord( {
 		repo: did,
@@ -124,6 +130,7 @@ export async function createPublication(
 		name: record.name,
 		...( record.description ? { description: record.description } : {} ),
 		...( record.icon ? { icon: record.icon } : {} ),
+		...( record.basicTheme ? { basicTheme: record.basicTheme } : {} ),
 	};
 }
 
@@ -144,6 +151,7 @@ export async function updatePublication(
 		name: input.name,
 		description: input.description,
 		icon: input.icon,
+		basicTheme: input.basicTheme,
 	} );
 	await agent.com.atproto.repo.putRecord( {
 		repo: did,
@@ -158,6 +166,7 @@ export async function updatePublication(
 		name: record.name,
 		...( record.description ? { description: record.description } : {} ),
 		...( record.icon ? { icon: record.icon } : {} ),
+		...( record.basicTheme ? { basicTheme: record.basicTheme } : {} ),
 	};
 }
 

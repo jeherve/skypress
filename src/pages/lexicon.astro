@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Logo from '../components/Logo.astro';
+import Footer from '../components/Footer.astro';
 import {
 	CONTENT_LEXICON,
 	CONTENT_LEXICON_ID,
@@ -94,8 +95,7 @@ const publicationFields = [
 				</tbody>
 			</table>
 			<p class="lex-note">
-				This is the only lexicon SkyPress owns; the name is the reverse-DNS of
-				<code>skypress.blog</code>. If a reader doesn&rsquo;t understand the
+				This is the only lexicon SkyPress owns. If a reader doesn&rsquo;t understand the
 				format, it falls back to the document&rsquo;s plain-text
 				<code>textContent</code>, so your article is never unreadable. Here&rsquo;s
 				the full schema:
@@ -152,13 +152,7 @@ const publicationFields = [
 		</div>
 	</main>
 
-	<footer class="lex-footer">
-		<span>Your words, your account, the open web.</span>
-		<span class="lex-footer__mark">
-			GPL-2.0 &middot; schemas in
-			<a href="https://tangled.org/standard.site/lexicons" target="_blank" rel="noopener noreferrer">standard.site</a>
-		</span>
-	</footer>
+	<Footer />
 </Base>
 
 <style>
@@ -222,6 +216,13 @@ const publicationFields = [
 		padding: 0.08em 0.36em;
 		border-radius: 5px;
 	}
+	/* Long NSIDs (e.g. blog.skypress.content.gutenberg) have no spaces, so let
+	   them break inside headings rather than overflow narrow viewports. */
+	.lex-section h2 code,
+	.lex-section h3 code {
+		overflow-wrap: anywhere;
+		word-break: break-word;
+	}
 
 	.lex-records { padding-left: 1.2rem; color: var( --ink-soft ); line-height: 1.7; }
 	.lex-records li { margin: 0.35rem 0; }
@@ -276,18 +277,4 @@ const publicationFields = [
 		padding-top: 2.5rem;
 		border-top: 1px solid var( --line );
 	}
-
-	.lex-footer {
-		display: flex;
-		justify-content: space-between;
-		gap: 1rem;
-		flex-wrap: wrap;
-		padding: 1.5rem clamp( 1.25rem, 5vw, 4rem );
-		border-top: 1px solid var( --line );
-		color: var( --muted );
-		font-family: var( --font-mono );
-		font-size: 0.72rem;
-		letter-spacing: 0.04em;
-	}
-	.lex-footer a { color: var( --muted ); }
 </style>

@@ -198,14 +198,14 @@ function StudioGate() {
 						className="studio__lede"
 						rows={ 1 }
 						maxLength={ 3000 }
-						placeholder="Add a lede… (defaults to the opening of your post)"
-						aria-label="Lede"
+						placeholder="Add a subtitle…"
+						aria-label="Subtitle"
 						value={ excerpt }
 						onChange={ ( event ) => setExcerpt( event.target.value ) }
 					/>
 					{ excerpt.length > 200 && (
 						<p className="studio__lede-hint">
-							Long ledes get truncated on the Bluesky card.
+							Long subtitles get truncated on the Bluesky card.
 						</p>
 					) }
 					<SkyEditor

@@ -58,8 +58,10 @@ describe( 'landing hero redesign', () => {
 		expect( index ).toMatch( /[Ff]ree/ );
 	} );
 
-	it( 'keeps the honest Bluesky cross-post note (product guardrail)', () => {
-		expect( index ).toMatch( /posts to Bluesky/ );
+	it( 'no longer carries the Bluesky cross-post note on the home page', () => {
+		// The "One thing worth knowing…" notice was removed from the landing page
+		// (commit c1508f9); the cross-post disclosure now lives on the publish panel.
+		expect( index ).not.toMatch( /posts to Bluesky/ );
 	} );
 
 	it( 'shows the three-up "see it in action" screenshot strip', () => {

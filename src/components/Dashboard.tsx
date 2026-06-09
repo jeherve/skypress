@@ -409,7 +409,11 @@ function PublicationManager( {
 											{ article.publishedAt.slice( 0, 10 ) }
 										</span>
 									) }
-									<a className="dash__edit" href={ editLinkFor( article.rkey ) }>
+									<a
+										className="dash__edit"
+										href={ editLinkFor( article.rkey ) }
+										aria-label={ `Edit ${ article.title }` }
+									>
 										Edit
 									</a>
 									<button

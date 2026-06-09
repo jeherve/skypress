@@ -275,6 +275,17 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		z-index: 5;
 		animation: account-menu-in 0.14s ease;
 	}
+	/* Transparent bridge across the visual gap below the trigger, so moving the
+	   cursor from the trigger into the dropdown never leaves `.account-menu` (which
+	   would fire mouseleave and close the menu before the pointer arrives). */
+	.masthead :global(.account-menu__dropdown)::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: -0.4rem;
+		height: 0.4rem;
+	}
 	.masthead :global(.account-menu__item) {
 		padding: 0.5rem 0.7rem;
 		border-radius: calc(var(--radius-sm) - 2px);

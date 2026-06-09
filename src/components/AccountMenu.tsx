@@ -20,8 +20,17 @@ export default function AccountMenu() {
 	const [ profile, setProfile ] = useState< ViewerProfile | null >( null );
 	const [ open, setOpen ] = useState( false );
 	const [ avatarOk, setAvatarOk ] = useState( true );
+	const [ canHover, setCanHover ] = useState( false );
 	const rootRef = useRef< HTMLDivElement >( null );
 	const triggerRef = useRef< HTMLButtonElement >( null );
+
+	// Hover is a desktop-only enhancement. On hover-capable devices the trigger
+	// opens on pointer enter (and closes on leave), so its click only ever opens —
+	// a toggle would close the menu the hover just opened. On touch there is no
+	// hover, so the click acts as a tap toggle instead.
+	useEffect( () => {
+		setCanHover( window.matchMedia?.( '(hover: hover)' ).matches ?? false );
+	}, [] );
 
 	// Restore the OAuth session and fetch the viewer's profile.
 	useEffect( () => {
@@ -91,8 +100,8 @@ export default function AccountMenu() {
 		<div
 			className="account-menu"
 			ref={ rootRef }
-			onMouseEnter={ () => setOpen( true ) }
-			onMouseLeave={ () => setOpen( false ) }
+			onMouseEnter={ canHover ? () => setOpen( true ) : undefined }
+			onMouseLeave={ canHover ? () => setOpen( false ) : undefined }
 			onBlur={ ( event ) => {
 				if ( ! rootRef.current?.contains( event.relatedTarget as Node ) ) {
 					setOpen( false );
@@ -106,7 +115,7 @@ export default function AccountMenu() {
 				aria-haspopup="menu"
 				aria-expanded={ open }
 				aria-controls="account-menu-dropdown"
-				onClick={ () => setOpen( ( value ) => ! value ) }
+				onClick={ () => setOpen( ( value ) => ( canHover ? true : ! value ) ) }
 			>
 				{ profile.avatar && avatarOk ? (
 					<img

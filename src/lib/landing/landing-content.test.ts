@@ -38,3 +38,37 @@ describe( 'sample/preview page is retired', () => {
 		expect( read( '../../pages/lexicon.astro' ) ).not.toMatch( /\/preview/ );
 	} );
 } );
+
+describe( 'landing hero redesign', () => {
+	const index = read( '../../pages/index.astro' );
+
+	it( 'mounts the HandleStart island as the primary CTA', () => {
+		expect( index ).toMatch( /import HandleStart from '\.\.\/components\/HandleStart'/ );
+		expect( index ).toMatch( /<HandleStart\s+client:only="react"\s*\/>/ );
+	} );
+
+	it( 'drops the old multi-button hero actions', () => {
+		expect( index ).not.toMatch( /Start writing/ );
+		expect( index ).not.toMatch( /Read a sample/ );
+		expect( index ).not.toMatch( /See the lexicon/ );
+		expect( index ).not.toMatch( /href="\/editor">Studio/ );
+	} );
+
+	it( 'states that SkyPress is free', () => {
+		expect( index ).toMatch( /[Ff]ree/ );
+	} );
+
+	it( 'keeps the honest Bluesky cross-post note (product guardrail)', () => {
+		expect( index ).toMatch( /posts to Bluesky/ );
+	} );
+
+	it( 'shows the three-up "see it in action" screenshot strip', () => {
+		expect( index ).toMatch( /\/screenshots\/editor\.png/ );
+		expect( index ).toMatch( /\/screenshots\/published-article\.png/ );
+		expect( index ).toMatch( /\/screenshots\/author-page\.png/ );
+	} );
+
+	it( 'no longer renders the three-step how-it-works list', () => {
+		expect( index ).not.toMatch( /class="steps"/ );
+	} );
+} );

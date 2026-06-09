@@ -16,4 +16,9 @@ describe( 'formatLongDate', () => {
 	it( 'accepts a date-only string', () => {
 		expect( formatLongDate( '2026-12-25' ) ).toBe( 'December 25, 2026' );
 	} );
+
+	it( 'falls back to the raw string for an unparseable date instead of throwing', () => {
+		// PDS records are untrusted; a malformed value must not crash rendering.
+		expect( formatLongDate( 'soon' ) ).toBe( 'soon' );
+	} );
 } );

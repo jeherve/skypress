@@ -13,5 +13,8 @@ const longDate = new Intl.DateTimeFormat( 'en-US', {
 } );
 
 export function formatLongDate( iso: string ): string {
-	return longDate.format( new Date( iso ) );
+	// Document dates come from untrusted PDS records; a malformed value would make
+	// Intl's format() throw (RangeError), so fall back to the raw string.
+	const date = new Date( iso );
+	return Number.isNaN( date.getTime() ) ? iso : longDate.format( date );
 }

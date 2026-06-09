@@ -95,7 +95,8 @@ A plain `<textarea>` (no block editor) used for both reply and quote, with a liv
 counter via the browser-native **`Intl.Segmenter`** (no new dependency; matches Bluesky's
 300-grapheme rule). Plain text only in v1 — no facet/link/mention detection, so URLs in a
 reply won't be clickable (acceptable for a simple composer; noted as a future addition).
-Submit is disabled when empty or over 300 graphemes.
+Submit is disabled when over 300 graphemes; a reply must also be non-empty, but a quote
+may be posted with no commentary (a bare quote-repost, as on Bluesky).
 
 A small persistent note states that actions are **public and happen on Bluesky** — the
 "don't surprise users" product guardrail (brief §10), the same principle the publish panel

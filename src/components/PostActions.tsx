@@ -134,7 +134,7 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 		if ( ! agent || ! did || ! composer || submitting ) {
 			return;
 		}
-		if ( ! validateReplyText( text ).ok ) {
+		if ( ! validateReplyText( text, { allowEmpty: composer === 'quote' } ).ok ) {
 			return;
 		}
 		setSubmitting( true );
@@ -206,7 +206,8 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 
 	const liked = Boolean( state?.viewerLikeUri );
 	const reposted = Boolean( state?.viewerRepostUri );
-	const validity = validateReplyText( text );
+	// A quote can be posted with no commentary (bare quote-repost); a reply cannot.
+	const validity = validateReplyText( text, { allowEmpty: composer === 'quote' } );
 	const graphemes = graphemeLength( text );
 
 	return (

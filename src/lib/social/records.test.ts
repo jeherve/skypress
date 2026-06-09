@@ -123,4 +123,15 @@ describe( 'validateReplyText', () => {
 	it( 'rejects text over the grapheme cap', () => {
 		expect( validateReplyText( 'a'.repeat( MAX_REPLY_GRAPHEMES + 1 ) ).ok ).toBe( false );
 	} );
+
+	it( 'accepts empty text when allowEmpty is set (a bare quote-repost)', () => {
+		expect( validateReplyText( '', { allowEmpty: true } ).ok ).toBe( true );
+		expect( validateReplyText( '   ', { allowEmpty: true } ).ok ).toBe( true );
+	} );
+
+	it( 'still rejects over-cap text even when allowEmpty is set', () => {
+		expect(
+			validateReplyText( 'a'.repeat( MAX_REPLY_GRAPHEMES + 1 ), { allowEmpty: true } ).ok
+		).toBe( false );
+	} );
 } );

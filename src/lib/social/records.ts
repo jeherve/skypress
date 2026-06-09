@@ -124,8 +124,15 @@ export interface ReplyValidation {
 	graphemes: number;
 }
 
-/** A reply/quote body must be non-empty and within the grapheme cap. */
-export function validateReplyText( text: string ): ReplyValidation {
+/**
+ * A reply/quote body must be within the grapheme cap. A reply must also be non-empty;
+ * a quote may have no commentary (`allowEmpty`), matching Bluesky's bare quote-repost.
+ */
+export function validateReplyText(
+	text: string,
+	options: { allowEmpty?: boolean } = {}
+): ReplyValidation {
 	const graphemes = graphemeLength( text );
-	return { ok: text.trim().length > 0 && graphemes <= MAX_REPLY_GRAPHEMES, graphemes };
+	const hasBody = options.allowEmpty || text.trim().length > 0;
+	return { ok: hasBody && graphemes <= MAX_REPLY_GRAPHEMES, graphemes };
 }

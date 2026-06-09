@@ -1,0 +1,12 @@
+---
+import ErrorScene from '../components/ErrorScene.astro';
+import { errorScene } from '../lib/reader/errors';
+
+// Generic, data-free: prerender to a static 404.html the adapter serves for
+// any unmatched URL.
+export const prerender = true;
+
+const scene = errorScene( 'not-found' );
+---
+
+<ErrorScene eyebrow={scene.eyebrow} heading={scene.heading} subline={scene.subline} />

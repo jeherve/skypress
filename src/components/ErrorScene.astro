@@ -1,0 +1,133 @@
+---
+import Base from '../layouts/Base.astro';
+import Logo from './Logo.astro';
+
+interface Props {
+	eyebrow: string;
+	heading: string;
+	subline: string;
+}
+const { eyebrow, heading, subline } = Astro.props;
+---
+
+<Base title={`${ heading } · SkyPress`} socialMeta={false}>
+	<Fragment slot="head">
+		<meta name="robots" content="noindex" />
+	</Fragment>
+
+	<header class="err-mast">
+		<a href="/"><Logo /></a>
+	</header>
+
+	<main class="err">
+		<div class="err__sky" aria-hidden="true">
+			<span class="err__birds">︶&nbsp;&nbsp;︶</span>
+			<span class="err__sun"></span>
+			<span class="err__horizon"></span>
+		</div>
+		<div class="err__body">
+			<p class="eyebrow">{eyebrow}</p>
+			<h1 class="err__heading">{heading}</h1>
+			<p class="err__sub">{subline}</p>
+			<a class="btn btn--primary" href="/">Back to homepage</a>
+		</div>
+	</main>
+</Base>
+
+<style>
+	.err-mast {
+		padding: 1.5rem clamp(1.25rem, 5vw, 4rem);
+	}
+	.err-mast a {
+		text-decoration: none;
+	}
+	.err {
+		position: relative;
+		min-height: calc(100vh - 6rem);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: flex-end;
+		text-align: center;
+		padding: 0 1.5rem clamp(3rem, 12vh, 7rem);
+		overflow: hidden;
+		/* Light sky: warm dawn at the top, a hard-ish stop forms the horizon band. */
+		background: linear-gradient(180deg, #fff4df 0%, #fcdfb8 33%, var(--paper) 33%);
+	}
+	.err__sky {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+	}
+	.err__sun {
+		position: absolute;
+		top: clamp(4rem, 16vh, 9rem);
+		left: 50%;
+		width: clamp(72px, 14vw, 104px);
+		height: clamp(72px, 14vw, 104px);
+		transform: translateX(-50%);
+		border-radius: 50%;
+		background: radial-gradient(circle at 50% 38%, #f8b850, var(--sun));
+		box-shadow: 0 0 46px 10px rgba(232, 146, 12, 0.3);
+		animation: err-glow 4.5s ease-in-out infinite;
+	}
+	@keyframes err-glow {
+		0%, 100% {
+			box-shadow: 0 0 46px 10px rgba(232, 146, 12, 0.3);
+		}
+		50% {
+			box-shadow: 0 0 66px 18px rgba(232, 146, 12, 0.42);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.err__sun {
+			animation: none;
+		}
+	}
+	.err__horizon {
+		position: absolute;
+		top: 33%;
+		left: 0;
+		right: 0;
+		height: 1px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			var(--line-strong) 18%,
+			var(--line-strong) 82%,
+			transparent
+		);
+	}
+	.err__birds {
+		position: absolute;
+		top: clamp(3rem, 11vh, 6rem);
+		left: 0;
+		right: 0;
+		text-align: center;
+		color: var(--sun-strong);
+		opacity: 0.5;
+		letter-spacing: 0.6em;
+		font-size: 0.9rem;
+	}
+	.err__body {
+		position: relative;
+		z-index: 1;
+		max-width: 36ch;
+	}
+	.err__heading {
+		font-size: clamp(2rem, 6vw, 2.9rem);
+		line-height: 1.04;
+		margin: 0.6rem 0 0;
+	}
+	.err__sub {
+		color: var(--ink-soft);
+		font-size: 1.05rem;
+		line-height: 1.55;
+		margin: 0.9rem 0 1.6rem;
+	}
+	@media (prefers-color-scheme: dark) {
+		.err {
+			background: linear-gradient(180deg, #2a1f12 0%, #3a2a14 33%, var(--paper) 33%);
+		}
+	}
+</style>

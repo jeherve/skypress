@@ -4,13 +4,12 @@ import Logo from '../../../components/Logo.astro';
 import { resolveAuthor } from '../../../lib/reader/identity';
 import { getRecord } from '../../../lib/reader/records';
 import { resolveReaderPublication } from '../../../lib/reader/publications';
-import { resolveBlobImageUrls } from '../../../lib/media/blob';
+import { resolveBlobImageUrls, buildGetBlobUrl } from '../../../lib/media/blob';
 import { renderBlocks, blocksToText, type BlockNode } from '../../../lib/blocks/render';
 import { sanitizeArticleHtml } from '../../../lib/reader/sanitize';
 import { canonicalArticleUrl } from '../../../lib/publish/records';
 import { themeStyleBlock } from '../../../lib/publish/themes';
 import { buildMetaTags } from '../../../lib/seo/meta';
-import { buildGetBlobUrl } from '../../../lib/media/blob';
 
 // Frontend block styles only — no editor chrome, no JS.
 import '@wordpress/block-library/build-style/common.css';

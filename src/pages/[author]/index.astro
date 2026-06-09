@@ -6,111 +6,138 @@ import { listReaderPublications } from '../../lib/reader/publications';
 import { fetchActorProfile } from '../../lib/reader/profile';
 import { buildGetBlobUrl } from '../../lib/media/blob';
 import CreatePublicationCta from '../../components/CreatePublicationCta.tsx';
+import ErrorScene from '../../components/ErrorScene.astro';
+import { errorScene } from '../../lib/reader/errors';
+import type { ErrorSceneCopy } from '../../lib/reader/errors';
 
 export const prerender = false;
 
 const { author } = Astro.params;
+
+let error: ErrorSceneCopy | null = null;
+const handle = author?.startsWith( '@' ) ? author.slice( 1 ) : '';
+
+let did = '';
+let pdsUrl = '';
+let profile: Awaited< ReturnType< typeof fetchActorProfile > > | null = null;
+let publications: Awaited< ReturnType< typeof listReaderPublications > > = [];
+let authorName = '';
+let initial = '';
+
 if ( ! author || ! author.startsWith( '@' ) ) {
-	return new Response( 'Not found', { status: 404 } );
+	error = errorScene( 'not-found' );
 }
-const handle = author.slice( 1 );
 
-const resolved = await resolveAuthor( handle );
-if ( ! resolved ) {
-	return new Response( `Could not resolve @${ handle }`, { status: 404 } );
+const resolved = error ? null : await resolveAuthor( handle );
+if ( ! error && ! resolved ) {
+	error = errorScene( 'writer-not-found', { handle } );
 }
-const { did, pdsUrl } = resolved;
 
-const [ profile, publications ] = await Promise.all( [
-	fetchActorProfile( pdsUrl, did ),
-	listReaderPublications( pdsUrl, did ),
-] );
+if ( ! error && resolved ) {
+	did = resolved.did;
+	pdsUrl = resolved.pdsUrl;
 
-const authorName = profile.displayName ?? `@${ handle }`;
-const initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
+	[ profile, publications ] = await Promise.all( [
+		fetchActorProfile( pdsUrl, did ),
+		listReaderPublications( pdsUrl, did ),
+	] );
+
+	authorName = profile.displayName ?? `@${ handle }`;
+	initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
+}
+
+if ( error ) {
+	Astro.response.status = error.status;
+}
 ---
 
-<Base title={`${ authorName } — SkyPress`} description={profile.description ?? undefined}>
-	<header class="masthead">
-		<a href="/"><Logo /></a>
-	</header>
+{
+	error ? (
+		<ErrorScene eyebrow={error.eyebrow} heading={error.heading} subline={error.subline} />
+	) : (
+		<Base title={`${ authorName } — SkyPress`} description={profile!.description ?? undefined}>
+			<header class="masthead">
+				<a href="/"><Logo /></a>
+			</header>
 
-	<main class="author">
-		<div class="author__hero">
-			{profile.banner && (
-				<div class="author__cover" style={`background-image:url("${ profile.banner }")`} aria-hidden="true"></div>
-			)}
-			<div class={`author__identity${ profile.banner ? ' author__identity--overlap' : '' }`}>
-				{profile.avatar ? (
-					<img class="author__avatar" src={profile.avatar} alt="" width="96" height="96" />
-				) : (
-					<span class="author__avatar author__avatar--fallback" aria-hidden="true">{initial}</span>
-				)}
-				<h1 class="author__name">{authorName}</h1>
-				<p class="author__handle">
-					<a
-						class="author__handle-link"
-						href={`https://bsky.app/profile/${ handle }`}
-						target="_blank"
-						rel="noopener noreferrer"
-						aria-label={`View @${ handle } on Bluesky`}
-					>
-						@{handle}
-						<svg
-							class="author__handle-arrow"
-							width="11"
-							height="11"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2.5"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							aria-hidden="true"
-						>
-							<path d="M7 17 17 7" />
-							<path d="M8 7h9v9" />
-						</svg>
-					</a>
-				</p>
-				{profile.description && <p class="author__bio">{profile.description}</p>}
-			</div>
-		</div>
-
-		<h2 class="author__heading">Publications</h2>
-		{publications.length === 0 ? (
-			<div class="author__emptyblock">
-				<p class="author__empty">No SkyPress publications yet.</p>
-				<CreatePublicationCta client:only="react" profileDid={did} />
-			</div>
-		) : (
-			<ul class="author__list">
-				{publications.map( ( pub ) => {
-					const logoUrl = pub.icon
-						? buildGetBlobUrl( pdsUrl, did, pub.icon.ref.$link )
-						: null;
-					return (
-						<li class="author__item">
-							<a class="author__pub" href={`/@${ handle }/${ pub.slug }`}>
-								{logoUrl ? (
-									<img class="author__publogo" src={logoUrl} alt="" width="52" height="52" />
-								) : (
-									<span class="author__publogo author__publogo--fallback" aria-hidden="true">
-										{pub.name.charAt( 0 ).toUpperCase()}
-									</span>
-								)}
-								<span class="author__pubtext">
-									<span class="author__pubname">{pub.name}</span>
-									{pub.description && <span class="author__pubdesc">{pub.description}</span>}
-								</span>
+			<main class="author">
+				<div class="author__hero">
+					{profile!.banner && (
+						<div class="author__cover" style={`background-image:url("${ profile!.banner }")`} aria-hidden="true"></div>
+					)}
+					<div class={`author__identity${ profile!.banner ? ' author__identity--overlap' : '' }`}>
+						{profile!.avatar ? (
+							<img class="author__avatar" src={profile!.avatar} alt="" width="96" height="96" />
+						) : (
+							<span class="author__avatar author__avatar--fallback" aria-hidden="true">{initial}</span>
+						)}
+						<h1 class="author__name">{authorName}</h1>
+						<p class="author__handle">
+							<a
+								class="author__handle-link"
+								href={`https://bsky.app/profile/${ handle }`}
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label={`View @${ handle } on Bluesky`}
+							>
+								@{handle}
+								<svg
+									class="author__handle-arrow"
+									width="11"
+									height="11"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2.5"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									aria-hidden="true"
+								>
+									<path d="M7 17 17 7" />
+									<path d="M8 7h9v9" />
+								</svg>
 							</a>
-						</li>
-					);
-				} )}
-			</ul>
-		)}
-	</main>
-</Base>
+						</p>
+						{profile!.description && <p class="author__bio">{profile!.description}</p>}
+					</div>
+				</div>
+
+				<h2 class="author__heading">Publications</h2>
+				{publications.length === 0 ? (
+					<div class="author__emptyblock">
+						<p class="author__empty">No SkyPress publications yet.</p>
+						<CreatePublicationCta client:only="react" profileDid={did} />
+					</div>
+				) : (
+					<ul class="author__list">
+						{publications.map( ( pub ) => {
+							const logoUrl = pub.icon
+								? buildGetBlobUrl( pdsUrl, did, pub.icon.ref.$link )
+								: null;
+							return (
+								<li class="author__item">
+									<a class="author__pub" href={`/@${ handle }/${ pub.slug }`}>
+										{logoUrl ? (
+											<img class="author__publogo" src={logoUrl} alt="" width="52" height="52" />
+										) : (
+											<span class="author__publogo author__publogo--fallback" aria-hidden="true">
+												{pub.name.charAt( 0 ).toUpperCase()}
+											</span>
+										)}
+										<span class="author__pubtext">
+											<span class="author__pubname">{pub.name}</span>
+											{pub.description && <span class="author__pubdesc">{pub.description}</span>}
+										</span>
+									</a>
+								</li>
+							);
+						} )}
+					</ul>
+				)}
+			</main>
+		</Base>
+	)
+}
 
 <style>
 	.masthead {

@@ -19,6 +19,7 @@ function StudioGate() {
 	const { status, agent, handle, did, pdsUrl, error } = useAuth();
 	const [ blocks, setBlocks ] = useState< BlockInstance[] >( [] );
 	const [ title, setTitle ] = useState( '' );
+	const [ excerpt, setExcerpt ] = useState( '' );
 	const [ editing, setEditing ] = useState< MyArticle | null >( null );
 	// Set when an `?edit=<rkey>` load fails to fetch (vs. simply not found).
 	const [ editLoadError, setEditLoadError ] = useState< string | null >( null );
@@ -27,6 +28,7 @@ function StudioGate() {
 	const [ publications, setPublications ] = useState< Publication[] | null >( null );
 	// Shared between mediaUpload (writes blob refs) and publish (reads them).
 	const registry = useRef< BlobRegistry >( new Map() ).current;
+	const ledeRef = useRef< HTMLTextAreaElement >( null );
 
 	// Load the writer's SkyPress publications (the publish targets / selector).
 	useEffect( () => {
@@ -64,6 +66,7 @@ function StudioGate() {
 					setEditing( article );
 					setBlocks( article.blocks as unknown as BlockInstance[] );
 					setTitle( article.title );
+					setExcerpt( article.description ?? '' );
 				}
 				// `article === null` → no owned document has this rkey (stale/bad edit
 				// link). Silently start a new article, as before.
@@ -85,6 +88,16 @@ function StudioGate() {
 
 	// Release the preview object URLs this session minted when the Studio unmounts.
 	useEffect( () => () => revokeBlobRegistry( registry ), [ registry ] );
+
+	// Grow the lede textarea to fit its content (and on hydrate from an edit-load).
+	useEffect( () => {
+		const el = ledeRef.current;
+		if ( ! el ) {
+			return;
+		}
+		el.style.height = 'auto';
+		el.style.height = `${ el.scrollHeight }px`;
+	}, [ excerpt ] );
 
 	const mediaUpload = useMemo( () => {
 		if ( ! agent || ! did || ! pdsUrl ) {
@@ -114,6 +127,7 @@ function StudioGate() {
 			setEditing( null );
 			setBlocks( [] );
 			setTitle( '' );
+			setExcerpt( '' );
 			setEditLoadError( null );
 		};
 
@@ -156,6 +170,7 @@ function StudioGate() {
 								: undefined
 						}
 						title={ title }
+						description={ excerpt }
 						onComplete={ () => {
 							setRefreshKey( ( k ) => k + 1 );
 							// A new publish leaves the editor on a fresh "new article": clear the
@@ -163,6 +178,7 @@ function StudioGate() {
 							// update we stay on the same article, so keep its content in place.
 							if ( ! editing ) {
 								setTitle( '' );
+								setExcerpt( '' );
 								setBlocks( [] );
 							}
 						} }
@@ -175,6 +191,21 @@ function StudioGate() {
 						value={ title }
 						onChange={ ( event ) => setTitle( event.target.value ) }
 					/>
+					<textarea
+						ref={ ledeRef }
+						className="studio__lede"
+						rows={ 1 }
+						maxLength={ 3000 }
+						placeholder="Add a lede… (defaults to the opening of your post)"
+						aria-label="Lede"
+						value={ excerpt }
+						onChange={ ( event ) => setExcerpt( event.target.value ) }
+					/>
+					{ excerpt.length > 200 && (
+						<p className="studio__lede-hint">
+							Long ledes get truncated on the Bluesky card.
+						</p>
+					) }
 					<SkyEditor
 						onChange={ setBlocks }
 						mediaUpload={ mediaUpload }

@@ -140,17 +140,19 @@ describe( 'PublicationForm save lifecycle', () => {
 		expect( button.disabled ).toBe( true );
 
 		// The PDS write resolves (the 200 the user saw). The button must return to normal.
-		// Flush the microtask chain (putRecord resolve → updatePublication resolve → onSubmit
-		// continuation → setSaving) inside act so React applies the state update.
+		// Flush the whole async chain (putRecord resolve → updatePublication resolve → onSubmit
+		// continuation → setSaving) inside act. A macrotask drains every queued microtask first,
+		// so the setSaving update lands inside the act() scope rather than escaping it.
 		await act( async () => {
 			resolvePut?.( { data: {} } );
-			await Promise.resolve();
-			await Promise.resolve();
+			await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
 		} );
 		expect( button.textContent ).toBe( 'Save changes' );
 		expect( button.disabled ).toBe( false );
 
-		root.unmount();
+		await act( async () => {
+			root.unmount();
+		} );
 		container.remove();
 	} );
 } );

@@ -34,7 +34,8 @@ interface Props {
 	publications: Publication[] | null;
 	/** When set, the panel updates an existing article instead of publishing a new one. */
 	editing?: EditingTarget;
-	initialTitle?: string;
+	/** Controlled title (lifted to the editor so it can render as a heading above the canvas). */
+	title: string;
 	/** Called after a successful publish/update so the parent can refresh. */
 	onComplete?: () => void;
 }
@@ -52,11 +53,10 @@ export default function PublishPanel( {
 	blobRegistry,
 	publications,
 	editing,
-	initialTitle,
+	title,
 	onComplete,
 }: Props ) {
 	const pubs = publications ?? [];
-	const [ title, setTitle ] = useState( initialTitle ?? '' );
 	const [ targetUri, setTargetUri ] = useState(
 		() => editing?.siteUri ?? pubs[ 0 ]?.uri ?? ''
 	);
@@ -150,15 +150,6 @@ export default function PublishPanel( {
 
 	return (
 		<section className="publish" aria-label={ isEditing ? 'Update article' : 'Publish' }>
-			<input
-				className="publish__title"
-				type="text"
-				placeholder="Article title"
-				value={ title }
-				onChange={ ( event ) => setTitle( event.target.value ) }
-				disabled={ phase === 'working' }
-			/>
-
 			{ isEditing ? (
 				<span className="publish__target publish__target--fixed">
 					In <strong>{ editingPubName ?? 'this publication' }</strong>

@@ -298,3 +298,17 @@ export async function listAllMyArticles( agent: Agent, did: string ): Promise< M
 		} )
 		.filter( ( article ): article is MyArticle => article !== null );
 }
+
+/**
+ * Fetch a single SkyPress article by rkey (the editor's `?edit=` load). Reuses
+ * `listAllMyArticles` so it inherits the same slug annotation and foreign/orphan
+ * filtering; returns null when no owned document has that rkey.
+ */
+export async function getMyArticle(
+	agent: Agent,
+	did: string,
+	rkey: string
+): Promise< MyArticle | null > {
+	const all = await listAllMyArticles( agent, did );
+	return all.find( ( article ) => article.rkey === rkey ) ?? null;
+}

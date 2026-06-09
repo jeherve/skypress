@@ -1,19 +1,15 @@
 ---
 import Base from '../layouts/Base.astro';
-import Logo from '../components/Logo.astro';
 import Studio from '../components/Studio.tsx';
 // The Studio is a `client:only` React island, so Astro's scoped styles never
-// reach its DOM — its chrome is styled globally from this shared stylesheet.
+// reach its DOM — its chrome is styled globally from these shared stylesheets.
+import '../styles/app-bar.css';
 import '../styles/editor-chrome.css';
 import '../styles/login.css';
 ---
 
 <Base title="Write — SkyPress">
 	<main class="editor-shell">
-		<header class="editor-shell__bar">
-			<a class="editor-shell__home" href="/"><Logo size={24} /></a>
-			<span class="editor-shell__hint eyebrow">The studio</span>
-		</header>
 		<!-- client:only — auth + editor run only in the browser; their bundle never
 		     reaches reading pages (Decisions 0001 & 0004). -->
 		<Studio client:only="react">
@@ -23,26 +19,6 @@ import '../styles/login.css';
 </Base>
 
 <style>
-	.editor-shell__bar {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		max-width: 60rem;
-		margin: 0 auto;
-		padding: 0.75rem 1.25rem;
-		border-bottom: 1px solid var(--line);
-		flex-wrap: wrap;
-	}
-	.editor-shell__home {
-		display: inline-flex;
-		font-weight: 700;
-		color: var(--ink);
-		text-decoration: none;
-	}
-	.editor-shell__hint {
-		font-size: 0.85rem;
-		line-height: 1;
-	}
 	.editor-shell__loading {
 		padding: 2rem 1.25rem;
 		color: var(--muted);

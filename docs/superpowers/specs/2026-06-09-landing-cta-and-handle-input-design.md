@@ -95,10 +95,10 @@ Three **real** captures, each inside a brand-styled (sky-tinted) browser frame:
 2. **A published article** — the public reader page (server-rendered typography).
 3. **An author page** — `/@handle`, showing all of a writer's publications.
 
-Static images for v1, committed as assets. Each tile links to the live equivalent where
-it makes sense — notably the "published article" tile points at the future
-`/@skypress.blog` demo once it exists. Captured from the running app; shown to the user
-for sign-off before committing.
+Static images for v1, committed as assets, **unlinked** — they are illustrative, not
+navigation. (A "published article" tile would otherwise point at `/@skypress.blog`,
+which 404s until that demo post exists; revisit linking once it's live.) Captured from
+the running app; shown to the user for sign-off before committing.
 
 ### Footer
 

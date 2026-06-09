@@ -49,6 +49,21 @@ describe( 'Base.astro Open Graph wiring', () => {
 		// pages that manage their own head tags (e.g. articles) can opt out.
 		expect( base ).toMatch( /socialMeta\s*&&/ );
 	} );
+
+	it( 'accepts optional imageWidth/imageHeight props', () => {
+		expect( base ).toMatch( /imageWidth\??:\s*number/ );
+		expect( base ).toMatch( /imageHeight\??:\s*number/ );
+	} );
+
+	it( 'only defaults the 1200x630 dimensions for the built-in default image', () => {
+		// A flag distinguishes the default image from a caller-supplied one.
+		expect( base ).toMatch( /og-default\.png/ );
+		expect( base ).toMatch( /1200/ );
+		expect( base ).toMatch( /630/ );
+		// Dimensions are threaded into buildMetaTags.
+		expect( base ).toMatch( /imageWidth:/ );
+		expect( base ).toMatch( /imageHeight:/ );
+	} );
 } );
 
 describe( 'preview page metadata', () => {

@@ -20,6 +20,22 @@ describe( 'publication page Open Graph wiring', () => {
 	} );
 
 	it( 'passes the publication name as the image alt', () => {
-		expect( page ).toMatch( /imageAlt=\{\s*publication\.name\s*\}/ );
+		expect( page ).toMatch( /imageAlt=\{\s*publication!?\.name\s*\}/ );
+	} );
+} );
+
+describe( 'publication page error wiring', () => {
+	it( 'renders ErrorScene instead of plain-text 404s', () => {
+		expect( page ).toMatch( /import ErrorScene from '[^']*components\/ErrorScene.astro'/ );
+		expect( page ).toMatch( /import\s*\{\s*errorScene/ );
+		expect( page ).toMatch( /<ErrorScene/ );
+		expect( page ).not.toMatch( /new Response\(\s*'Not found'/ );
+		expect( page ).not.toMatch( /new Response\(\s*'Publication not found'/ );
+	} );
+
+	it( 'maps writer + publication failures and sets the response status', () => {
+		expect( page ).toMatch( /errorScene\(\s*'writer-not-found'/ );
+		expect( page ).toMatch( /errorScene\(\s*'publication-not-found'/ );
+		expect( page ).toMatch( /Astro\.response\.status\s*=/ );
 	} );
 } );

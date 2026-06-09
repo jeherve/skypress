@@ -76,7 +76,7 @@ const updatedLabel = doc.updatedAt ? doc.updatedAt.slice( 0, 10 ) : null;
 const themeStyle = themeStyleBlock( publication.basicTheme );
 ---
 
-<Base title={`${ title } — ${ publication.name }`} description={description}>
+<Base title={`${ title } — ${ publication.name }`} description={description} socialMeta={false}>
 	<Fragment slot="head">
 		{/* standard.site indexing tags (brief §3) — Bluesky cards + AppView pickup */}
 		<link rel="site.standard.document" href={docUri} />

@@ -9,11 +9,12 @@
  * src/lib/seo/meta.test.ts.
  */
 import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-const read = ( rel: string ) =>
-	readFileSync( fileURLToPath( new URL( rel, import.meta.url ) ), 'utf8' );
+const here = dirname( fileURLToPath( import.meta.url ) );
+const read = ( rel: string ) => readFileSync( join( here, rel ), 'utf8' );
 
 describe( 'Base.astro Open Graph wiring', () => {
 	const base = read( './Base.astro' );
@@ -40,6 +41,14 @@ describe( 'Base.astro Open Graph wiring', () => {
 	it( 'defaults the share image to the shared og-default.png', () => {
 		expect( base ).toMatch( /\/og-default\.png/ );
 	} );
+
+	it( 'guards the canonical link + social tags behind an opt-out socialMeta prop', () => {
+		// Defaults on, so callers that pass nothing are unaffected.
+		expect( base ).toMatch( /socialMeta\s*=\s*true/ );
+		// The canonical + meta block only renders when socialMeta is truthy, so
+		// pages that manage their own head tags (e.g. articles) can opt out.
+		expect( base ).toMatch( /socialMeta\s*&&/ );
+	} );
 } );
 
 describe( 'preview page metadata', () => {
@@ -47,5 +56,13 @@ describe( 'preview page metadata', () => {
 
 	it( 'passes a description so its card has body text', () => {
 		expect( preview ).toMatch( /<Base[^>]*\sdescription=/s );
+	} );
+} );
+
+describe( 'article page metadata', () => {
+	const article = read( '../pages/[author]/[slug]/[rkey].astro' );
+
+	it( 'opts out of Base social meta so its own OG + canonical tags are not duplicated', () => {
+		expect( article ).toMatch( /<Base[^>]*\ssocialMeta=\{\s*false\s*\}/s );
 	} );
 } );

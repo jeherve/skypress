@@ -17,6 +17,13 @@ interface Props {
 	ogType?: string;
 	/** Alt text for the share image. */
 	imageAlt?: string;
+	/**
+	 * Whether Base emits the canonical link + Open Graph/Twitter tags. Defaults
+	 * to true. Pages that manage their own head tags (e.g. the article page,
+	 * which sets article-specific `og:*` + canonical) opt out to avoid emitting
+	 * duplicate, conflicting tags.
+	 */
+	socialMeta?: boolean;
 }
 const {
 	title,
@@ -25,6 +32,7 @@ const {
 	image = '/og-default.png',
 	ogType = 'website',
 	imageAlt = 'SkyPress — a writing studio for the open social web',
+	socialMeta = true,
 } = Astro.props;
 
 // Absolute URLs for OG/Twitter, resolved against the configured public origin
@@ -51,14 +59,18 @@ const metaTags = buildMetaTags( {
 		<meta name="generator" content={Astro.generator} />
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 		{description && <meta name="description" content={description} />}
-		<link rel="canonical" href={canonicalUrl} />
 		{
-			metaTags.map( ( tag ) =>
-				tag.property ? (
-					<meta property={tag.property} content={tag.content} />
-				) : (
-					<meta name={tag.name} content={tag.content} />
-				)
+			socialMeta && (
+				<>
+					<link rel="canonical" href={canonicalUrl} />
+					{metaTags.map( ( tag ) =>
+						tag.property ? (
+							<meta property={tag.property} content={tag.content} />
+						) : (
+							<meta name={tag.name} content={tag.content} />
+						)
+					)}
+				</>
 			)
 		}
 		<title>{title}</title>

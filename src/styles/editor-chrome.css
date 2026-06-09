@@ -33,6 +33,13 @@
 	color: var(--ember);
 	font-size: 0.9rem;
 }
+/* Same alignment when the error sits on its own above the editor column (the
+   signed-in `?edit=` load-failure notice) rather than inside the login card. */
+.studio__error--banner {
+	max-width: var(--studio-measure);
+	margin: 0.5rem auto 0;
+	padding: 0 var(--studio-gutter);
+}
 
 /* Publish panel */
 .publish {

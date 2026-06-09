@@ -20,6 +20,8 @@ function StudioGate() {
 	const [ blocks, setBlocks ] = useState< BlockInstance[] >( [] );
 	const [ title, setTitle ] = useState( '' );
 	const [ editing, setEditing ] = useState< MyArticle | null >( null );
+	// Set when an `?edit=<rkey>` load fails to fetch (vs. simply not found).
+	const [ editLoadError, setEditLoadError ] = useState< string | null >( null );
 	const [ refreshKey, setRefreshKey ] = useState( 0 );
 	// `null` = still loading; `[]` = loaded, none exist. PublishPanel needs the distinction.
 	const [ publications, setPublications ] = useState< Publication[] | null >( null );
@@ -55,14 +57,26 @@ function StudioGate() {
 		let cancelled = false;
 		getMyArticle( agent, did, rkey )
 			.then( ( article ) => {
-				if ( ! cancelled && article ) {
+				if ( cancelled ) {
+					return;
+				}
+				if ( article ) {
 					setEditing( article );
 					setBlocks( article.blocks as unknown as BlockInstance[] );
 					setTitle( article.title );
 				}
+				// `article === null` → no owned document has this rkey (stale/bad edit
+				// link). Silently start a new article, as before.
 			} )
-			.catch( () => {
-				/* stale/bad edit link → start a new article */
+			.catch( ( err ) => {
+				// The fetch itself failed (network/auth) — distinct from a stale link.
+				// Surface it so the blank "New article" editor isn't mistaken for the
+				// requested article having loaded.
+				if ( ! cancelled ) {
+					setEditLoadError(
+						err instanceof Error ? err.message : String( err )
+					);
+				}
 			} );
 		return () => {
 			cancelled = true;
@@ -100,6 +114,7 @@ function StudioGate() {
 			setEditing( null );
 			setBlocks( [] );
 			setTitle( '' );
+			setEditLoadError( null );
 		};
 
 		return (
@@ -114,6 +129,13 @@ function StudioGate() {
 						</button>
 					) }
 				</div>
+
+				{ editLoadError && (
+					<p className="studio__error studio__error--banner" role="alert">
+						Couldn't open that article for editing: { editLoadError }. You can
+						retry from your dashboard, or start a new article below.
+					</p>
+				) }
 
 				<div key={ editorKey }>
 					<PublishPanel

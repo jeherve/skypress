@@ -3,8 +3,8 @@ import type { BlockNode } from './render';
 /**
  * A representative stored document for the SP0 spike, expressed as a block tree
  * (the structured array `onSaveBlocks` emits). Stands in for what a PDS `content`
- * record will hold (SP2). `preview.astro` renders this with the dependency-free
- * `render.ts` — no `@wordpress` on the reading path.
+ * record will hold (SP2). It is rendered with the dependency-free `render.ts`
+ * — no `@wordpress` on the reading path — and locked by `render.test.ts`.
  */
 export const SAMPLE_TREE: BlockNode[] = [
 	{

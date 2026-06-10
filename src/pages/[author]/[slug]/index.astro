@@ -1,89 +1,37 @@
 ---
 import Base from '../../../layouts/Base.astro';
 import PublicationFooter from '../../../components/PublicationFooter.astro';
-import { resolveAuthor } from '../../../lib/reader/identity';
-import { listRecords } from '../../../lib/reader/records';
-import { resolveReaderPublication } from '../../../lib/reader/publications';
-import { fetchActorProfile } from '../../../lib/reader/profile';
+import { resolvePublicationContext } from '../../../lib/reader/read-context';
 import { formatLongDate } from '../../../lib/reader/dates';
-import { buildGetBlobUrl } from '../../../lib/media/blob';
 import { themeStyleBlock } from '../../../lib/publish/themes';
 import ErrorScene from '../../../components/ErrorScene.astro';
-import { errorScene } from '../../../lib/reader/errors';
-import type { ErrorSceneCopy } from '../../../lib/reader/errors';
 
 export const prerender = false;
 
-interface DocumentValue {
-	title?: string;
-	description?: string;
-	site?: string;
-	publishedAt?: string;
-}
-
 const { author, slug } = Astro.params;
 
-let error: ErrorSceneCopy | null = null;
-const handle = author?.startsWith( '@' ) ? author.slice( 1 ) : '';
+// Resolve author → publication → its documents behind one interface;
+// this page keeps only presentation.
+const result = await resolvePublicationContext( author, slug );
+const error = result.ok ? null : result.error;
+const ctx = result.ok ? result.context : null;
 
-let publication: Awaited< ReturnType< typeof resolveReaderPublication > > = null;
-let profile: Awaited< ReturnType< typeof fetchActorProfile > > | null = null;
-let articles: Array< {
-	rkey: string;
-	title: string;
-	description?: string;
-	publishedLabel: string | null;
-} > = [];
-let logoUrl: string | null = null;
-let authorName = '';
-let initial = '';
-let feedHref = '';
-let themeStyle = '';
+const handle = ctx?.author.handle ?? '';
+const publication = ctx?.publication ?? null;
+const profile = ctx?.profile ?? null;
 
-if ( ! author || ! author.startsWith( '@' ) || ! slug ) {
-	error = errorScene( 'not-found' );
-}
+const articles = ( ctx?.documents ?? [] ).map( ( doc ) => ( {
+	rkey: doc.rkey,
+	title: doc.value.title ?? 'Untitled',
+	description: doc.value.description,
+	publishedLabel: doc.value.publishedAt ? formatLongDate( doc.value.publishedAt ) : null,
+} ) );
 
-const resolved = error ? null : await resolveAuthor( handle );
-if ( ! error && ! resolved ) {
-	error = errorScene( 'writer-not-found', { handle } );
-}
-
-if ( ! error && resolved ) {
-	const { did, pdsUrl } = resolved;
-
-	publication = await resolveReaderPublication( pdsUrl, did, slug! );
-	if ( ! publication ) {
-		error = errorScene( 'publication-not-found', { handle, slug } );
-	} else {
-		profile = await fetchActorProfile( pdsUrl, did );
-
-		const allDocs = await listRecords< DocumentValue >(
-			pdsUrl,
-			did,
-			'site.standard.document',
-			100
-		);
-		articles = allDocs
-			.filter( ( record ) => record.value.site === publication!.uri )
-			.map( ( record ) => ( {
-				rkey: record.uri.split( '/' ).pop() as string,
-				title: record.value.title ?? 'Untitled',
-				description: record.value.description,
-				publishedLabel: record.value.publishedAt
-					? formatLongDate( record.value.publishedAt )
-					: null,
-			} ) );
-
-		logoUrl = publication.icon
-			? buildGetBlobUrl( pdsUrl, did, publication.icon.ref.$link )
-			: null;
-		authorName = profile.displayName ?? `@${ handle }`;
-		initial = publication.name.charAt( 0 ).toUpperCase();
-		feedHref = `/${ author }/${ slug }/rss.xml`;
-		themeStyle = themeStyleBlock( publication.basicTheme );
-	}
-}
+const logoUrl = publication?.logoUrl ?? null;
+const authorName = profile?.displayName ?? `@${ handle }`;
+const initial = publication?.name.charAt( 0 ).toUpperCase() ?? '';
+const feedHref = `/${ author }/${ slug }/rss.xml`;
+const themeStyle = publication ? themeStyleBlock( publication.basicTheme ) : '';
 
 if ( error ) {
 	Astro.response.status = error.status;

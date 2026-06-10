@@ -1,57 +1,28 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Logo from '../../components/Logo.astro';
-import { resolveAuthor } from '../../lib/reader/identity';
-import { listAllReaderPublications } from '../../lib/reader/publications';
-import { fetchActorProfile } from '../../lib/reader/profile';
+import { resolveAuthorContext } from '../../lib/reader/read-context';
 import { detectBioSegments } from '../../lib/reader/rich-text';
-import { buildGetBlobUrl } from '../../lib/media/blob';
 import CreatePublicationCta from '../../components/CreatePublicationCta.tsx';
 import ErrorScene from '../../components/ErrorScene.astro';
-import { errorScene } from '../../lib/reader/errors';
-import type { ErrorSceneCopy } from '../../lib/reader/errors';
 
 export const prerender = false;
 
-const { author } = Astro.params;
+// Resolve handle → DID → PDS → profile + publications behind one interface;
+// this page keeps only presentation.
+const result = await resolveAuthorContext( Astro.params.author );
+const error = result.ok ? null : result.error;
+const ctx = result.ok ? result.context : null;
 
-let error: ErrorSceneCopy | null = null;
-const handle = author?.startsWith( '@' ) ? author.slice( 1 ) : '';
+const handle = ctx?.author.handle ?? '';
+const did = ctx?.author.did ?? '';
+const profile = ctx?.profile ?? null;
+const publications = ctx?.publications ?? [];
+const foreign = ctx?.foreign ?? [];
 
-let did = '';
-let pdsUrl = '';
-let profile: Awaited< ReturnType< typeof fetchActorProfile > > | null = null;
-let publications: Awaited< ReturnType< typeof listAllReaderPublications > >[ 'owned' ] = [];
-let foreign: Awaited< ReturnType< typeof listAllReaderPublications > >[ 'foreign' ] = [];
-let authorName = '';
-let initial = '';
-let bioSegments: ReturnType< typeof detectBioSegments > = [];
-
-if ( ! author || ! author.startsWith( '@' ) ) {
-	error = errorScene( 'not-found' );
-}
-
-const resolved = error ? null : await resolveAuthor( handle );
-if ( ! error && ! resolved ) {
-	error = errorScene( 'writer-not-found', { handle } );
-}
-
-if ( ! error && resolved ) {
-	did = resolved.did;
-	pdsUrl = resolved.pdsUrl;
-
-	const [ fetchedProfile, allPublications ] = await Promise.all( [
-		fetchActorProfile( pdsUrl, did ),
-		listAllReaderPublications( pdsUrl, did ),
-	] );
-	profile = fetchedProfile;
-	publications = allPublications.owned;
-	foreign = allPublications.foreign;
-
-	authorName = profile.displayName ?? `@${ handle }`;
-	initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
-	bioSegments = profile.description ? detectBioSegments( profile.description ) : [];
-}
+const authorName = profile?.displayName ?? `@${ handle }`;
+const initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
+const bioSegments = profile?.description ? detectBioSegments( profile.description ) : [];
 
 if ( error ) {
 	Astro.response.status = error.status;
@@ -140,14 +111,11 @@ if ( error ) {
 				) : (
 					<ul class="author__list">
 						{publications.map( ( pub ) => {
-							const logoUrl = pub.icon
-								? buildGetBlobUrl( pdsUrl, did, pub.icon.ref.$link )
-								: null;
 							return (
 								<li class="author__item">
 									<a class="author__pub" href={`/@${ handle }/${ pub.slug }`}>
-										{logoUrl ? (
-											<img class="author__publogo" src={logoUrl} alt="" width="52" height="52" />
+										{pub.logoUrl ? (
+											<img class="author__publogo" src={pub.logoUrl} alt="" width="52" height="52" />
 										) : (
 											<span class="author__publogo author__publogo--fallback" aria-hidden="true">
 												{pub.name.charAt( 0 ).toUpperCase()}
@@ -169,9 +137,6 @@ if ( error ) {
 						<h2 class="author__heading">Elsewhere</h2>
 						<ul class="author__list">
 							{foreign.map( ( pub ) => {
-								const logoUrl = pub.icon
-									? buildGetBlobUrl( pdsUrl, did, pub.icon.ref.$link )
-									: null;
 								return (
 									<li class="author__item">
 										<a
@@ -180,8 +145,8 @@ if ( error ) {
 											target="_blank"
 											rel="noopener noreferrer"
 										>
-											{logoUrl ? (
-												<img class="author__publogo" src={logoUrl} alt="" width="52" height="52" />
+											{pub.logoUrl ? (
+												<img class="author__publogo" src={pub.logoUrl} alt="" width="52" height="52" />
 											) : (
 												<span class="author__publogo author__publogo--fallback" aria-hidden="true">
 													{pub.name.charAt( 0 ).toUpperCase()}

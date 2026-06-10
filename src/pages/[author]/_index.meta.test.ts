@@ -7,17 +7,20 @@ const here = dirname( fileURLToPath( import.meta.url ) );
 const page = readFileSync( join( here, './index.astro' ), 'utf8' );
 
 describe( 'writer page error wiring', () => {
-	it( 'renders ErrorScene instead of plain-text 404s', () => {
-		expect( page ).toMatch( /import ErrorScene from '[^']*components\/ErrorScene.astro'/ );
-		expect( page ).toMatch( /import\s*\{\s*errorScene/ );
-		expect( page ).toMatch( /<ErrorScene/ );
-		expect( page ).not.toMatch( /new Response\(\s*'Not found'/ );
-		expect( page ).not.toMatch( /new Response\(\s*`Could not resolve/ );
+	it( 'delegates resolution to the read-context module', () => {
+		expect( page ).toMatch(
+			/import\s*\{\s*resolveAuthorContext\s*\}\s*from\s*'[^']*lib\/reader\/read-context'/
+		);
+		expect( page ).toMatch( /resolveAuthorContext\(/ );
 	} );
 
-	it( 'maps the writer-not-found failure and sets the response status', () => {
-		expect( page ).toMatch( /errorScene\(\s*'writer-not-found'/ );
-		expect( page ).toMatch( /errorScene\(\s*'not-found'/ );
+	it( 'renders ErrorScene with the module-provided copy instead of plain-text 404s', () => {
+		// Error mapping (not-found / writer-not-found) is behaviourally tested in
+		// src/lib/reader/read-context.test.ts; the page only renders what comes back.
+		expect( page ).toMatch( /import ErrorScene from '[^']*components\/ErrorScene.astro'/ );
+		expect( page ).toMatch( /<ErrorScene/ );
 		expect( page ).toMatch( /Astro\.response\.status\s*=/ );
+		expect( page ).not.toMatch( /new Response\(\s*'Not found'/ );
+		expect( page ).not.toMatch( /new Response\(\s*`Could not resolve/ );
 	} );
 } );

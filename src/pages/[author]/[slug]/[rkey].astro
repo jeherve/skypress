@@ -1,21 +1,16 @@
 ---
 import Base from '../../../layouts/Base.astro';
 import PublicationFooter from '../../../components/PublicationFooter.astro';
-import { resolveAuthor } from '../../../lib/reader/identity';
-import { getRecord } from '../../../lib/reader/records';
-import { resolveReaderPublication } from '../../../lib/reader/publications';
-import { fetchActorProfile } from '../../../lib/reader/profile';
+import { resolveArticleContext } from '../../../lib/reader/read-context';
 import { formatLongDate } from '../../../lib/reader/dates';
-import { resolveBlobImageUrls, buildGetBlobUrl } from '../../../lib/media/blob';
-import { renderBlocks, blocksToText, type BlockNode } from '../../../lib/blocks/render';
+import { resolveBlobImageUrls } from '../../../lib/media/blob';
+import { renderBlocks, blocksToText } from '../../../lib/blocks/render';
 import { sanitizeArticleHtml } from '../../../lib/reader/sanitize';
 import { canonicalArticleUrl } from '../../../lib/publish/records';
 import { deriveExcerpt } from '../../../lib/publish/excerpt';
 import { themeStyleBlock } from '../../../lib/publish/themes';
 import { buildMetaTags } from '../../../lib/seo/meta';
 import ErrorScene from '../../../components/ErrorScene.astro';
-import { errorScene } from '../../../lib/reader/errors';
-import type { ErrorSceneCopy } from '../../../lib/reader/errors';
 import PostActions from '../../../components/PostActions.tsx';
 
 // Frontend block styles only — no editor chrome, no JS.
@@ -28,25 +23,16 @@ import '../../../styles/post-actions.css';
 // Read-through renderer: resolve + fetch at request time (Decision 0007).
 export const prerender = false;
 
-interface SkyDocument {
-	title?: string;
-	description?: string;
-	textContent?: string;
-	publishedAt?: string;
-	updatedAt?: string;
-	site?: string;
-	content?: { blocks?: BlockNode[] };
-	/** strongRef to the companion `app.bsky.feed.post` — the target of reader actions. */
-	bskyPostRef?: { uri: string; cid: string };
-}
-
 const { author, slug, rkey } = Astro.params;
 
-let error: ErrorSceneCopy | null = null;
-const handle = author?.startsWith( '@' ) ? author.slice( 1 ) : '';
+// Resolve author → publication → document (site-joined) behind one interface;
+// this page keeps the render pipeline and presentation.
+const result = await resolveArticleContext( author, slug, rkey );
+const error = result.ok ? null : result.error;
+const ctx = result.ok ? result.context : null;
 
 // Everything the happy-path template needs; populated only when there's no error.
-let publication: Awaited< ReturnType< typeof resolveReaderPublication > > = null;
+const publication = ctx?.publication ?? null;
 let metaTags: ReturnType< typeof buildMetaTags > = [];
 let title = '';
 let description = '';
@@ -58,6 +44,7 @@ let html = '';
 let readingMinutes = 1;
 let publishedLabel: string | null = null;
 let updatedLabel: string | null = null;
+let handle = '';
 let authorName = '';
 let authorHandle: string | null = null;
 let authorAvatar: string | null = null;
@@ -67,83 +54,53 @@ let themeStyle = '';
 let ogImage = '';
 let bskyPostRef: { uri: string; cid: string } | null = null;
 
-if ( ! author || ! author.startsWith( '@' ) || ! slug || ! rkey ) {
-	error = errorScene( 'not-found' );
-}
+if ( ctx && publication ) {
+	const { author: readAuthor, profile, document } = ctx;
+	const { did, pdsUrl } = readAuthor;
+	handle = readAuthor.handle;
 
-const resolved = error ? null : await resolveAuthor( handle );
-if ( ! error && ! resolved ) {
-	error = errorScene( 'writer-not-found', { handle } );
-}
+	const doc = document.value;
+	const blocks = resolveBlobImageUrls( doc.content?.blocks ?? [], { pdsUrl, did } );
+	html = sanitizeArticleHtml( renderBlocks( blocks ) );
+	const textContent = doc.textContent || blocksToText( blocks );
 
-if ( ! error && resolved ) {
-	const { did, pdsUrl } = resolved;
+	title = doc.title ?? 'Untitled';
+	description = doc.description || deriveExcerpt( textContent );
+	canonical = canonicalArticleUrl( handle, slug!, rkey! );
+	docUri = document.uri;
+	pubUrl = `/${ author }/${ slug }`;
+	feedHref = `${ pubUrl }/rss.xml`;
 
-	publication = await resolveReaderPublication( pdsUrl, did, slug! );
-	if ( ! publication ) {
-		error = errorScene( 'publication-not-found', { handle, slug } );
-	} else {
-		const record = await getRecord< SkyDocument >(
-			pdsUrl,
-			did,
-			'site.standard.document',
-			rkey!
-		);
-		if ( ! record?.value || record.value.site !== publication.uri ) {
-			error = errorScene( 'article-not-found', {
-				publicationName: publication.name,
-			} );
-		} else {
-			const doc = record.value;
-			const blocks = resolveBlobImageUrls( doc.content?.blocks ?? [], { pdsUrl, did } );
-			html = sanitizeArticleHtml( renderBlocks( blocks ) );
-			const textContent = doc.textContent || blocksToText( blocks );
+	const words = textContent.split( /\s+/ ).filter( Boolean ).length;
+	readingMinutes = Math.max( 1, Math.round( words / 200 ) );
+	publishedLabel = doc.publishedAt ? formatLongDate( doc.publishedAt ) : null;
+	updatedLabel = doc.updatedAt ? formatLongDate( doc.updatedAt ) : null;
+	themeStyle = themeStyleBlock( publication.basicTheme );
+	// The companion Bluesky post is the target of every reader action; absent it
+	// (legacy docs) there's no thread to act on, so the action bar is omitted.
+	bskyPostRef = doc.bskyPostRef?.uri && doc.bskyPostRef?.cid ? doc.bskyPostRef : null;
 
-			title = doc.title ?? 'Untitled';
-			description = doc.description || deriveExcerpt( textContent );
-			canonical = canonicalArticleUrl( handle, slug!, rkey! );
-			docUri = `at://${ did }/site.standard.document/${ rkey }`;
-			pubUrl = `/${ author }/${ slug }`;
-			feedHref = `${ pubUrl }/rss.xml`;
+	authorName = profile.displayName ?? `@${ handle }`;
+	// Only show a separate @handle chip when there's a distinct display name.
+	authorHandle = profile.displayName ? `@${ handle }` : null;
+	authorAvatar = profile.avatar;
+	logoUrl = publication.logoUrl;
+	initial = publication.name.charAt( 0 ).toUpperCase();
 
-			const words = textContent.split( /\s+/ ).filter( Boolean ).length;
-			readingMinutes = Math.max( 1, Math.round( words / 200 ) );
-			publishedLabel = doc.publishedAt ? formatLongDate( doc.publishedAt ) : null;
-			updatedLabel = doc.updatedAt ? formatLongDate( doc.updatedAt ) : null;
-			themeStyle = themeStyleBlock( publication.basicTheme );
-			// The companion Bluesky post is the target of every reader action; absent it
-			// (legacy docs) there's no thread to act on, so the action bar is omitted.
-			bskyPostRef =
-				doc.bskyPostRef?.uri && doc.bskyPostRef?.cid ? doc.bskyPostRef : null;
-
-			const profile = await fetchActorProfile( pdsUrl, did );
-			authorName = profile.displayName ?? `@${ handle }`;
-			// Only show a separate @handle chip when there's a distinct display name.
-			authorHandle = profile.displayName ? `@${ handle }` : null;
-			authorAvatar = profile.avatar;
-			logoUrl = publication.icon
-				? buildGetBlobUrl( pdsUrl, did, publication.icon.ref.$link )
-				: null;
-			initial = publication.name.charAt( 0 ).toUpperCase();
-
-			// Share image: the publication logo, else the shared default. Only the
-			// default image has known 1200x630 dimensions; a square logo omits them.
-			ogImage = logoUrl ?? new URL( '/og-default.png', Astro.site ).href;
-			const ogDimensions = publication.icon
-				? {}
-				: { imageWidth: 1200, imageHeight: 630 };
-			metaTags = buildMetaTags( {
-				title,
-				description,
-				url: canonical,
-				image: ogImage,
-				siteName: 'SkyPress',
-				type: 'article',
-				imageAlt: publication.name,
-				...ogDimensions,
-			} );
-		}
-	}
+	// Share image: the publication logo, else the shared default. Only the
+	// default image has known 1200x630 dimensions; a square logo omits them.
+	ogImage = logoUrl ?? new URL( '/og-default.png', Astro.site ).href;
+	const ogDimensions = logoUrl ? {} : { imageWidth: 1200, imageHeight: 630 };
+	metaTags = buildMetaTags( {
+		title,
+		description,
+		url: canonical,
+		image: ogImage,
+		siteName: 'SkyPress',
+		type: 'article',
+		imageAlt: publication.name,
+		...ogDimensions,
+	} );
 }
 
 if ( error ) {

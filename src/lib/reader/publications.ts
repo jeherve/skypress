@@ -116,20 +116,3 @@ export async function listAllReaderPublications(
 	return { owned, foreign };
 }
 
-/** All of a writer's SkyPress publications (newest first) — for the author index. */
-export async function listReaderPublications(
-	pdsUrl: string,
-	did: string
-): Promise< ReaderPublication[] > {
-	return ( await listAllReaderPublications( pdsUrl, did ) ).owned;
-}
-
-/** Resolve one publication by its slug (the publication + document routes), or null. */
-export async function resolveReaderPublication(
-	pdsUrl: string,
-	did: string,
-	slug: string
-): Promise< ReaderPublication | null > {
-	const pubs = await listReaderPublications( pdsUrl, did );
-	return pubs.find( ( pub ) => pub.slug === slug ) ?? null;
-}

@@ -7,6 +7,7 @@ import {
 	postReply,
 	postQuote,
 	fetchPostState,
+	fetchPostExists,
 } from './interactions';
 import type { StrongRef } from './records';
 
@@ -147,5 +148,41 @@ describe( 'fetchPostState', () => {
 			app: { bsky: { feed: { getPosts: vi.fn( async () => ( { data: { posts: [] } } ) ) } } },
 		} );
 		expect( await fetchPostState( agent, SUBJECT.uri ) ).toBeNull();
+	} );
+} );
+
+describe( 'fetchPostExists', () => {
+	const ok = ( body: unknown ) =>
+		( { ok: true, json: async () => body } ) as unknown as Response;
+	const notOk = () => ( { ok: false, json: async () => ( {} ) } ) as unknown as Response;
+
+	it( 'queries the public AppView getPosts endpoint with the encoded uri', async () => {
+		const fetchImpl = vi.fn().mockResolvedValue( ok( { posts: [ { uri: SUBJECT.uri } ] } ) );
+		await fetchPostExists( SUBJECT.uri, fetchImpl as unknown as typeof fetch );
+		expect( fetchImpl ).toHaveBeenCalledWith(
+			`https://public.api.bsky.app/xrpc/app.bsky.feed.getPosts?uris=${ encodeURIComponent(
+				SUBJECT.uri
+			) }`
+		);
+	} );
+
+	it( 'returns true when the post is present', async () => {
+		const fetchImpl = vi.fn().mockResolvedValue( ok( { posts: [ { uri: SUBJECT.uri } ] } ) );
+		expect( await fetchPostExists( SUBJECT.uri, fetchImpl as unknown as typeof fetch ) ).toBe( true );
+	} );
+
+	it( 'returns false when the post is gone (no posts returned)', async () => {
+		const fetchImpl = vi.fn().mockResolvedValue( ok( { posts: [] } ) );
+		expect( await fetchPostExists( SUBJECT.uri, fetchImpl as unknown as typeof fetch ) ).toBe( false );
+	} );
+
+	it( 'returns null (undetermined) on a non-ok response', async () => {
+		const fetchImpl = vi.fn().mockResolvedValue( notOk() );
+		expect( await fetchPostExists( SUBJECT.uri, fetchImpl as unknown as typeof fetch ) ).toBeNull();
+	} );
+
+	it( 'returns null (undetermined) when the network throws', async () => {
+		const fetchImpl = vi.fn().mockRejectedValue( new Error( 'offline' ) );
+		expect( await fetchPostExists( SUBJECT.uri, fetchImpl as unknown as typeof fetch ) ).toBeNull();
 	} );
 } );

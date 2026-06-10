@@ -19,6 +19,9 @@ const LIKE_COLLECTION = 'app.bsky.feed.like';
 const REPOST_COLLECTION = 'app.bsky.feed.repost';
 const POST_COLLECTION = 'app.bsky.feed.post';
 
+/** The public, unauthenticated Bluesky AppView (same host as the landing actor lookup). */
+const APPVIEW = 'https://public.api.bsky.app';
+
 /** createRecord types `record` as an open index signature; our records are precise. */
 function asRecord( value: object ): Record< string, unknown > {
 	return value as Record< string, unknown >;
@@ -127,4 +130,33 @@ export async function fetchPostState( agent: Agent, postUri: string ): Promise< 
 		viewerLikeUri: post.viewer?.like ?? null,
 		viewerRepostUri: post.viewer?.repost ?? null,
 	};
+}
+
+/**
+ * Does the companion post still exist on Bluesky? An UNAUTHENTICATED read of the public
+ * AppView (no OAuth, no agent), so signed-out readers can also tell when a post is gone.
+ * Mirrors `landing/actor-lookup.ts`: fixed host, the post AT-URI URL-encoded as the only
+ * input, and a deliberate three-state result —
+ *
+ * - `true`  — the post is present,
+ * - `false` — the post is gone (deleted, or not yet indexed),
+ * - `null`  — undetermined (network/HTTP error), so callers can fail OPEN and keep the
+ *   action bar rather than hide a live post on a transient blip.
+ */
+export async function fetchPostExists(
+	postUri: string,
+	fetchImpl: typeof fetch = fetch
+): Promise< boolean | null > {
+	try {
+		const res = await fetchImpl(
+			`${ APPVIEW }/xrpc/app.bsky.feed.getPosts?uris=${ encodeURIComponent( postUri ) }`
+		);
+		if ( ! res.ok ) {
+			return null;
+		}
+		const data = ( await res.json() ) as { posts?: unknown[] };
+		return Array.isArray( data?.posts ) && data.posts.length > 0;
+	} catch {
+		return null;
+	}
 }

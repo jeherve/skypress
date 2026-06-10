@@ -144,7 +144,10 @@
 }
 
 /* Borderless article title, sitting above the framed editor canvas — echoes the
-   block-editor post title (large display heading, no box). */
+   block-editor post title (large display heading, no box). A `<textarea>` (not a
+   single-line input) so long titles wrap and the field auto-grows to fit instead
+   of clipping on one line — it stays single-line semantically (Enter is blocked
+   in the markup). Auto-grows via JS, like the lede; resize/overflow off. */
 .studio__title {
 	display: block;
 	max-width: var(--studio-measure);
@@ -159,6 +162,9 @@
 	font-size: clamp(1.9rem, 4vw, 2.6rem);
 	font-weight: 700;
 	line-height: 1.15;
+	resize: none;
+	overflow: hidden;
+	overflow-wrap: break-word;
 }
 .studio__title::placeholder {
 	color: var(--muted);

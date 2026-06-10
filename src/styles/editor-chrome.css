@@ -106,17 +106,10 @@
 	gap: 0.75rem;
 	flex-wrap: wrap;
 }
-.publish__result,
 .publish__status,
 .publish__error {
 	flex: 1 1 100%;
 	font-size: 0.9rem;
-}
-.publish__result code {
-	word-break: break-all;
-	background: var(--panel);
-	padding: 0.1rem 0.3rem;
-	border-radius: 4px;
 }
 .publish__error {
 	color: var(--ember);
@@ -344,7 +337,12 @@
 	color: var(--ember);
 }
 
-/* Publish success pill — sunrise callback, rises into view (Studio-owned) */
+/* Publish success pill — sunrise callback, rises into view (Studio-owned).
+   Deliberately uses a fixed warm palette, NOT the --sun*/--ink tokens: those
+   flip with the colour scheme, and no single text colour stays legible over a
+   gradient whose --sun-tint end goes near-black in dark mode. A constant light
+   sunrise gradient + dark ink keeps the look and clears WCAG AA in both schemes
+   (≈7.5:1 over the gold end, ≈12:1 over the peach). */
 .studio__published {
 	width: fit-content;
 	max-width: var(--studio-measure);
@@ -354,8 +352,8 @@
 	gap: 0.6rem;
 	padding: 0.5rem 1rem;
 	border-radius: 999px;
-	background: linear-gradient(100deg, var(--sun-tint), var(--sun));
-	color: var(--ink);
+	background: linear-gradient(100deg, #fde4c4, #f4a72c);
+	color: #3a2200;
 	font-size: 0.9rem;
 	font-weight: 600;
 	box-shadow: 0 1px 8px rgba(232, 146, 12, 0.3);
@@ -363,7 +361,7 @@
 }
 
 .studio__published-link {
-	color: var(--ink);
+	color: #3a2200;
 	font-weight: 700;
 	text-decoration: underline;
 	white-space: nowrap;

@@ -35,6 +35,7 @@ function StudioGate() {
 	const [ publications, setPublications ] = useState< Publication[] | null >( null );
 	// Shared between mediaUpload (writes blob refs) and publish (reads them).
 	const registry = useRef< BlobRegistry >( new Map() ).current;
+	const titleRef = useRef< HTMLTextAreaElement >( null );
 	const ledeRef = useRef< HTMLTextAreaElement >( null );
 
 	// Load the writer's SkyPress publications (the publish targets / selector).
@@ -106,6 +107,18 @@ function StudioGate() {
 
 	// Release the preview object URLs this session minted when the Studio unmounts.
 	useEffect( () => () => revokeBlobRegistry( registry ), [ registry ] );
+
+	// Grow the title textarea to fit its content so long titles wrap into view
+	// instead of clipping on one line (esp. on narrow mobile viewports). Layout
+	// effect so it sizes before paint — same reasoning as the lede below.
+	useLayoutEffect( () => {
+		const el = titleRef.current;
+		if ( ! el ) {
+			return;
+		}
+		el.style.height = 'auto';
+		el.style.height = `${ el.scrollHeight }px`;
+	}, [ title ] );
 
 	// Grow the lede textarea to fit its content (and on hydrate from an edit-load).
 	// Layout effect so it sizes before paint — avoids a one-row collapse flash when
@@ -213,12 +226,20 @@ function StudioGate() {
 							}
 						} }
 					/>
-					<input
+					<textarea
+						ref={ titleRef }
 						className="studio__title"
-						type="text"
+						rows={ 1 }
 						placeholder="Add title"
 						aria-label="Article title"
 						value={ title }
+						// The title is a single-line string: let it wrap visually, but
+						// don't let Enter insert a literal newline into the stored value.
+						onKeyDown={ ( event ) => {
+							if ( event.key === 'Enter' ) {
+								event.preventDefault();
+							}
+						} }
 						onChange={ ( event ) => setTitle( event.target.value ) }
 					/>
 					<textarea

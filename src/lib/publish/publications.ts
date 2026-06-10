@@ -17,6 +17,7 @@ import {
 } from './records';
 import { normalizeBlobRefJson, type BlobRefJson } from '../media/blob';
 import { parseBasicTheme, type BasicTheme } from './themes';
+import { detectProvider, type ProviderId } from './providers';
 
 const PUBLICATION_COLLECTION = 'site.standard.publication';
 const DOCUMENT_COLLECTION = 'site.standard.document';
@@ -52,6 +53,8 @@ export interface ForeignPublication {
 	hostname: string;
 	url: string;
 	icon?: BlobRefJson;
+	/** The app that wrote the record (Leaflet, pckt, …), or null when unrecognised. */
+	provider: ProviderId | null;
 }
 
 /** Fields a writer can set/change on a publication (the slug is derived, never entered). */
@@ -116,6 +119,7 @@ function toForeignPublication( record: {
 		name: value.name ?? parsed.hostname,
 		hostname: parsed.hostname,
 		url: value.url,
+		provider: detectProvider( value.url, value ),
 		...( icon ? { icon } : {} ),
 	};
 }

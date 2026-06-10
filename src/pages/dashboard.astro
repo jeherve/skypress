@@ -183,7 +183,9 @@ import '../styles/login.css';
 		opacity: 0.85;
 	}
 	.dash__pubhost {
-		display: inline-block;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
 		align-self: flex-start;
 		color: var(--muted);
 		font-family: var(--font-mono);
@@ -192,6 +194,10 @@ import '../styles/login.css';
 		border: 1px solid var(--line);
 		border-radius: 999px;
 		background: var(--paper-raised);
+	}
+	.dash__pubhost-logo {
+		flex: none;
+		color: var(--ink-soft);
 	}
 	.dash__pubactions {
 		display: flex;

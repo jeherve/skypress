@@ -17,6 +17,9 @@ Each entry links out to the foreign publication's own URL (external link,
 
 - **Section heading:** "Elsewhere".
 - **Per-item content:** publication **name** only (plus its logo). No hostname.
+  - **Superseded 2026-06-10** (`2026-06-10-provider-logos-design.md`): each row now also
+    shows a hostname pill, with the originating service's logo before it when recognised
+    (Decision 0017). `ReaderForeignPublication` gained `hostname` + `provider` for this.
 - Render the section only when there is at least one foreign publication.
 
 ## Data layer — `src/lib/reader/publications.ts`

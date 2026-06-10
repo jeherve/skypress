@@ -2,8 +2,11 @@ import { describe, it, expect } from 'vitest';
 import {
 	validateCoverFile,
 	coverPreviewUrl,
+	uploadCoverViaMedia,
 	COVER_MAX_BYTES,
+	type CoverUpload,
 } from './cover';
+import type { BlobRegistry, MediaUploadHandler } from './mediaUpload';
 
 describe( 'COVER_MAX_BYTES', () => {
 	it( 'matches the 1MB cover/thumb cap', () => {
@@ -47,5 +50,38 @@ describe( 'coverPreviewUrl', () => {
 		expect( url ).toContain( 'com.atproto.sync.getBlob' );
 		expect( url ).toContain( 'did%3Aplc%3Ame' );
 		expect( url ).toContain( 'bafycid' );
+	} );
+} );
+
+describe( 'uploadCoverViaMedia', () => {
+	it( 'uploads via the media handler and returns the registry ref + preview URL', async () => {
+		const registry: BlobRegistry = new Map();
+		const ref = {
+			$type: 'blob' as const,
+			ref: { $link: 'bafyc' },
+			mimeType: 'image/png',
+			size: 10,
+		};
+		const mediaUpload: MediaUploadHandler = async ( { filesList, onFileChange } ) => {
+			expect( filesList.length ).toBe( 1 );
+			const previewUrl = 'data:image/png;base64,AAA';
+			registry.set( previewUrl, { ref, url: 'https://pds/getblob' } );
+			onFileChange( [ { url: previewUrl, alt: '' } ] );
+		};
+		const file = new File( [ 'x' ], 'c.png', { type: 'image/png' } );
+		const result: CoverUpload = await uploadCoverViaMedia( file, mediaUpload, registry );
+		expect( result.ref ).toEqual( ref );
+		expect( result.previewUrl ).toBe( 'data:image/png;base64,AAA' );
+	} );
+
+	it( 'rejects when the handler reports an error', async () => {
+		const registry: BlobRegistry = new Map();
+		const mediaUpload: MediaUploadHandler = async ( { onError } ) => {
+			onError?.( new Error( 'upload failed' ) );
+		};
+		const file = new File( [ 'x' ], 'c.png', { type: 'image/png' } );
+		await expect(
+			uploadCoverViaMedia( file, mediaUpload, registry )
+		).rejects.toThrow( 'upload failed' );
 	} );
 } );

@@ -61,6 +61,16 @@ or `blog.skypress.*`.
   there is no SkyPress server write endpoint. Rate-limiting / abuse is the PDS's concern.
 - **Legacy documents without `bskyPostRef`** (pre–Decision 0013, or a failed third write)
   render no action bar — there is no Bluesky thread to act on.
+- **Deleted companion post** (the `bskyPostRef` exists, but the post it points at was later
+  deleted on Bluesky): the island confirms the post is live before showing anything, and
+  renders **nothing** when it is gone — no buttons, note, or thread link, since none would
+  work. The check is client-side and three-state: signed-in readers learn it from the
+  authenticated `getPosts` (a `null` result ⇒ gone); signed-out readers from an
+  unauthenticated `fetchPostExists` against the public AppView. It is **optimistic** — the
+  bar shows by default and only hides on a *definitive* "gone", so a transient network error
+  never hides a live post (fail open). `getPosts` can't distinguish *deleted* from
+  *not-yet-indexed*, so a just-published post viewed before AppView indexing is briefly
+  hidden too (self-heals on reload).
 - **"Don't surprise users" (brief §10):** the UI states, in both signed-out and signed-in
   states, that actions are public and happen on Bluesky.
 

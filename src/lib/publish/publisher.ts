@@ -7,7 +7,7 @@ import {
 	type StrongRef,
 } from './records';
 import { listPublications } from './publications';
-import { firstImageBlobRef } from '../media/blob';
+import { firstImageBlobRef, normalizeBlobRefJson, type BlobRefJson } from '../media/blob';
 import { blocksToText, type BlockNode } from '../blocks/render';
 import { deriveExcerpt } from './excerpt';
 
@@ -34,6 +34,8 @@ export interface PublishInput {
 	title: string;
 	blocks: BlockNode[];
 	description?: string;
+	/** Optional explicit per-article cover; overrides the first-content-image thumb. */
+	coverImage?: BlobRefJson;
 	/** The chosen target publication's AT-URI (Decision 0010 — no more auto-create). */
 	publicationUri: string;
 	/** Its current cid, for the post's `associatedRefs` strongRef (Decision 0013). */
@@ -94,6 +96,7 @@ export async function publish(
 				textContent,
 				siteUri: input.publicationUri,
 				publishedAt: now,
+				coverImage: input.coverImage,
 				description,
 			} )
 		),
@@ -111,8 +114,8 @@ export async function publish(
 				articleUrl,
 				description,
 				createdAt: now,
-				// Reuse the first uploaded image's in-repo blob as the card thumb (Decision 0014).
-				thumb: firstImageBlobRef( input.blocks ),
+				// Prefer the writer's explicit cover; else reuse the first uploaded image (Decision 0014).
+				thumb: input.coverImage ?? firstImageBlobRef( input.blocks ),
 				associatedRefs: [ documentRef, publicationRef ],
 			} )
 		),
@@ -132,6 +135,7 @@ export async function publish(
 				textContent,
 				siteUri: input.publicationUri,
 				publishedAt: now,
+				coverImage: input.coverImage,
 				description,
 				bskyPostRef,
 			} )
@@ -150,6 +154,8 @@ export interface UpdateInput {
 	title: string;
 	blocks: BlockNode[];
 	description?: string;
+	/** Optional explicit per-article cover (design 2026-06-10). */
+	coverImage?: BlobRefJson;
 	/** The existing document's record key (URL stays stable, Decision 0008). */
 	rkey: string;
 	/** Preserved from the original publish. */
@@ -189,6 +195,7 @@ export async function updateDocument(
 				textContent,
 				siteUri: input.siteUri,
 				publishedAt: input.publishedAt,
+				coverImage: input.coverImage,
 				description,
 				bskyPostRef: input.bskyPostRef,
 				updatedAt: now,

@@ -15,9 +15,11 @@ const here = dirname( fileURLToPath( import.meta.url ) );
 const page = readFileSync( join( here, './[rkey].astro' ), 'utf8' );
 
 describe( 'document page Open Graph wiring', () => {
-	it( 'imports buildMetaTags and buildGetBlobUrl', () => {
+	it( 'imports buildMetaTags and takes the logo from the read context', () => {
 		expect( page ).toMatch( /import\s*\{\s*buildMetaTags\s*\}\s*from\s*'[^']*lib\/seo\/meta'/ );
-		expect( page ).toMatch( /buildGetBlobUrl/ );
+		// The blob-ref → URL construction lives in the read-context module now.
+		expect( page ).toMatch( /publication\.logoUrl/ );
+		expect( page ).not.toMatch( /buildGetBlobUrl/ );
 	} );
 
 	it( 'builds the meta tags as an article with the canonical URL', () => {
@@ -44,17 +46,19 @@ describe( 'document page Open Graph wiring', () => {
 
 	it( 'renders the ErrorScene instead of plain-text 404 responses', () => {
 		expect( page ).toMatch( /import ErrorScene from '[^']*components\/ErrorScene.astro'/ );
-		expect( page ).toMatch( /import\s*\{\s*errorScene\s*\}\s*from\s*'[^']*lib\/reader\/errors'/ );
 		expect( page ).toMatch( /<ErrorScene/ );
 		// No more bare plain-text 404 bodies.
 		expect( page ).not.toMatch( /new Response\(\s*'Not found'/ );
 		expect( page ).not.toMatch( /new Response\(\s*'Article not found'/ );
 	} );
 
-	it( 'maps each failure to the right error kind and sets the response status', () => {
-		expect( page ).toMatch( /errorScene\(\s*'writer-not-found'/ );
-		expect( page ).toMatch( /errorScene\(\s*'publication-not-found'/ );
-		expect( page ).toMatch( /errorScene\(\s*'article-not-found'/ );
+	it( 'delegates failure mapping to the read-context module and sets the response status', () => {
+		// Error-kind mapping (writer/publication/article not found + the site-join)
+		// is behaviourally tested in src/lib/reader/read-context.test.ts.
+		expect( page ).toMatch(
+			/import\s*\{\s*resolveArticleContext\s*\}\s*from\s*'[^']*lib\/reader\/read-context'/
+		);
+		expect( page ).toMatch( /resolveArticleContext\(/ );
 		expect( page ).toMatch( /Astro\.response\.status\s*=/ );
 	} );
 
@@ -78,11 +82,9 @@ describe( 'document page focuses on publication + author', () => {
 		expect( page ).toMatch( /class="masthead__title">\{publication!?\.name\}/ );
 	} );
 
-	it( 'fetches the author profile for the eyebrow', () => {
-		expect( page ).toMatch(
-			/import\s*\{\s*fetchActorProfile\s*\}\s*from\s*'[^']*lib\/reader\/profile'/
-		);
-		expect( page ).toMatch( /fetchActorProfile\(/ );
+	it( 'takes the author profile from the read context for the eyebrow', () => {
+		expect( page ).toMatch( /profile\.displayName/ );
+		expect( page ).toMatch( /profile\.avatar/ );
 	} );
 
 	it( 'shows the author (name, avatar, handle) in the eyebrow, linked to the profile', () => {

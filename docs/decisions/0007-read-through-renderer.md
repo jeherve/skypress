@@ -28,6 +28,11 @@ The dynamic segment captures the whole `@handle` (validated to start with `@`); 
 routes (`/editor`, `/`, …) take priority, so they're unaffected.
 
 ### Resolution chain (`src/lib/reader/`)
+
+> **Amended by Decision 0016 (2026-06-10):** the routes no longer assemble this chain
+> themselves — `src/lib/reader/read-context.ts` orchestrates it behind one interface.
+> The chain itself is unchanged.
+
 - `identity.resolveHandleToDid` — the handle's own `/.well-known/atproto-did` first (no
   third party), falling back to a public `resolveHandle` XRPC. DIDs pass through.
 - `media/pds.resolvePdsUrl` — the `#atproto_pds` endpoint from the DID document.

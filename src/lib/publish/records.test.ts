@@ -244,6 +244,19 @@ describe( 'buildDocumentRecord', () => {
 		expect( edited.updatedAt ).toBe( '2026-06-09T09:00:00.000Z' );
 		expect( edited.publishedAt ).toBe( base.publishedAt ); // preserved
 	} );
+
+	it( 'omits coverImage unless provided, includes it when set', () => {
+		expect( 'coverImage' in buildDocumentRecord( base ) ).toBe( false );
+		const cover = {
+			$type: 'blob' as const,
+			ref: { $link: 'bafycover' },
+			mimeType: 'image/png',
+			size: 4242,
+		};
+		expect(
+			buildDocumentRecord( { ...base, coverImage: cover } ).coverImage
+		).toEqual( cover );
+	} );
 } );
 
 describe( 'buildBskyPost', () => {

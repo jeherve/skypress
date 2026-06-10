@@ -42,7 +42,8 @@ its assertion — the same discipline as the block renderer.
 `buildPublicationFeedXml` is a pure transform fed by the same `listRecords` call the
 publication page already makes (`listRecords` returns each document's full `content.blocks`,
 so there is **no per-article round-trip**). Each item runs through the exact reader pipeline:
-`resolveBlobImageUrls` → `renderBlocks` → `sanitizeArticleHtml`. The feed body is therefore
+`resolveBlobImageUrls` → `renderBlocks` → `sanitizeArticleHtml` (since Decision 0017, owned
+by `src/lib/reader/render-article.ts`). The feed body is therefore
 the same sanitised HTML a browser sees (AGENTS.md #6b satisfied by reuse), and the route's
 single PDS fetch goes through `safeFetch` (AGENTS.md #6a satisfied by reuse).
 

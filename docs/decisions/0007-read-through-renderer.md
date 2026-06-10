@@ -39,6 +39,11 @@ routes (`/editor`, `/`, …) take priority, so they're unaffected.
 - `records.getRecord` / `listRecords` — public `com.atproto.repo` XRPC (no auth).
 
 ### Rendering
+
+> **Amended by Decision 0017 (2026-06-10):** callers no longer assemble this pipeline
+> themselves — `src/lib/reader/render-article.ts` owns the ordering behind one
+> interface. The pipeline itself is unchanged.
+
 `fetch document → resolveBlobImageUrls → renderBlocks → sanitizeArticleHtml → inject`.
 - **Images:** `resolveBlobImageUrls` rebuilds each blob-backed image's `getBlob` URL from
   the article's DID + the stored CID (portable across PDS migrations, Decision 0006);

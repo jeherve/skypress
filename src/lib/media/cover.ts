@@ -50,6 +50,26 @@ export function coverPreviewUrl(
 }
 
 /**
+ * Build the cover state for an edit-loaded article from its stored ref. Returns `null` until
+ * both the PDS URL and DID are known — `pdsUrl` resolves *after* `agent`/`did` (the auth
+ * provider awaits the profile + PDS lookup), so the edit-load fetch can land before it. The
+ * caller must run this in an effect keyed on `pdsUrl` so the cover hydrates once it arrives;
+ * returning `null` (rather than an unusable `getBlob` URL) keeps a premature call harmless.
+ */
+export function coverFromStoredRef(
+	ref: BlobRefJson | undefined,
+	author: { pdsUrl: string | null; did: string | null }
+): CoverUpload | null {
+	if ( ! ref || ! author.pdsUrl || ! author.did ) {
+		return null;
+	}
+	return {
+		ref,
+		previewUrl: coverPreviewUrl( ref, { pdsUrl: author.pdsUrl, did: author.did } ),
+	};
+}
+
+/**
  * Upload a cover file through the existing Gutenberg `mediaUpload` handler (same PDS path as
  * content images) and resolve with the persistable ref + preview URL. The handler records the
  * upload in `registry` keyed by the preview `data:` URL it returns via `onFileChange`; we read

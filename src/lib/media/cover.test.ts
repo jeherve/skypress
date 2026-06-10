@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
 	validateCoverFile,
 	coverPreviewUrl,
+	coverFromStoredRef,
 	uploadCoverViaMedia,
 	COVER_MAX_BYTES,
 	type CoverUpload,
@@ -50,6 +51,36 @@ describe( 'coverPreviewUrl', () => {
 		expect( url ).toContain( 'com.atproto.sync.getBlob' );
 		expect( url ).toContain( 'did%3Aplc%3Ame' );
 		expect( url ).toContain( 'bafycid' );
+	} );
+} );
+
+describe( 'coverFromStoredRef', () => {
+	const ref = {
+		$type: 'blob' as const,
+		ref: { $link: 'bafycid' },
+		mimeType: 'image/png',
+		size: 1234,
+	};
+
+	it( 'builds a cover from a stored ref once the PDS URL and DID are known', () => {
+		const cover = coverFromStoredRef( ref, { pdsUrl: 'https://pds.example', did: 'did:plc:me' } );
+		expect( cover?.ref ).toBe( ref );
+		expect( cover?.previewUrl ).toContain( 'com.atproto.sync.getBlob' );
+	} );
+
+	it( 'returns null until the PDS URL has resolved', () => {
+		// pdsUrl resolves after agent/did in adoptSession, so the edit-load fetch can land
+		// first. Returning null (rather than an unusable getBlob URL) lets the caller's
+		// effect re-run and hydrate once pdsUrl arrives — without this guard a re-save would
+		// drop the stored cover.
+		expect( coverFromStoredRef( ref, { pdsUrl: null, did: 'did:plc:me' } ) ).toBeNull();
+		expect( coverFromStoredRef( ref, { pdsUrl: 'https://pds.example', did: null } ) ).toBeNull();
+	} );
+
+	it( 'returns null when the article has no stored cover', () => {
+		expect(
+			coverFromStoredRef( undefined, { pdsUrl: 'https://pds.example', did: 'did:plc:me' } )
+		).toBeNull();
 	} );
 } );
 

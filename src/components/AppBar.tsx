@@ -44,8 +44,9 @@ function NavIcon( { name }: { name: 'feather' | 'publications' } ) {
 /**
  * The shared top bar for the editor + dashboard islands. Logo on the left;
  * contextual nav + account + sign-out on the right. Rendered inside AuthProvider
- * in every auth state: logo-only while loading, + nav when signed out, + account
- * and sign-out when signed in.
+ * in every auth state: logo-only while loading or signed out, + contextual nav,
+ * account, and sign-out once signed in. The cross-link to Publications / Write is
+ * gated on auth so signed-out visitors aren't pointed at editor-only routes.
  */
 export default function AppBar( { current }: { current: AppBarContext } ) {
 	const { status, handle, displayName, avatar, did, signOut } = useAuth();
@@ -67,7 +68,7 @@ export default function AppBar( { current }: { current: AppBarContext } ) {
 
 			<span className="app-bar__spacer" />
 
-			{ status !== 'loading' && (
+			{ signedIn && (
 				<a className="app-bar__nav" href={ nav.href }>
 					<NavIcon name={ nav.icon } />
 					{ nav.label }

@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth/useAuth';
 import LoginForm from '../lib/auth/LoginForm';
 import SkyEditor from './SkyEditor';
 import PublishPanel from './PublishPanel';
+import PublishedPill from './PublishedPill';
 import CoverImagePicker from './CoverImagePicker';
 import AppBar from './AppBar';
 import { createMediaUpload, revokeBlobRegistry, type BlobRegistry } from '../lib/media/mediaUpload';
@@ -31,6 +32,12 @@ function StudioGate() {
 	// Set when an `?edit=<rkey>` load fails to fetch (vs. simply not found).
 	const [ editLoadError, setEditLoadError ] = useState< string | null >( null );
 	const [ refreshKey, setRefreshKey ] = useState( 0 );
+	// The just-published/updated article — drives the success pill. Lives here
+	// (above the keyed editor div) so it survives the post-publish remount.
+	const [ published, setPublished ] = useState< {
+		url: string;
+		isEditing: boolean;
+	} | null >( null );
 	// `null` = still loading; `[]` = loaded, none exist. PublishPanel needs the distinction.
 	const [ publications, setPublications ] = useState< Publication[] | null >( null );
 	// Shared between mediaUpload (writes blob refs) and publish (reads them).
@@ -151,6 +158,7 @@ function StudioGate() {
 
 		const startNew = () => {
 			revokeBlobRegistry( registry );
+			setPublished( null );
 			setEditing( null );
 			setBlocks( [] );
 			setCover( null );
@@ -171,6 +179,10 @@ function StudioGate() {
 						</button>
 					) }
 				</div>
+
+				{ published && (
+					<PublishedPill url={ published.url } isEditing={ published.isEditing } />
+				) }
 
 				{ editLoadError && (
 					<p className="studio__error studio__error--banner" role="alert">
@@ -200,7 +212,11 @@ function StudioGate() {
 						title={ title }
 						description={ excerpt }
 						coverImage={ cover?.ref }
-						onComplete={ () => {
+						onComplete={ ( result ) => {
+							setPublished( {
+								url: result.articleUrl,
+								isEditing: result.isEditing,
+							} );
 							setRefreshKey( ( k ) => k + 1 );
 							// A new publish leaves the editor on a fresh "new article": clear the
 							// title + blocks (the editorKey bump remounts SkyEditor empty). On an
@@ -219,7 +235,10 @@ function StudioGate() {
 						placeholder="Add title"
 						aria-label="Article title"
 						value={ title }
-						onChange={ ( event ) => setTitle( event.target.value ) }
+						onChange={ ( event ) => {
+							setPublished( null );
+							setTitle( event.target.value );
+						} }
 					/>
 					<textarea
 						ref={ ledeRef }
@@ -229,7 +248,10 @@ function StudioGate() {
 						placeholder="Add a subtitle…"
 						aria-label="Subtitle"
 						value={ excerpt }
-						onChange={ ( event ) => setExcerpt( event.target.value ) }
+						onChange={ ( event ) => {
+							setPublished( null );
+							setExcerpt( event.target.value );
+						} }
 					/>
 					{ excerpt.length > 200 && (
 						<p className="studio__lede-hint">

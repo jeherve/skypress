@@ -185,6 +185,8 @@ export interface DocumentRecord {
 	publishedAt: string;
 	textContent: string;
 	content: GutenbergContent;
+	/** Optional per-article cover (≤1MB, image/*) — the standard.site coverImage field. */
+	coverImage?: BlobRefJson;
 	description?: string;
 	bskyPostRef?: StrongRef;
 	updatedAt?: string;
@@ -197,6 +199,8 @@ export function buildDocumentRecord( input: {
 	textContent: string;
 	siteUri: string;
 	publishedAt: string;
+	/** Optional per-article cover blob ref to persist (design 2026-06-10). */
+	coverImage?: BlobRefJson;
 	description?: string;
 	bskyPostRef?: StrongRef;
 	/** Set on edit (Decision 0008); preserves publishedAt + bskyPostRef. */
@@ -210,6 +214,7 @@ export function buildDocumentRecord( input: {
 		publishedAt: input.publishedAt,
 		textContent: input.textContent,
 		content: buildContentObject( input.blocks ),
+		...( input.coverImage ? { coverImage: input.coverImage } : {} ),
 		...( input.description ? { description: input.description } : {} ),
 		...( input.bskyPostRef ? { bskyPostRef: input.bskyPostRef } : {} ),
 		...( input.updatedAt ? { updatedAt: input.updatedAt } : {} ),

@@ -121,6 +121,64 @@ describe( 'publish', () => {
 		expect( 'thumb' in post.embed.external ).toBe( false );
 	} );
 
+	it( 'prefers an explicit coverImage over the first content image for the thumb', async () => {
+		const auto = {
+			$type: 'blob',
+			ref: { $link: 'bafyauto' },
+			mimeType: 'image/jpeg',
+			size: 5000,
+		};
+		const cover = {
+			$type: 'blob',
+			ref: { $link: 'bafycover' },
+			mimeType: 'image/png',
+			size: 9000,
+		};
+		const blocksWithImage: BlockNode[] = [
+			{ name: 'core/image', attributes: { url: 'getblob://x', skypressBlob: auto }, innerBlocks: [] },
+		];
+		const { agent, created } = mockAgent();
+		await publish(
+			agent,
+			{ did: DID, handle: HANDLE },
+			{ title: 'Hello', blocks: blocksWithImage, coverImage: cover as never, ...TARGET }
+		);
+		const post = created.find( ( c ) => c.collection === 'app.bsky.feed.post' )!.record as {
+			embed: { external: { thumb?: { ref: { $link: string } } } };
+		};
+		expect( post.embed.external.thumb?.ref.$link ).toBe( 'bafycover' );
+		const doc = created.find( ( c ) => c.collection === 'site.standard.document' )!.record as {
+			coverImage?: { ref: { $link: string } };
+		};
+		expect( doc.coverImage?.ref.$link ).toBe( 'bafycover' );
+	} );
+
+	it( 'falls back to the first content image when no cover is set', async () => {
+		const auto = {
+			$type: 'blob',
+			ref: { $link: 'bafyauto' },
+			mimeType: 'image/jpeg',
+			size: 5000,
+		};
+		const blocksWithImage: BlockNode[] = [
+			{ name: 'core/image', attributes: { url: 'getblob://x', skypressBlob: auto }, innerBlocks: [] },
+		];
+		const { agent, created } = mockAgent();
+		await publish(
+			agent,
+			{ did: DID, handle: HANDLE },
+			{ title: 'Hello', blocks: blocksWithImage, ...TARGET }
+		);
+		const post = created.find( ( c ) => c.collection === 'app.bsky.feed.post' )!.record as {
+			embed: { external: { thumb?: { ref: { $link: string } } } };
+		};
+		expect( post.embed.external.thumb?.ref.$link ).toBe( 'bafyauto' );
+		const doc = created.find( ( c ) => c.collection === 'site.standard.document' )!.record as {
+			coverImage?: unknown;
+		};
+		expect( 'coverImage' in doc ).toBe( false );
+	} );
+
 	it( 'writes the document first so the post can embed its strongRef (standard.site card)', async () => {
 		const { agent, created, put } = mockAgent();
 		await publish( agent, { did: DID, handle: HANDLE }, { title: 'Hello', blocks: BLOCKS, ...TARGET } );
@@ -178,6 +236,33 @@ describe( 'updateDocument', () => {
 		expect( put[ 0 ].rkey ).toBe( '3kdoc' );
 		expect( put[ 0 ].record.site ).toBe( TARGET.publicationUri );
 		expect( res.articleUrl ).toBe( `${ SITE_BASE }/@${ HANDLE }/my-blog/3kdoc` );
+	} );
+
+	it( 'writes the coverImage when provided', async () => {
+		const cover = {
+			$type: 'blob',
+			ref: { $link: 'bafycover' },
+			mimeType: 'image/png',
+			size: 9000,
+		};
+		const { agent, put } = mockAgent();
+		await updateDocument(
+			agent,
+			{ did: DID, handle: HANDLE },
+			{
+				rkey: '3kdoc',
+				siteUri: TARGET.publicationUri,
+				publicationSlug: 'my-blog',
+				publishedAt: '2026-06-08T00:00:00.000Z',
+				title: 'Hello again',
+				blocks: BLOCKS,
+				coverImage: cover as never,
+			}
+		);
+		const doc = put.find( ( p ) => p.collection === 'site.standard.document' )!.record as {
+			coverImage?: { ref: { $link: string } };
+		};
+		expect( doc.coverImage?.ref.$link ).toBe( 'bafycover' );
 	} );
 } );
 
@@ -272,6 +357,43 @@ describe( 'getMyArticle', () => {
 	it( 'returns null for a foreign/orphan document', async () => {
 		const { agent } = repo();
 		expect( await getMyArticle( agent, DID, 'd2' ) ).toBeNull();
+	} );
+
+	it( 'round-trips the stored coverImage as a normalized blob ref', async () => {
+		const { agent } = mockAgent( {
+			'site.standard.publication': [
+				{
+					uri: `at://${ DID }/site.standard.publication/pub1`,
+					value: {
+						$type: 'site.standard.publication',
+						url: `${ SITE_BASE }/@${ HANDLE }/blog-a`,
+						name: 'Blog A',
+					},
+				},
+			],
+			'site.standard.document': [
+				{
+					uri: `at://${ DID }/site.standard.document/d1`,
+					value: {
+						title: 'In A',
+						site: `at://${ DID }/site.standard.publication/pub1`,
+						coverImage: {
+							$type: 'blob',
+							ref: { $link: 'bafycover' },
+							mimeType: 'image/png',
+							size: 4242,
+						},
+					},
+				},
+			],
+		} );
+		const article = await getMyArticle( agent, DID, 'd1' );
+		expect( article?.coverImage ).toEqual( {
+			$type: 'blob',
+			ref: { $link: 'bafycover' },
+			mimeType: 'image/png',
+			size: 4242,
+		} );
 	} );
 } );
 

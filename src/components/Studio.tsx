@@ -5,8 +5,14 @@ import { useAuth } from '../lib/auth/useAuth';
 import LoginForm from '../lib/auth/LoginForm';
 import SkyEditor from './SkyEditor';
 import PublishPanel from './PublishPanel';
+import CoverImagePicker from './CoverImagePicker';
 import AppBar from './AppBar';
 import { createMediaUpload, revokeBlobRegistry, type BlobRegistry } from '../lib/media/mediaUpload';
+import {
+	coverPreviewUrl,
+	uploadCoverViaMedia,
+	type CoverUpload,
+} from '../lib/media/cover';
 import { getMyArticle, type MyArticle } from '../lib/publish/publisher';
 import { editRkeyFromSearch } from '../lib/editor/edit-link';
 import { listPublications, type Publication } from '../lib/publish/publications';
@@ -21,6 +27,7 @@ function StudioGate() {
 	const [ title, setTitle ] = useState( '' );
 	const [ excerpt, setExcerpt ] = useState( '' );
 	const [ editing, setEditing ] = useState< MyArticle | null >( null );
+	const [ cover, setCover ] = useState< CoverUpload | null >( null );
 	// Set when an `?edit=<rkey>` load fails to fetch (vs. simply not found).
 	const [ editLoadError, setEditLoadError ] = useState< string | null >( null );
 	const [ refreshKey, setRefreshKey ] = useState( 0 );
@@ -67,6 +74,12 @@ function StudioGate() {
 					setBlocks( article.blocks as unknown as BlockInstance[] );
 					setTitle( article.title );
 					setExcerpt( article.description ?? '' );
+					if ( article.coverImage && pdsUrl ) {
+						setCover( {
+							ref: article.coverImage,
+							previewUrl: coverPreviewUrl( article.coverImage, { pdsUrl, did } ),
+						} );
+					}
 				}
 				// `article === null` → no owned document has this rkey (stale/bad edit
 				// link). Silently start a new article, as before.
@@ -84,7 +97,7 @@ function StudioGate() {
 		return () => {
 			cancelled = true;
 		};
-	}, [ agent, did ] );
+	}, [ agent, did, pdsUrl ] );
 
 	// Release the preview object URLs this session minted when the Studio unmounts.
 	useEffect( () => () => revokeBlobRegistry( registry ), [ registry ] );
@@ -108,6 +121,13 @@ function StudioGate() {
 		return createMediaUpload( { agent, did, pdsUrl, registry } );
 	}, [ agent, did, pdsUrl, registry ] );
 
+	const uploadCover = useMemo( () => {
+		if ( ! mediaUpload ) {
+			return undefined;
+		}
+		return ( file: File ) => uploadCoverViaMedia( file, mediaUpload, registry );
+	}, [ mediaUpload, registry ] );
+
 	if ( status === 'loading' ) {
 		return (
 			<>
@@ -128,6 +148,7 @@ function StudioGate() {
 			revokeBlobRegistry( registry );
 			setEditing( null );
 			setBlocks( [] );
+			setCover( null );
 			setTitle( '' );
 			setExcerpt( '' );
 			setEditLoadError( null );
@@ -173,6 +194,7 @@ function StudioGate() {
 						}
 						title={ title }
 						description={ excerpt }
+						coverImage={ cover?.ref }
 						onComplete={ () => {
 							setRefreshKey( ( k ) => k + 1 );
 							// A new publish leaves the editor on a fresh "new article": clear the
@@ -182,6 +204,7 @@ function StudioGate() {
 								setTitle( '' );
 								setExcerpt( '' );
 								setBlocks( [] );
+								setCover( null );
 							}
 						} }
 					/>
@@ -213,6 +236,13 @@ function StudioGate() {
 						mediaUpload={ mediaUpload }
 						initialBlocks={ editing?.blocks }
 					/>
+					{ uploadCover && (
+						<CoverImagePicker
+							cover={ cover }
+							onUpload={ uploadCover }
+							onChange={ setCover }
+						/>
+					) }
 				</div>
 			</>
 		);

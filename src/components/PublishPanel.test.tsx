@@ -70,7 +70,11 @@ async function clickUpdate(
 	await act( async () => {
 		button.dispatchEvent( new MouseEvent( 'click', { bubbles: true } ) );
 	} );
-	root.unmount();
+	// The submit handler is async, so a state update can still be settling at
+	// teardown; unmount inside act() so it isn't flagged "not wrapped in act".
+	await act( async () => {
+		root.unmount();
+	} );
 	container.remove();
 }
 
@@ -114,7 +118,11 @@ async function clickPublish(
 			new MouseEvent( 'click', { bubbles: true } )
 		);
 	} );
-	root.unmount();
+	// The publish handler is async, so a state update can still be settling at
+	// teardown; unmount inside act() so it isn't flagged "not wrapped in act".
+	await act( async () => {
+		root.unmount();
+	} );
 	container.remove();
 }
 

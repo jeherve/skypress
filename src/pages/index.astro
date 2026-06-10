@@ -33,31 +33,37 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 	</Fragment>
 
 	<div class="page">
-		<div class="sky" aria-hidden="true">
-			<div class="stars"></div>
-			<span class="shootingstar"></span>
-			<div class="bloom"></div>
-			<div class="halo"></div>
-			<div class="horizon"></div>
+		<!-- The sky backs the masthead + hero together. Wrapping them lets the sky fill the
+		     zone exactly (inset: 0) instead of guessing a fixed height — on a narrow phone the
+		     wrapping title can push the hero past any fixed height, dropping the trailing copy
+		     onto the bare dark page background as unreadable dark-on-dark text. -->
+		<div class="skyzone">
+			<div class="sky" aria-hidden="true">
+				<div class="stars"></div>
+				<span class="shootingstar"></span>
+				<div class="bloom"></div>
+				<div class="halo"></div>
+				<div class="horizon"></div>
+			</div>
+
+			<header class="masthead">
+				<Logo />
+				<div class="masthead__right">
+					<a class="btn btn--ghost masthead-write" href="/editor">Write</a>
+					<AccountMenu client:only="react" />
+				</div>
+			</header>
+
+			<main class="hero">
+				<p class="eyebrow" id="greet">{fallback.greeting}</p>
+				<h1 class="hero__title" id="headline" set:html={fallback.headlineHtml} />
+				<p class="hero__lede" id="lede">{fallback.lede}</p>
+				<div class="hero__cta">
+					<HandleStart client:only="react" />
+				</div>
+				<p class="hero__free">Free &amp; open-source. Your words live in your account, not ours.</p>
+			</main>
 		</div>
-
-		<header class="masthead">
-			<Logo />
-			<div class="masthead__right">
-				<a class="btn btn--ghost masthead-write" href="/editor">Write</a>
-				<AccountMenu client:only="react" />
-			</div>
-		</header>
-
-		<main class="hero">
-			<p class="eyebrow" id="greet">{fallback.greeting}</p>
-			<h1 class="hero__title" id="headline" set:html={fallback.headlineHtml} />
-			<p class="hero__lede" id="lede">{fallback.lede}</p>
-			<div class="hero__cta">
-				<HandleStart client:only="react" />
-			</div>
-			<p class="hero__free">Free &amp; open-source. Your words live in your account, not ours.</p>
-		</main>
 
 		<section class="showcase">
 			<p class="showcase__label">See it in action</p>
@@ -105,12 +111,20 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		overflow: hidden;
 	}
 
+	/* The sky zone holds the masthead + hero; the sky fills it exactly so the backdrop always
+	   reaches the bottom of the hero, however tall the (wrapping) title makes it. flex: 1 lets
+	   it grow to push the showcase down when the content is short. */
+	.skyzone {
+		position: relative;
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+	}
+
 	/* ===== Atmospheric sky (hero backdrop) — varies by [data-phase] ===== */
 	.sky {
 		position: absolute;
-		inset: 0 0 auto 0;
-		height: 78vh;
-		min-height: 32rem;
+		inset: 0;
 		z-index: 0;
 		pointer-events: none;
 	}

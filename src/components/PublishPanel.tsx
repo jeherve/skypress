@@ -41,8 +41,12 @@ interface Props {
 	description: string;
 	/** Optional explicit per-article cover blob ref to persist + use as the card thumb. */
 	coverImage?: BlobRefJson;
-	/** Called after a successful publish/update so the parent can refresh. */
-	onComplete?: () => void;
+	/**
+	 * Called after a successful publish/update with the live article URL so the
+	 * parent (Studio) can show the success pill. `isEditing` distinguishes an
+	 * update from a brand-new publish.
+	 */
+	onComplete?: ( result: { articleUrl: string; isEditing: boolean } ) => void;
 }
 
 /**
@@ -68,7 +72,6 @@ export default function PublishPanel( {
 		() => editing?.siteUri ?? pubs[ 0 ]?.uri ?? ''
 	);
 	const [ phase, setPhase ] = useState< Phase >( 'idle' );
-	const [ resultUrl, setResultUrl ] = useState< string | null >( null );
 	const [ error, setError ] = useState< string | null >( null );
 
 	const isEditing = Boolean( editing );
@@ -121,6 +124,7 @@ export default function PublishPanel( {
 			const prepared = attachBlobRefs( normalizeBlocks( blocks ), ( url ) =>
 				blobRegistry.get( url )
 			);
+			let articleUrl: string;
 			if ( editing ) {
 				const res = await updateDocument( agent, identity, {
 					rkey: editing.rkey,
@@ -133,7 +137,7 @@ export default function PublishPanel( {
 					blocks: prepared,
 					coverImage,
 				} );
-				setResultUrl( res.articleUrl );
+				articleUrl = res.articleUrl;
 			} else {
 				// Non-editing: the target is always a full Publication picked from `pubs`.
 				const pub = pubs.find( ( candidate ) => candidate.uri === targetUri );
@@ -149,10 +153,10 @@ export default function PublishPanel( {
 					publicationSlug: pub.slug,
 					coverImage,
 				} );
-				setResultUrl( res.articleUrl );
+				articleUrl = res.articleUrl;
 			}
 			setPhase( 'done' );
-			onComplete?.();
+			onComplete?.( { articleUrl, isEditing } );
 		} catch ( err ) {
 			setError( err instanceof Error ? err.message : String( err ) );
 			setPhase( 'error' );
@@ -218,19 +222,6 @@ export default function PublishPanel( {
 
 			{ phase === 'working' && (
 				<p className="publish__status">{ isEditing ? 'Updating…' : 'Publishing…' }</p>
-			) }
-
-			{ phase === 'done' && resultUrl && (
-				<div className="publish__result">
-					<p>
-						{ isEditing
-							? 'Updated ✓ (same URL; the original Bluesky post stays — its preview may not refresh)'
-							: 'Published ✓ (the reading page goes live once SkyPress is deployed)' }
-					</p>
-					<p>
-						Article URL: <code>{ resultUrl }</code>
-					</p>
-				</div>
 			) }
 
 			{ phase === 'error' && error && (

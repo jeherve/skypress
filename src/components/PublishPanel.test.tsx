@@ -40,7 +40,11 @@ beforeEach( () => {
 	publish.mockClear();
 } );
 
-async function clickUpdate( description: string, coverImage?: unknown ) {
+async function clickUpdate(
+	description: string,
+	coverImage?: unknown,
+	onComplete?: ( r: { articleUrl: string; isEditing: boolean } ) => void
+) {
 	const container = document.createElement( 'div' );
 	document.body.appendChild( container );
 	const root = createRoot( container );
@@ -56,6 +60,7 @@ async function clickUpdate( description: string, coverImage?: unknown ) {
 				title: 'A title',
 				description,
 				coverImage: coverImage as never,
+				onComplete,
 			} )
 		);
 	} );
@@ -64,6 +69,50 @@ async function clickUpdate( description: string, coverImage?: unknown ) {
 	)!;
 	await act( async () => {
 		button.dispatchEvent( new MouseEvent( 'click', { bubbles: true } ) );
+	} );
+	root.unmount();
+	container.remove();
+}
+
+const PUB = {
+	uri: 'at://did:plc:me/site.standard.publication/pub1',
+	cid: 'bafypub',
+	rkey: 'pub1',
+	slug: 'my-blog',
+	name: 'My Blog',
+};
+
+async function clickPublish(
+	onComplete: ( r: { articleUrl: string; isEditing: boolean } ) => void
+) {
+	const container = document.createElement( 'div' );
+	document.body.appendChild( container );
+	const root = createRoot( container );
+	await act( async () => {
+		root.render(
+			createElement( PublishPanel, {
+				agent: {} as Agent,
+				identity: { did: 'did:plc:me', handle: 'me.test' },
+				blocks: [ { name: 'core/paragraph', attributes: { content: 'Body' }, innerBlocks: [] } ] as never,
+				blobRegistry: new Map(),
+				publications: [ PUB ] as never,
+				title: 'A title',
+				description: 'A lede',
+				onComplete,
+			} )
+		);
+	} );
+	const find = ( label: string ) =>
+		Array.from( container.querySelectorAll( 'button' ) ).find(
+			( b ) => b.textContent === label
+		)!;
+	await act( async () => {
+		find( 'Publish…' ).dispatchEvent( new MouseEvent( 'click', { bubbles: true } ) );
+	} );
+	await act( async () => {
+		find( 'Publish & post to Bluesky' ).dispatchEvent(
+			new MouseEvent( 'click', { bubbles: true } )
+		);
 	} );
 	root.unmount();
 	container.remove();
@@ -88,6 +137,24 @@ describe( 'PublishPanel', () => {
 		await clickUpdate( 'A lede', cover );
 		expect( updateDocument.mock.calls[ 0 ][ 2 ] ).toMatchObject( {
 			coverImage: cover,
+		} );
+	} );
+
+	it( 'reports the article URL and isEditing=true on update', async () => {
+		const onComplete = vi.fn();
+		await clickUpdate( 'A lede', undefined, onComplete );
+		expect( onComplete ).toHaveBeenCalledWith( {
+			articleUrl: 'https://x',
+			isEditing: true,
+		} );
+	} );
+
+	it( 'reports the article URL and isEditing=false on a new publish', async () => {
+		const onComplete = vi.fn();
+		await clickPublish( onComplete );
+		expect( onComplete ).toHaveBeenCalledWith( {
+			articleUrl: 'https://x',
+			isEditing: false,
 		} );
 	} );
 } );

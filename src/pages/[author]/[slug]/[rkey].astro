@@ -3,9 +3,7 @@ import Base from '../../../layouts/Base.astro';
 import PublicationFooter from '../../../components/PublicationFooter.astro';
 import { resolveArticleContext } from '../../../lib/reader/read-context';
 import { formatLongDate } from '../../../lib/reader/dates';
-import { resolveBlobImageUrls } from '../../../lib/media/blob';
-import { renderBlocks, blocksToText } from '../../../lib/blocks/render';
-import { sanitizeArticleHtml } from '../../../lib/reader/sanitize';
+import { renderArticle } from '../../../lib/reader/render-article';
 import { canonicalArticleUrl } from '../../../lib/publish/records';
 import { deriveExcerpt } from '../../../lib/publish/excerpt';
 import { themeStyleBlock } from '../../../lib/publish/themes';
@@ -26,7 +24,7 @@ export const prerender = false;
 const { author, slug, rkey } = Astro.params;
 
 // Resolve author → publication → document (site-joined) behind one interface;
-// this page keeps the render pipeline and presentation.
+// rendering lives behind render-article — this page keeps only presentation.
 const result = await resolveArticleContext( author, slug, rkey );
 const error = result.ok ? null : result.error;
 const ctx = result.ok ? result.context : null;
@@ -60,9 +58,10 @@ if ( ctx && publication ) {
 	handle = readAuthor.handle;
 
 	const doc = document.value;
-	const blocks = resolveBlobImageUrls( doc.content?.blocks ?? [], { pdsUrl, did } );
-	html = sanitizeArticleHtml( renderBlocks( blocks ) );
-	const textContent = doc.textContent || blocksToText( blocks );
+	// Blob URLs, render, sanitise, and the text fallback all live in render-article.
+	const rendered = renderArticle( doc, { pdsUrl, did } );
+	html = rendered.html;
+	const textContent = rendered.text;
 
 	title = doc.title ?? 'Untitled';
 	description = doc.description || deriveExcerpt( textContent );

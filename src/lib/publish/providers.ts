@@ -1,0 +1,94 @@
+/**
+ * Recognising the third-party app that wrote a foreign `site.standard.publication`
+ * record (Leaflet, pckt, Offprint, …) so the UI can show its logo next to the hostname.
+ *
+ * Detection is two-step: an app-specific `$type` discriminator embedded in the record
+ * (survives a custom domain) first, then a hostname-suffix fallback. Leaflet records are
+ * fully standard and Offprint is unsampled, so those two are only recognised on their
+ * default domains — a custom-domain Leaflet/Offprint falls back to a bare hostname.
+ *
+ * Framework-agnostic on purpose (no JSX): the React dashboard and the server-rendered
+ * Astro reader both render `KNOWN_PROVIDERS[ id ].body` inside their own tiny `<svg>`.
+ */
+
+export type ProviderId = 'leaflet' | 'pckt' | 'offprint';
+
+export interface KnownProvider {
+	id: ProviderId;
+	/** Accessible name for the logo (e.g. "Leaflet"). */
+	label: string;
+	viewBox: string;
+	/** Inner SVG markup, self-contained and monochrome (`currentColor`). */
+	body: string;
+}
+
+export const KNOWN_PROVIDERS: Record< ProviderId, KnownProvider > = {
+	// Leaflet's saved asset is a raster PNG, so we use a clean vector feather (Lucide,
+	// ISC) — Leaflet's mark is a feather — stroked in currentColor.
+	leaflet: {
+		id: 'leaflet',
+		label: 'Leaflet',
+		viewBox: '0 0 24 24',
+		body:
+			'<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+			'<path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/>' +
+			'<path d="M16 8 2 22"/>' +
+			'<path d="M17.5 15H9"/>' +
+			'</g>',
+	},
+	pckt: {
+		id: 'pckt',
+		label: 'pckt',
+		viewBox: '0 0 93 107',
+		body:
+			'<g fill="currentColor">' +
+			'<path d="M43 28.4316C49.0182 28.4316 50.9999 32.9208 51 40.4316C51 47.9427 49.0183 52.4316 43 52.4316C36.9817 52.4316 35 47.9427 35 40.4316C35.0001 32.9208 36.9818 28.4316 43 28.4316Z"/>' +
+			'<path fill-rule="evenodd" clip-rule="evenodd" d="M51.3115 0C61.4858 0 70.1235 3.41104 76.0547 10.7363C76.6352 11.4533 77.1811 12.2001 77.6963 12.9736C80.0589 14.5183 82.1905 16.4339 84.0547 18.7363C89.8115 25.8465 92.3203 35.7949 92.3203 47.5361C92.3203 56.8683 90.7323 65.0802 87.1973 71.6416C87.555 71.8872 87.8993 72.1614 88.2275 72.4639C89.7962 73.9093 90.7073 75.7198 91.2803 77.3252L91.3135 77.4189L91.3447 77.5146C92.0855 79.8314 92.5794 83.2003 90.6436 86.3193C90.2445 86.9622 89.7874 87.5179 89.2939 88C89.3984 88.6569 89.4353 89.3495 89.3809 90.0762C89.105 93.7548 86.7034 96.2192 84.6309 97.6953L84.627 97.6982C83.0852 98.7944 80.886 99.9999 78.124 100C76.524 99.9999 75.153 99.6078 73.9863 98.9902C72.8052 99.6106 71.4261 100 69.832 100C67.1912 99.9998 64.9313 98.7943 63.3896 97.6982L63.3193 97.6475C61.6106 96.3947 59.5544 94.3932 58.8428 91.4941C57.4844 91.0415 56.3089 90.3518 55.3896 89.6982L55.3193 89.6475C54.2639 88.8736 53.0762 87.8138 52.1543 86.4336C51.3191 86.2498 50.4993 86.0361 49.6963 85.79V96.6885C49.6962 98.8934 49.139 101.688 46.9102 103.862C44.7096 106.009 41.9236 106.528 39.7275 106.528H17.8398C15.6351 106.528 12.8798 105.972 10.7178 103.811C9.09088 102.184 8.37361 100.221 8.11816 98.4092C6.30699 98.1536 4.3444 97.4371 2.71777 95.8105C0.555853 93.6486 7.94166e-05 90.8933 0 88.6885V11.1201C0 8.91525 0.555694 6.15915 2.71777 3.99707C4.87975 1.83534 7.63512 1.2803 9.83984 1.28027H31.7275C33.5137 1.28027 35.6607 1.62338 37.5752 2.86719C41.6669 0.976593 46.2905 6.17063e-05 51.3115 0ZM51.3115 6C45.0398 6.00009 39.7922 7.79232 35.6963 10.9922C35.6963 8.56019 34.4155 7.28027 31.7275 7.28027H9.83984C7.27995 7.28033 6 8.56017 6 11.1201V88.6885C6.00016 91.2481 7.28011 92.5283 9.83984 92.5283H31.7275C34.4154 92.5283 35.6961 91.2482 35.6963 88.6885V68.0801C39.8495 71.2264 44.9925 73.1332 51.0039 73.1963C51.036 72.2441 51.2486 71.3016 51.5518 70.4229C51.9966 69.03 52.6684 67.6698 53.7695 66.6406C54.978 65.5113 56.4604 65.0049 58.0195 65.0049C58.2332 65.0049 58.4479 65.0174 58.6631 65.0381C58.8865 64.059 59.3111 63.1152 60.0332 62.2871C61.593 60.4986 63.8728 60 66.0088 60C68.1185 60 70.4052 60.5007 71.957 62.2988C72.1747 62.5511 72.3616 62.816 72.5264 63.0869C76.3427 57.4793 78.3203 49.5894 78.3203 39.5361C78.3203 17.5201 68.8475 6 51.3115 6ZM66.0088 63C62.4983 63 61.1066 64.6691 61.5303 68.0654L61.7715 69.3164L60.6221 68.7207C59.6538 68.2441 58.7458 68.0059 58.0195 68.0059C56.2643 68.0059 55.114 69.0785 54.3877 71.4023C53.2985 74.5601 54.5092 76.4071 57.959 77.0029L59.2295 77.1816L58.3223 78.1943C55.8408 80.5777 56.0219 82.7232 58.8662 84.8086C59.9555 85.5831 60.9848 85.9999 61.832 86C63.224 86 64.435 85.0471 65.4033 83.2002L66.0088 82.0674L66.6143 83.2002C67.5825 85.0469 68.7322 85.9999 70.124 86C71.0924 86 72.061 85.5832 73.1504 84.8086C75.9951 82.7827 76.1163 80.5778 73.6953 78.1348L72.8477 77.1816L74.0586 77.0029C77.5687 76.4071 78.6585 74.56 77.6299 71.3428C76.8431 69.1382 75.6927 68.0655 74.0586 68.0654C73.2718 68.0654 72.4244 68.3036 71.3955 68.7803L70.1846 69.3164L70.3662 68.0654C70.9109 64.6691 69.4586 63.0001 66.0088 63Z"/>' +
+			'</g>',
+	},
+	offprint: {
+		id: 'offprint',
+		label: 'Offprint',
+		viewBox: '0 0 24 24',
+		body:
+			'<path fill="currentColor" d="M5.39061 11.8098C5.53372 13.0032 6.05847 15.4376 7.25109 17.4901C7.3942 17.7765 7.77584 17.7288 7.87125 17.4901L14.7407 4.8884C14.8838 4.64973 14.8361 4.3156 14.5976 4.12466C13.5958 3.26545 12.3078 2.74038 10.7812 2.78811C5.2952 2.93131 5.2475 9.85272 5.39061 11.8098ZM12.9279 21.1656C18.2708 21.0224 18.4616 14.1488 18.2708 12.2394C18.1754 10.9983 17.6507 8.51617 16.4104 6.36815C16.3149 6.17722 15.981 6.17722 15.8856 6.36815L8.96845 19.0654C8.87304 19.3518 8.92075 19.6382 9.11156 19.8291C10.1134 20.6883 11.4014 21.2134 12.9279 21.1656ZM18.7479 1.11743L18.4616 1.6425C18.2708 1.97664 18.3662 2.35851 18.6525 2.50171C22.4688 4.93614 23.7091 9.13671 23.7091 11.9053C23.7091 15.3421 20.8469 23.3614 12.1169 23.3614C10.3996 23.3614 8.92075 23.1227 7.58502 22.6931C7.3465 22.5977 7.01256 22.6931 6.86945 22.9318L6.48781 23.6955C6.3447 23.9819 6.01077 24.0774 5.72454 23.9342L5.19979 23.6478C4.91357 23.5046 4.81816 23.1705 4.96127 22.8841L5.2952 22.2635C5.43831 21.9771 5.34291 21.643 5.10438 21.4998C1.28802 19.0176 0 14.7693 0 12.0962C0 8.65938 2.62375 0.640089 11.4014 0.640089C13.2142 0.640089 14.7407 0.878758 16.0764 1.30836C16.3626 1.40383 16.6966 1.26063 16.8397 1.02196L17.269 0.258218C17.4121 0.0195488 17.7461 -0.0759191 17.9846 0.0672834L18.5571 0.353686C18.7956 0.496888 18.891 0.831025 18.7479 1.11743Z"/>',
+	},
+};
+
+/** Provider domains for the hostname-suffix fallback. */
+const PROVIDER_DOMAINS: Record< string, ProviderId > = {
+	'leaflet.pub': 'leaflet',
+	'pckt.blog': 'pckt',
+	'offprint.app': 'offprint',
+};
+
+/** True when `host` is exactly `domain` or a subdomain of it (dot-boundary, no look-alikes). */
+function hostMatches( host: string, domain: string ): boolean {
+	return host === domain || host.endsWith( '.' + domain );
+}
+
+/**
+ * Recognise the originating app for a foreign publication, or `null` if unknown.
+ * `value` is the raw record value; we inspect its embedded `$type` discriminators.
+ */
+export function detectProvider( url: string, value: unknown ): ProviderId | null {
+	// Primary: an app-specific theme discriminator survives even on a custom domain.
+	const themeType = ( value as { theme?: { $type?: unknown } } | undefined )?.theme?.$type;
+	if ( themeType === 'blog.pckt.theme' ) {
+		return 'pckt';
+	}
+
+	// Fallback: the publication's default hostname.
+	let host: string;
+	try {
+		host = new URL( url ).hostname;
+	} catch {
+		return null;
+	}
+	for ( const [ domain, id ] of Object.entries( PROVIDER_DOMAINS ) ) {
+		if ( hostMatches( host, domain ) ) {
+			return id;
+		}
+	}
+	return null;
+}

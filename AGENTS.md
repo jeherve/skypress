@@ -40,7 +40,9 @@ Read the relevant `docs/decisions/*` and `docs/specs/*` before working in an are
    **sanitises** HTML before injecting it (`src/lib/reader/sanitize.ts`). Three standing
    rules for the read path: (a) any server-side `fetch` to a host derived from user input
    (a handle, `did:web`, a PDS `serviceEndpoint`) MUST go through `src/lib/net/safe-fetch.ts`
-   (SSRF guard); (b) never inject PDS-sourced HTML without sanitising; (c) read routes
+   (SSRF guard); (b) never inject PDS-sourced HTML without sanitising — turn document
+   blocks into HTML through `src/lib/reader/render-article.ts`, which runs
+   blob-resolve → render → sanitise in the one safe order (Decision 0017); (c) read routes
    resolve author/publication/document through `src/lib/reader/read-context.ts` — don't
    re-assemble the handle → DID → PDS → slug-match → site-join chain in page frontmatter.
    (Decision 0016)

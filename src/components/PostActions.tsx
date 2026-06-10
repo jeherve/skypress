@@ -9,6 +9,7 @@ import {
 	postReply,
 	postQuote,
 	fetchPostState,
+	fetchPostExists,
 	type PostState,
 } from '../lib/social/interactions';
 import {
@@ -46,6 +47,10 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 	const subject: StrongRef = { uri: postUri, cid: postCid };
 
 	const [ state, setState ] = useState< PostState | null >( null );
+	// Whether the companion Bluesky post still exists. Optimistic: we show the bar and only
+	// hide it once a read confirms the post is gone — a transient error must never hide a
+	// live post, and this keeps the common (post present) case flicker-free.
+	const [ present, setPresent ] = useState( true );
 	const [ busy, setBusy ] = useState< null | 'like' | 'repost' >( null );
 	const [ composer, setComposer ] = useState< Composer >( null );
 	const [ text, setText ] = useState( '' );
@@ -60,17 +65,35 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 		mounted.current = false;
 	}, [] );
 
-	// Load counts + viewer state once signed in (and refresh after each write).
+	// Resolve the companion post once auth settles: signed-in readers get counts + viewer
+	// state from an authenticated read (a `null` result means the post is gone); signed-out
+	// readers get an unauthenticated existence check (only a definitive `false` hides the
+	// bar — `true`/`null` keep it, so a transient error fails open).
 	useEffect( () => {
-		if ( status !== 'signed-in' || ! agent ) {
-			return;
+		if ( status === 'loading' ) {
+			return; // wait for auth before choosing the read path
 		}
 		let cancelled = false;
-		fetchPostState( agent, postUri )
-			.then( ( next ) => ! cancelled && next && setState( next ) )
-			.catch( () => {
-				/* counts are best-effort; the action buttons still work */
-			} );
+		if ( status === 'signed-in' && agent ) {
+			fetchPostState( agent, postUri )
+				.then( ( next ) => {
+					if ( cancelled ) {
+						return;
+					}
+					if ( next ) {
+						setState( next );
+					} else {
+						setPresent( false ); // getPosts found no post → deleted/unindexed
+					}
+				} )
+				.catch( () => {
+					/* counts are best-effort; fail open — the action buttons still work */
+				} );
+		} else {
+			fetchPostExists( postUri )
+				.then( ( exists ) => ! cancelled && exists === false && setPresent( false ) )
+				.catch( () => {} );
+		}
 		return () => {
 			cancelled = true;
 		};
@@ -158,6 +181,12 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 
 	if ( status === 'loading' ) {
 		return <div className="post-actions post-actions--loading">Loading actions…</div>;
+	}
+
+	// The companion post is gone — there's no live Bluesky thread to act on, so render
+	// nothing rather than buttons / a sign-in prompt / a dead thread link that won't work.
+	if ( ! present ) {
+		return null;
 	}
 
 	const threadUrl = bskyPostWebUrl( postUri );
@@ -303,9 +332,6 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 			<p className="post-actions__note">
 				Likes, reposts, quotes, and replies are public and happen on Bluesky.
 			</p>
-			<a className="post-actions__thread" href={ threadUrl } target="_blank" rel="noopener noreferrer">
-				View the full thread on Bluesky
-			</a>
 		</div>
 	);
 }

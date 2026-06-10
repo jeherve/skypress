@@ -1,15 +1,14 @@
 /**
  * Assemble a publication's full-content RSS feed (Decision 0011).
  *
- * Pure transform — no network. It reuses the EXACT reader pipeline the article page uses
- * (`resolveBlobImageUrls` → `renderBlocks` → `sanitizeArticleHtml`), so the feed body is
- * the same sanitised HTML a browser would see (AGENTS.md #6b), then hands off to the
- * test-locked `buildRssFeed`. The feed route fetches the records (SSRF-guarded) and calls
- * this; keeping the transform pure makes the sort/cap/filter rules unit-testable.
+ * Pure transform — no network. It renders each item through `renderArticle` — the same
+ * deep module the article page uses — so the feed body is the same sanitised HTML a
+ * browser would see (AGENTS.md #6b), then hands off to the test-locked `buildRssFeed`.
+ * The feed route fetches the records (SSRF-guarded) and calls this; keeping the
+ * transform pure makes the sort/cap/filter rules unit-testable.
  */
-import { renderBlocks, blocksToText, type BlockNode } from '../blocks/render';
-import { sanitizeArticleHtml } from '../reader/sanitize';
-import { resolveBlobImageUrls } from '../media/blob';
+import type { BlockNode } from '../blocks/render';
+import { renderArticle } from '../reader/render-article';
 import { canonicalArticleUrl, publicationHomeUrl } from '../publish/records';
 import { buildRssFeed, type FeedChannel, type FeedItem } from './rss';
 import type { RepoRecord } from '../reader/records';
@@ -59,12 +58,7 @@ export function buildPublicationFeedXml( input: PublicationFeedInput ): string {
 		.slice( 0, FEED_ITEM_LIMIT )
 		.map( ( record ) => {
 			const rkey = record.uri.split( '/' ).pop() as string;
-			const blocks = resolveBlobImageUrls( record.value.content?.blocks ?? [], {
-				pdsUrl,
-				did,
-			} );
-			const contentHtml = sanitizeArticleHtml( renderBlocks( blocks ) );
-			const text = record.value.textContent || blocksToText( blocks );
+			const { html: contentHtml, text } = renderArticle( record.value, { pdsUrl, did } );
 			const description =
 				record.value.description?.trim() ||
 				text.slice( 0, DESCRIPTION_FALLBACK_CHARS ).trim() ||

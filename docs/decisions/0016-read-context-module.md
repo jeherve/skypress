@@ -30,7 +30,8 @@ each returning `{ ok: true, context }` or `{ ok: false, error: ErrorSceneCopy }`
   in parallel inside the module; the old pages ran them serially.
 - The article render pipeline (`resolveBlobImageUrls → renderBlocks →
   sanitizeArticleHtml`) deliberately stays in the article page / feed builder — sealing
-  it behind its own interface is a separate, orthogonal deepening.
+  it behind its own interface is a separate, orthogonal deepening. *(Since done:
+  Decision 0017 sealed it behind `src/lib/reader/render-article.ts`.)*
 - The shallow wrappers this obsoleted (`listReaderPublications`,
   `resolveReaderPublication`) were deleted; `listAllReaderPublications` remains the one
   reader-side publication fetch.

@@ -11,6 +11,7 @@ import {
 	isSkyPressPublicationUrl,
 	publicationSlugFromUrl,
 } from '../publish/records';
+import { detectProvider, type ProviderId } from '../publish/providers';
 import type { BlobRefJson } from '../media/blob';
 import { parseBasicTheme, type BasicTheme } from '../publish/themes';
 
@@ -27,8 +28,11 @@ export interface ReaderPublication {
 export interface ReaderForeignPublication {
 	uri: string;
 	name: string;
+	hostname: string;
 	url: string;
 	icon: BlobRefJson | null;
+	/** The app that wrote the record (Leaflet, pckt, …), or null when unrecognised. */
+	provider: ProviderId | null;
 }
 
 interface RawPublication {
@@ -78,8 +82,10 @@ function toReaderForeignPublication(
 	return {
 		uri: record.uri,
 		name: value.name ?? parsed.hostname,
+		hostname: parsed.hostname,
 		url: value.url,
 		icon: value.icon ?? null,
+		provider: detectProvider( value.url, value ),
 	};
 }
 

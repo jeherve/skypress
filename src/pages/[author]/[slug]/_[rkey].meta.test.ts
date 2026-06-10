@@ -62,6 +62,17 @@ describe( 'document page Open Graph wiring', () => {
 		expect( page ).toMatch( /Astro\.response\.status\s*=/ );
 	} );
 
+	it( 'delegates the render pipeline to the render-article module', () => {
+		// The ordering invariant (resolve blobs → render → sanitise) is behaviourally
+		// tested in src/lib/reader/render-article.test.ts; the page only injects.
+		expect( page ).toMatch(
+			/import\s*\{\s*renderArticle\s*\}\s*from\s*'[^']*lib\/reader\/render-article'/
+		);
+		expect( page ).toMatch( /renderArticle\(/ );
+		// No hand-assembled pipeline: these belong inside render-article now.
+		expect( page ).not.toMatch( /sanitizeArticleHtml|renderBlocks|resolveBlobImageUrls/ );
+	} );
+
 	it( 'derives the og:description fallback via deriveExcerpt (shared with publish)', () => {
 		expect( page ).toMatch(
 			/import\s*\{\s*deriveExcerpt\s*\}\s*from\s*'[^']*lib\/publish\/excerpt'/

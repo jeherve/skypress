@@ -17,6 +17,7 @@ import {
 } from '../lib/publish/publisher';
 import { buildGetBlobUrl, type BlobRefJson } from '../lib/media/blob';
 import AppBar from './AppBar';
+import ProviderLogo from './ProviderLogo';
 import { editLinkFor } from '../lib/editor/edit-link';
 
 type View =
@@ -188,42 +189,49 @@ function PublicationList( {
 		<section className="dash__section">
 			<div className="dash__section-head">
 				<h1 className="dash__h1">Your publications</h1>
-				<button type="button" className="dash__new" onClick={ onNew }>
-					+ New publication
-				</button>
 			</div>
 
 			{ publications.length === 0 ? (
-				<p className="dash__empty">
-					You don't have any publications yet. Create one to start publishing.
-				</p>
+				<div className="dash__empty-state">
+					<p>You don't have any publications yet. Create one to start publishing.</p>
+					<button type="button" className="dash__new" onClick={ onNew }>
+						+ New publication
+					</button>
+				</div>
 			) : (
-				<ul className="dash__pubs">
-					{ publications.map( ( pub ) => {
-						return (
-							<li className="dash__pub" key={ pub.uri }>
-								<PublicationLogo
-									icon={ pub.icon }
-									name={ pub.name }
-									pdsUrl={ pdsUrl }
-									did={ did }
-								/>
-								<span className="dash__pubtext">
-									<span className="dash__pubname">{ pub.name }</span>
-									<span className="dash__pubslug">/{ pub.slug }</span>
-								</span>
-								<span className="dash__pubactions">
-									<a className="dash__link" href={ `/@${ handle }/${ pub.slug }` }>
-										View
-									</a>
-									<button type="button" onClick={ () => onManage( pub ) }>
-										Manage
-									</button>
-								</span>
-							</li>
-						);
-					} ) }
-				</ul>
+				<>
+					<ul className="dash__pubs">
+						{ publications.map( ( pub ) => {
+							return (
+								<li className="dash__pub" key={ pub.uri }>
+									<PublicationLogo
+										icon={ pub.icon }
+										name={ pub.name }
+										pdsUrl={ pdsUrl }
+										did={ did }
+									/>
+									<span className="dash__pubtext">
+										<span className="dash__pubname">{ pub.name }</span>
+										<span className="dash__pubslug">/{ pub.slug }</span>
+									</span>
+									<span className="dash__pubactions">
+										<a className="dash__link" href={ `/@${ handle }/${ pub.slug }` }>
+											View
+										</a>
+										<button type="button" onClick={ () => onManage( pub ) }>
+											Manage
+										</button>
+									</span>
+								</li>
+							);
+						} ) }
+					</ul>
+					<div className="dash__add">
+						<button type="button" className="dash__new-quiet" onClick={ onNew }>
+							+ New publication
+						</button>
+					</div>
+				</>
 			) }
 
 			{ foreign.length > 0 && (
@@ -244,7 +252,13 @@ function PublicationList( {
 									/>
 									<span className="dash__pubtext">
 										<span className="dash__pubname">{ pub.name }</span>
-										<span className="dash__pubhost">{ pub.hostname }</span>
+										<span className="dash__pubhost">
+											<ProviderLogo
+												provider={ pub.provider }
+												className="dash__pubhost-logo"
+											/>
+											{ pub.hostname }
+										</span>
 									</span>
 									<span className="dash__pubactions">
 										<a

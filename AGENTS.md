@@ -37,10 +37,13 @@ Read the relevant `docs/decisions/*` and `docs/specs/*` before working in an are
 5. **Curated block allowlist is the content model.** Add blocks deliberately; removing
    one after content exists is a breaking change. (Decision 0002)
 6. **Untrusted content:** stored block trees come from arbitrary PDSes. The reader
-   **sanitises** HTML before injecting it (`src/lib/reader/sanitize.ts`). Two standing
+   **sanitises** HTML before injecting it (`src/lib/reader/sanitize.ts`). Three standing
    rules for the read path: (a) any server-side `fetch` to a host derived from user input
    (a handle, `did:web`, a PDS `serviceEndpoint`) MUST go through `src/lib/net/safe-fetch.ts`
-   (SSRF guard); (b) never inject PDS-sourced HTML without sanitising.
+   (SSRF guard); (b) never inject PDS-sourced HTML without sanitising; (c) read routes
+   resolve author/publication/document through `src/lib/reader/read-context.ts` — don't
+   re-assemble the handle → DID → PDS → slug-match → site-join chain in page frontmatter.
+   (Decision 0016)
 7. **OAuth is a browser public client** (`@atproto/oauth-client-browser`, Decision 0004).
    In **dev you must serve on `http://127.0.0.1:<port>`, not `localhost`** (atproto
    loopback requirement), and the loopback `client_id` must be path-less — see

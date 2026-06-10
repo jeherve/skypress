@@ -134,7 +134,7 @@ src/
     auth/       oauth.ts · AuthProvider.tsx · config.ts · LoginForm.tsx · profile.ts · nav.ts · cta.ts
     publish/    records.ts (pure builders) · publisher.ts (Agent orchestration) · publications.ts (publication CRUD) · themes.ts
     media/      mediaUpload.ts · uploadImage.ts (logo) · blob.ts · pds.ts
-    reader/     identity.ts · records.ts · publications.ts · profile.ts · sanitize.ts
+    reader/     read-context.ts (read-route orchestration) · identity.ts · records.ts · publications.ts · profile.ts · sanitize.ts
     feed/       rss.ts · publication-feed.ts (full-content RSS, hand-rolled)
     seo/        meta.ts (Open Graph + Twitter card tags)
     editor/     edit-link.ts (dashboard → editor edit links)

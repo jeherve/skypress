@@ -303,9 +303,6 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 			<p className="post-actions__note">
 				Likes, reposts, quotes, and replies are public and happen on Bluesky.
 			</p>
-			<a className="post-actions__thread" href={ threadUrl } target="_blank" rel="noopener noreferrer">
-				View the full thread on Bluesky
-			</a>
 		</div>
 	);
 }

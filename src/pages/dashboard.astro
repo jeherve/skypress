@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Dashboard from '../components/Dashboard.tsx';
+import LoadingScene from '../components/LoadingScene.astro';
 // Shared top-bar styles (the Dashboard island is client:only, so Astro scoped
 // styles can't reach its DOM). The sign-in form styles are shared with the editor.
 import '../styles/app-bar.css';
@@ -10,9 +11,10 @@ import '../styles/login.css';
 <Base title="Dashboard — SkyPress">
 	<main class="dash-shell">
 		<!-- client:only — auth runs only in the browser; its bundle never reaches
-		     reading pages (Decisions 0003 & 0004). No `@wordpress/*` here. -->
+		     reading pages (Decisions 0003 & 0004). No `@wordpress/*` here. The
+		     fallback shows the durable header + a skeleton until the island loads. -->
 		<Dashboard client:only="react">
-			<p slot="fallback" class="dash__loading">Loading…</p>
+			<LoadingScene slot="fallback" variant="dashboard" />
 		</Dashboard>
 	</main>
 </Base>

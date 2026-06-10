@@ -50,7 +50,9 @@ async function mountGate( auth: Partial< AuthContextValue > ): Promise< { html: 
 	return {
 		html: container.innerHTML,
 		cleanup: () => {
-			root.unmount();
+			act( () => {
+				root.unmount();
+			} );
 			container.remove();
 		},
 	};

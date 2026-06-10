@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Studio from '../components/Studio.tsx';
+import LoadingScene from '../components/LoadingScene.astro';
 // The Studio is a `client:only` React island, so Astro's scoped styles never
 // reach its DOM — its chrome is styled globally from these shared stylesheets.
 import '../styles/app-bar.css';
@@ -11,16 +12,10 @@ import '../styles/login.css';
 <Base title="Write — SkyPress">
 	<main class="editor-shell">
 		<!-- client:only — auth + editor run only in the browser; their bundle never
-		     reaches reading pages (Decisions 0001 & 0004). -->
+		     reaches reading pages (Decisions 0001 & 0004). The fallback shows the
+		     durable header + a skeleton until the island loads. -->
 		<Studio client:only="react">
-			<p slot="fallback" class="editor-shell__loading">Loading…</p>
+			<LoadingScene slot="fallback" variant="editor" />
 		</Studio>
 	</main>
 </Base>
-
-<style>
-	.editor-shell__loading {
-		padding: 2rem 1.25rem;
-		color: var(--muted);
-	}
-</style>

@@ -1,0 +1,211 @@
+---
+/**
+ * Static loading scene for the `client:only` Studio + Dashboard islands.
+ *
+ * Those islands are browser-only (auth + editor) and can't render server-side,
+ * so until their JS bundle loads Astro shows this `slot="fallback"` markup.
+ * Rather than a bare, left-aligned "Loading…", render the durable page chrome —
+ * a logo-only header (matching AppBar's `status === 'loading'` state, so the
+ * swap to the live bar is seamless) plus a content skeleton — so the page has
+ * shape immediately and hydration doesn't reflow into an empty viewport.
+ *
+ * The fallback is plain server-rendered markup (it is NOT inside the island's
+ * DOM), so this component's scoped styles reach it normally. The header reuses
+ * the global `.app-bar` classes (app-bar.css is imported by both page shells);
+ * only the static logo is shown — nav/identity depend on auth state we don't
+ * have yet.
+ */
+interface Props {
+	/** Which island is loading; picks the skeleton shape + content width. */
+	variant: 'dashboard' | 'editor';
+}
+const { variant } = Astro.props;
+---
+
+<div class="loading-scene" aria-busy="true">
+	<header class="app-bar">
+		<a class="app-bar__home" href="/" aria-label="SkyPress home">
+			<svg
+				class="app-bar__mark"
+				width="24"
+				height="24"
+				viewBox="0 0 32 32"
+				fill="none"
+				aria-hidden="true"
+			>
+				<rect x="2.5" y="2.5" width="27" height="27" rx="7.5" stroke="currentColor" stroke-width="2.2" />
+				<circle cx="16" cy="12.5" r="3.6" stroke="currentColor" stroke-width="1.9" />
+				<circle cx="16" cy="12.5" r="0.9" fill="currentColor" />
+				<path d="M7 18.5h18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+				<path d="M9 22.8h14M9 25.6h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" opacity="0.55" />
+			</svg>
+			<span class="app-bar__word">SkyPress</span>
+		</a>
+	</header>
+
+	{
+		variant === 'dashboard' ? (
+			<div class="loading-scene__body loading-scene__body--dash">
+				<div class="loading-scene__head">
+					<span class="sk sk-heading" />
+					<span class="sk sk-button" />
+				</div>
+				<ul class="loading-scene__rows">
+					{[ 0, 1, 2 ].map( () => (
+						<li class="loading-scene__row">
+							<span class="sk sk-logo" />
+							<span class="loading-scene__rowtext">
+								<span class="sk sk-line sk-line--name" />
+								<span class="sk sk-line sk-line--slug" />
+							</span>
+						</li>
+					) )}
+				</ul>
+			</div>
+		) : (
+			<div class="loading-scene__body loading-scene__body--editor">
+				<span class="sk sk-mode" />
+				<span class="sk sk-headline" />
+				<span class="sk sk-lede" />
+				<span class="sk sk-surface" />
+			</div>
+		)
+	}
+
+	<p class="loading-scene__sr">Loading…</p>
+</div>
+
+<style>
+	/* Skeleton block: a tinted bar with a sweeping shimmer highlight. */
+	.sk {
+		display: block;
+		border-radius: var(--radius-sm);
+		background: var(--panel);
+		position: relative;
+		overflow: hidden;
+	}
+	.sk::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		transform: translateX(-100%);
+		background: linear-gradient(
+			90deg,
+			transparent,
+			color-mix(in srgb, var(--paper-raised) 70%, transparent),
+			transparent
+		);
+		animation: loading-shimmer 1.5s ease-in-out infinite;
+	}
+	@keyframes loading-shimmer {
+		100% {
+			transform: translateX(100%);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.sk::after {
+			animation: none;
+		}
+	}
+
+	/* Visually-hidden live label — the skeleton conveys "loading" visually, but
+	   screen readers get an explicit announcement (paired with aria-busy). */
+	.loading-scene__sr {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	/* Content column — mirrors the loaded layouts so the swap doesn't shift. */
+	.loading-scene__body {
+		max-width: 48rem;
+		margin: 0 auto;
+		padding: 0 1.25rem 5rem;
+	}
+	.loading-scene__body--editor {
+		max-width: var(--studio-measure, 60rem);
+	}
+
+	/* Dashboard skeleton — mirrors `.dash__section-head` + a few `.dash__pub` rows. */
+	.loading-scene__head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		margin: 1rem 0 1.5rem;
+	}
+	.sk-heading {
+		width: clamp(10rem, 40vw, 16rem);
+		height: clamp(1.6rem, 4vw, 2.2rem);
+	}
+	.sk-button {
+		width: 9.5rem;
+		height: 2.2rem;
+		flex: none;
+	}
+	.loading-scene__rows {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.loading-scene__row {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 0.9rem 0;
+		border-top: 1px solid var(--line);
+	}
+	.sk-logo {
+		width: 48px;
+		height: 48px;
+		border-radius: 10px;
+		flex: none;
+	}
+	.loading-scene__rowtext {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		flex: 1;
+		min-width: 0;
+	}
+	.sk-line {
+		height: 0.85rem;
+	}
+	.sk-line--name {
+		width: 45%;
+		height: 1rem;
+	}
+	.sk-line--slug {
+		width: 22%;
+		height: 0.7rem;
+	}
+
+	/* Editor skeleton — mode line, title, lede, then the framed writing surface. */
+	.sk-mode {
+		width: 11rem;
+		height: 0.9rem;
+		margin: 0.5rem 0 1.25rem;
+	}
+	.sk-headline {
+		width: 70%;
+		height: clamp(1.9rem, 4vw, 2.6rem);
+		margin-bottom: 0.75rem;
+	}
+	.sk-lede {
+		width: 48%;
+		height: 1.2rem;
+	}
+	.sk-surface {
+		height: 60vh;
+		min-height: 18rem;
+		margin-top: 1.5rem;
+		border-radius: var(--radius);
+		border: 1px solid var(--line-strong);
+	}
+</style>

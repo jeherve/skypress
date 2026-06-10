@@ -84,8 +84,8 @@ export default function CoverImagePicker( { cover, onUpload, onChange }: Props )
 						{ uploading ? 'Uploading…' : 'Upload cover image' }
 					</button>
 					<p className="studio__cover-hint">
-						No cover set — the first image in your article will be used. PNG, JPG,
-						or GIF, max 1 MB.
+						No cover set. If you don&apos;t add one, the first image in your
+						article will be used. PNG, JPG, or GIF, max 1 MB.
 					</p>
 				</div>
 			) }

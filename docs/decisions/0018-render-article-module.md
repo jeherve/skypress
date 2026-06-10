@@ -1,4 +1,4 @@
-# 0017 — The article render pipeline lives in one render-article module
+# 0018 — The article render pipeline lives in one render-article module
 
 - **Status:** Accepted
 - **Date:** 2026-06-10

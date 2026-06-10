@@ -42,7 +42,7 @@ Read the relevant `docs/decisions/*` and `docs/specs/*` before working in an are
    (a handle, `did:web`, a PDS `serviceEndpoint`) MUST go through `src/lib/net/safe-fetch.ts`
    (SSRF guard); (b) never inject PDS-sourced HTML without sanitising — turn document
    blocks into HTML through `src/lib/reader/render-article.ts`, which runs
-   blob-resolve → render → sanitise in the one safe order (Decision 0017); (c) read routes
+   blob-resolve → render → sanitise in the one safe order (Decision 0018); (c) read routes
    resolve author/publication/document through `src/lib/reader/read-context.ts` — don't
    re-assemble the handle → DID → PDS → slug-match → site-join chain in page frontmatter.
    (Decision 0016)

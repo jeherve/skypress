@@ -40,7 +40,7 @@ routes (`/editor`, `/`, …) take priority, so they're unaffected.
 
 ### Rendering
 
-> **Amended by Decision 0017 (2026-06-10):** callers no longer assemble this pipeline
+> **Amended by Decision 0018 (2026-06-10):** callers no longer assemble this pipeline
 > themselves — `src/lib/reader/render-article.ts` owns the ordering behind one
 > interface. The pipeline itself is unchanged.
 

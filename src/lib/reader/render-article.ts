@@ -1,6 +1,6 @@
 /**
  * The render-article module: one deep interface for turning a stored document
- * into safe HTML + plain text (Decision 0017).
+ * into safe HTML + plain text (Decision 0018).
  *
  * Turning a block tree into injectable HTML requires three calls in one
  * load-bearing order — `resolveBlobImageUrls` → `renderBlocks` →

@@ -40,7 +40,7 @@ beforeEach( () => {
 	publish.mockClear();
 } );
 
-async function clickUpdate( description: string ) {
+async function clickUpdate( description: string, coverImage?: unknown ) {
 	const container = document.createElement( 'div' );
 	document.body.appendChild( container );
 	const root = createRoot( container );
@@ -55,6 +55,7 @@ async function clickUpdate( description: string ) {
 				editing: EDITING,
 				title: 'A title',
 				description,
+				coverImage: coverImage as never,
 			} )
 		);
 	} );
@@ -74,6 +75,19 @@ describe( 'PublishPanel', () => {
 		expect( updateDocument ).toHaveBeenCalledTimes( 1 );
 		expect( updateDocument.mock.calls[ 0 ][ 2 ] ).toMatchObject( {
 			description: 'My hand-written lede',
+		} );
+	} );
+
+	it( 'forwards the coverImage to updateDocument', async () => {
+		const cover = {
+			$type: 'blob',
+			ref: { $link: 'bafycover' },
+			mimeType: 'image/png',
+			size: 9000,
+		};
+		await clickUpdate( 'A lede', cover );
+		expect( updateDocument.mock.calls[ 0 ][ 2 ] ).toMatchObject( {
+			coverImage: cover,
 		} );
 	} );
 } );

@@ -10,6 +10,7 @@ import type { Publication } from '../lib/publish/publications';
 import { normalizeBlocks, type StrongRef } from '../lib/publish/records';
 import { attachBlobRefs } from '../lib/media/blob';
 import type { BlobRegistry } from '../lib/media/mediaUpload';
+import type { BlobRefJson } from '../lib/media/blob';
 
 type Phase = 'idle' | 'confirm' | 'working' | 'done' | 'error';
 
@@ -38,6 +39,8 @@ interface Props {
 	title: string;
 	/** The lede / excerpt for the document + Bluesky-card description (blank → auto-derived). */
 	description: string;
+	/** Optional explicit per-article cover blob ref to persist + use as the card thumb. */
+	coverImage?: BlobRefJson;
 	/** Called after a successful publish/update so the parent can refresh. */
 	onComplete?: () => void;
 }
@@ -57,6 +60,7 @@ export default function PublishPanel( {
 	editing,
 	title,
 	description,
+	coverImage,
 	onComplete,
 }: Props ) {
 	const pubs = publications ?? [];
@@ -127,6 +131,7 @@ export default function PublishPanel( {
 					title: title.trim(),
 					description,
 					blocks: prepared,
+					coverImage,
 				} );
 				setResultUrl( res.articleUrl );
 			} else {
@@ -142,6 +147,7 @@ export default function PublishPanel( {
 					publicationUri: pub.uri,
 					publicationCid: pub.cid,
 					publicationSlug: pub.slug,
+					coverImage,
 				} );
 				setResultUrl( res.articleUrl );
 			}

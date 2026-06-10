@@ -358,6 +358,43 @@ describe( 'getMyArticle', () => {
 		const { agent } = repo();
 		expect( await getMyArticle( agent, DID, 'd2' ) ).toBeNull();
 	} );
+
+	it( 'round-trips the stored coverImage as a normalized blob ref', async () => {
+		const { agent } = mockAgent( {
+			'site.standard.publication': [
+				{
+					uri: `at://${ DID }/site.standard.publication/pub1`,
+					value: {
+						$type: 'site.standard.publication',
+						url: `${ SITE_BASE }/@${ HANDLE }/blog-a`,
+						name: 'Blog A',
+					},
+				},
+			],
+			'site.standard.document': [
+				{
+					uri: `at://${ DID }/site.standard.document/d1`,
+					value: {
+						title: 'In A',
+						site: `at://${ DID }/site.standard.publication/pub1`,
+						coverImage: {
+							$type: 'blob',
+							ref: { $link: 'bafycover' },
+							mimeType: 'image/png',
+							size: 4242,
+						},
+					},
+				},
+			],
+		} );
+		const article = await getMyArticle( agent, DID, 'd1' );
+		expect( article?.coverImage ).toEqual( {
+			$type: 'blob',
+			ref: { $link: 'bafycover' },
+			mimeType: 'image/png',
+			size: 4242,
+		} );
+	} );
 } );
 
 describe( 'publish — description fallback', () => {

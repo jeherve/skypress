@@ -243,6 +243,8 @@ export interface MyArticle {
 	/** The owning publication's frozen slug (for building URLs + the update call). */
 	siteSlug: string;
 	bskyPostRef?: StrongRef;
+	/** The stored per-article cover blob ref, normalized for re-preview on edit. */
+	coverImage?: BlobRefJson;
 	blocks: BlockNode[];
 }
 
@@ -253,6 +255,7 @@ interface RawDocValue {
 	updatedAt?: string;
 	site?: string;
 	bskyPostRef?: StrongRef;
+	coverImage?: unknown;
 	content?: { blocks?: BlockNode[] };
 }
 
@@ -271,6 +274,7 @@ function toMyArticle(
 		siteUri,
 		siteSlug,
 		bskyPostRef: value.bskyPostRef,
+		coverImage: normalizeBlobRefJson( value.coverImage ),
 		blocks: value.content?.blocks ?? [],
 	};
 }

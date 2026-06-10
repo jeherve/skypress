@@ -1,0 +1,29 @@
+---
+import { KNOWN_PROVIDERS, type ProviderId } from '../lib/publish/providers';
+
+interface Props {
+	provider: ProviderId | null;
+	size?: number;
+	class?: string;
+}
+
+const { provider, size = 14, class: className } = Astro.props;
+
+// Glyph + label data is shared with the React `ProviderLogo.tsx` via lib/publish/providers.
+// `body` is a hardcoded registry constant (never user/PDS content), so `set:html` is trusted.
+const logo = provider ? KNOWN_PROVIDERS[ provider ] : null;
+---
+
+{
+	logo && (
+		<svg
+			class={className}
+			width={size}
+			height={size}
+			viewBox={logo.viewBox}
+			role="img"
+			aria-label={logo.label}
+			set:html={logo.body}
+		/>
+	)
+}

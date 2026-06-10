@@ -156,6 +156,19 @@ describe( 'listAllPublications', () => {
 		} );
 	} );
 
+	it( 'tags each foreign publication with its detected provider', async () => {
+		const { agent } = mockAgent( {
+			'site.standard.publication': [
+				pubRecord( 'a', 'https://jehervecom.leaflet.pub' ),
+				pubRecord( 'b', 'https://my-domain.example', { theme: { $type: 'blog.pckt.theme' } } ),
+				pubRecord( 'c', 'https://unknown.example' ),
+			],
+		} );
+		const { foreign } = await listAllPublications( agent, DID );
+		const byRkey = Object.fromEntries( foreign.map( ( p ) => [ p.uri.split( '/' ).pop(), p.provider ] ) );
+		expect( byRkey ).toEqual( { a: 'leaflet', b: 'pckt', c: null } );
+	} );
+
 	it( 'drops a slugless SkyPress-origin record from BOTH buckets', async () => {
 		const { agent } = mockAgent( {
 			'site.standard.publication': [ pubRecord( 'c', `${ SITE_BASE }/@me.bsky.social` ) ],

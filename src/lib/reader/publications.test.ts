@@ -50,8 +50,27 @@ describe( 'listAllReaderPublications', () => {
 		expect( foreign[ 0 ] ).toEqual( {
 			uri: `at://${ DID }/site.standard.publication/b`,
 			name: 'My Leaflet',
+			hostname: 'leaflet.pub',
 			url: 'https://leaflet.pub/lish/did:plc:me/xyz',
 			icon,
+			provider: 'leaflet',
+		} );
+	} );
+
+	it( 'tags each foreign publication with its hostname and detected provider', async () => {
+		mockedList.mockResolvedValue( [
+			rec( 'a', 'https://jehervecom.leaflet.pub' ),
+			rec( 'b', 'https://my-domain.example', { theme: { $type: 'blog.pckt.theme' } } ),
+			rec( 'c', 'https://unknown.example/path' ),
+		] );
+		const { foreign } = await listAllReaderPublications( PDS, DID );
+		const byRkey = Object.fromEntries(
+			foreign.map( ( p ) => [ p.uri.split( '/' ).pop(), { hostname: p.hostname, provider: p.provider } ] )
+		);
+		expect( byRkey ).toEqual( {
+			a: { hostname: 'jehervecom.leaflet.pub', provider: 'leaflet' },
+			b: { hostname: 'my-domain.example', provider: 'pckt' },
+			c: { hostname: 'unknown.example', provider: null },
 		} );
 	} );
 

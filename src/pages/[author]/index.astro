@@ -4,6 +4,7 @@ import Logo from '../../components/Logo.astro';
 import { resolveAuthorContext } from '../../lib/reader/read-context';
 import { detectBioSegments } from '../../lib/reader/rich-text';
 import CreatePublicationCta from '../../components/CreatePublicationCta.tsx';
+import ProviderLogo from '../../components/ProviderLogo.astro';
 import ErrorScene from '../../components/ErrorScene.astro';
 
 export const prerender = false;
@@ -154,6 +155,10 @@ if ( error ) {
 											)}
 											<span class="author__pubtext">
 												<span class="author__pubname">{pub.name}</span>
+												<span class="author__pubhost">
+													<ProviderLogo provider={pub.provider} class="author__pubhost-logo" />
+													{pub.hostname}
+												</span>
 											</span>
 											<svg
 												class="author__pub-arrow"
@@ -351,6 +356,24 @@ if ( error ) {
 	.author__pubdesc {
 		color: var(--ink-soft);
 		font-size: 0.95rem;
+	}
+	.author__pubhost {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		align-self: flex-start;
+		margin-top: 0.3rem;
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+		padding: 0.05rem 0.4rem;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		background: var(--paper-raised);
+	}
+	.author__pubhost-logo {
+		flex: none;
+		color: var(--ink-soft);
 	}
 	.author__elsewhere {
 		margin-top: 2.5rem;

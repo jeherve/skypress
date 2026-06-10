@@ -17,6 +17,7 @@ import {
 } from '../lib/publish/publisher';
 import { buildGetBlobUrl, type BlobRefJson } from '../lib/media/blob';
 import AppBar from './AppBar';
+import ProviderLogo from './ProviderLogo';
 import { editLinkFor } from '../lib/editor/edit-link';
 
 type View =
@@ -244,7 +245,13 @@ function PublicationList( {
 									/>
 									<span className="dash__pubtext">
 										<span className="dash__pubname">{ pub.name }</span>
-										<span className="dash__pubhost">{ pub.hostname }</span>
+										<span className="dash__pubhost">
+											<ProviderLogo
+												provider={ pub.provider }
+												className="dash__pubhost-logo"
+											/>
+											{ pub.hostname }
+										</span>
 									</span>
 									<span className="dash__pubactions">
 										<a

@@ -58,8 +58,10 @@ function highlightOne( escapedSource: string ): string {
 	// Stored code may use <br> for line breaks (render.ts passes it through and the
 	// sanitiser keeps it as a real break). Turn those into real newlines BEFORE tokenising,
 	// or the highlighter treats "<br>" as an xml tag and emits literal "<br>" text,
-	// collapsing the code's line structure.
-	const raw = decodeEntities( escapedSource ).replace( /<br\s*\/?>/gi, '\n' );
+	// collapsing the code's line structure. Strip the breaks on the still-escaped source
+	// so only genuine break tags are affected — a literal `<br>` typed in a code sample is
+	// stored escaped (`&lt;br&gt;`) and must survive as text, not become a newline.
+	const raw = decodeEntities( escapedSource.replace( /<br\s*\/?>/gi, '\n' ) );
 	try {
 		const { value, language, relevance } = hljs.highlightAuto( raw );
 		// Zero relevance / no detected language → no useful tokens; keep it plain.

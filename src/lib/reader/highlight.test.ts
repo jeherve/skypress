@@ -64,4 +64,14 @@ describe( 'highlightCodeBlocks', () => {
 		expect( out ).toContain( '\n' );       // line breaks preserved as real newlines
 		expect( out ).toContain( 'class="hljs' ); // still highlighted
 	} );
+
+	it( 'keeps a literal <br> typed in a code sample as text, not a newline', () => {
+		// A literal `<br>` in a code sample is stored escaped (`&lt;br&gt;`), unlike the
+		// real break tags above. It must survive as escaped tag text after highlighting,
+		// not be collapsed into a newline along with the genuine separators.
+		const out = highlightCodeBlocks( block( 'const html = "&lt;br&gt;";' ) );
+		expect( out ).toContain( '&lt;br&gt;' ); // literal example tag preserved as text
+		expect( out ).not.toContain( '\n' );     // not turned into a line break
+		expect( out ).toContain( 'class="hljs' ); // still highlighted
+	} );
 } );

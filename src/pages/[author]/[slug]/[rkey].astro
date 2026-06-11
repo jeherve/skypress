@@ -59,7 +59,7 @@ if ( ctx && publication ) {
 
 	const doc = document.value;
 	// Blob URLs, render, sanitise, and the text fallback all live in render-article.
-	const rendered = renderArticle( doc, { pdsUrl, did } );
+	const rendered = renderArticle( doc, { pdsUrl, did }, { highlight: true } );
 	html = rendered.html;
 	const textContent = rendered.text;
 
@@ -286,6 +286,54 @@ if ( error ) {
 	}
 	.reader__article :global(code) {
 		font-family: var(--font-mono);
+	}
+	/* Syntax highlighting tokens, layered on the existing dark <pre> chrome.
+	   No background/padding on .hljs so the pre styling above is untouched.
+	   Colours come from the site tokens, which flip with the light/dark theme. */
+	.reader__article :global(.hljs-comment),
+	.reader__article :global(.hljs-quote) {
+		color: var(--muted);
+		font-style: italic;
+	}
+	.reader__article :global(.hljs-keyword),
+	.reader__article :global(.hljs-selector-tag),
+	.reader__article :global(.hljs-literal),
+	.reader__article :global(.hljs-section),
+	.reader__article :global(.hljs-tag) {
+		color: var(--sun);
+	}
+	.reader__article :global(.hljs-string),
+	.reader__article :global(.hljs-attr),
+	.reader__article :global(.hljs-symbol),
+	.reader__article :global(.hljs-bullet) {
+		color: var(--sun-strong);
+	}
+	.reader__article :global(.hljs-number),
+	.reader__article :global(.hljs-built_in),
+	.reader__article :global(.hljs-class .hljs-title) {
+		color: #7fb2c9;
+	}
+	.reader__article :global(.hljs-title),
+	.reader__article :global(.hljs-function .hljs-title),
+	.reader__article :global(.hljs-name) {
+		color: var(--paper);
+		font-weight: 600;
+	}
+	.reader__article :global(.hljs-meta),
+	.reader__article :global(.hljs-comment .hljs-doctag) {
+		color: var(--ink-soft);
+	}
+	.reader__article :global(.hljs-addition) {
+		color: #7faa6b;
+	}
+	.reader__article :global(.hljs-deletion) {
+		color: #c97f7f;
+	}
+	.reader__article :global(.hljs-emphasis) {
+		font-style: italic;
+	}
+	.reader__article :global(.hljs-strong) {
+		font-weight: 700;
 	}
 	.reader__actions-loading {
 		max-width: 40rem;

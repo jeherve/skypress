@@ -84,7 +84,7 @@ export function renderBlocks( blocks: BlockNode[] ): string {
 
 const TEXT_ATTRIBUTES = [ 'content', 'value', 'citation', 'caption' ];
 
-function decodeEntities( input: string ): string {
+export function decodeEntities( input: string ): string {
 	return input
 		.replace( /&lt;/g, '<' )
 		.replace( /&gt;/g, '>' )

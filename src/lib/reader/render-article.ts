@@ -14,6 +14,7 @@
 import { renderBlocks, blocksToText } from '../blocks/render';
 import { resolveBlobImageUrls } from '../media/blob';
 import { sanitizeArticleHtml } from './sanitize';
+import { highlightCodeBlocks } from './highlight';
 import type { BlockNode } from '../blocks/render';
 
 /** The slice of a `site.standard.document` value the renderer consumes. */
@@ -29,18 +30,28 @@ export interface RenderedArticle {
 	text: string;
 }
 
+export interface RenderOptions {
+	/** Syntax-highlight code blocks (web page only — RSS stays plain). */
+	highlight?: boolean;
+}
+
 /**
  * Render a document's blocks to sanitised HTML and plain text. `author` is the
  * document's writer (current PDS + DID) — blob-backed image URLs are rebuilt
- * against it before rendering, so images survive a PDS migration.
+ * against it before rendering, so images survive a PDS migration. Pass
+ * `{ highlight: true }` to syntax-highlight code blocks (web page only; the
+ * highlight step runs before sanitise, so its token markup is sanitiser-checked).
  */
 export function renderArticle(
 	doc: RenderableDocument,
-	author: { pdsUrl: string; did: string }
+	author: { pdsUrl: string; did: string },
+	options: RenderOptions = {}
 ): RenderedArticle {
 	const blocks = resolveBlobImageUrls( doc.content?.blocks ?? [], author );
+	const rendered = renderBlocks( blocks );
+	const highlighted = options.highlight ? highlightCodeBlocks( rendered ) : rendered;
 	return {
-		html: sanitizeArticleHtml( renderBlocks( blocks ) ),
+		html: sanitizeArticleHtml( highlighted ),
 		text: doc.textContent || blocksToText( blocks ),
 	};
 }

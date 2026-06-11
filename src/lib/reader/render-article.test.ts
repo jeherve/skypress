@@ -121,4 +121,22 @@ describe( 'renderArticle', () => {
 		expect( html ).toBe( '' );
 		expect( text ).toBe( '' );
 	} );
+
+	it( 'highlights code blocks only when opted in', () => {
+		const doc = {
+			content: {
+				blocks: [ { name: 'core/code', attributes: { content: 'const answer = 42;' } } ],
+			},
+		};
+		const off = renderArticle( doc, AUTHOR );
+		const on = renderArticle( doc, AUTHOR, { highlight: true } );
+
+		// Default (RSS path) stays plain.
+		expect( off.html ).toContain( '<pre class="wp-block-code"><code>' );
+		expect( off.html ).not.toContain( 'hljs' );
+
+		// Opt-in produces sanitiser-safe token spans.
+		expect( on.html ).toContain( 'class="hljs' );
+		expect( on.html ).toContain( '<span class="hljs-' );
+	} );
 } );

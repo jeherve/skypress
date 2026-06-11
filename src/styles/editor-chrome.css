@@ -344,7 +344,7 @@
 }
 
 /* Publish success pill — sunrise callback, rises into view (Studio-owned).
-   Deliberately uses a fixed warm palette, NOT the --sun*/--ink tokens: those
+   Deliberately uses a fixed warm palette, NOT the --sun* or --ink tokens: those
    flip with the colour scheme, and no single text colour stays legible over a
    gradient whose --sun-tint end goes near-black in dark mode. A constant light
    sunrise gradient + dark ink keeps the look and clears WCAG AA in both schemes

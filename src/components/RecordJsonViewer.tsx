@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface RecordJsonViewerProps {
 	/** Sanitised, syntax-highlighted JSON markup — a `<code class="hljs language-json">…</code>` string. */
@@ -63,31 +64,38 @@ export default function RecordJsonViewer( { highlightedHtml }: RecordJsonViewerP
 					<path d="m8 6-6 6 6 6" />
 				</svg>
 			</button>
-			{ open && (
-				<div className="record-json__backdrop" onClick={ close }>
-					<div
-						className="record-json__dialog"
-						role="dialog"
-						aria-modal="true"
-						aria-label="Record JSON"
-						onClick={ ( event ) => event.stopPropagation() }
-					>
-						<button
-							ref={ closeRef }
-							type="button"
-							className="record-json__close"
-							aria-label="Close"
-							onClick={ close }
+			{ /* Portalled to <body>: the trigger lives inside the eyebrow <p>, where a
+			   block-level backdrop would be invalid, and the fixed overlay must escape any
+			   ancestor overflow/transform. Focus is moved in on open and restored to the
+			   trigger on close; we intentionally don't trap Tab — the dialog is view-only
+			   (one focusable control), and Escape/backdrop both dismiss it. */ }
+			{ open &&
+				createPortal(
+					<div className="record-json__backdrop" onClick={ close }>
+						<div
+							className="record-json__dialog"
+							role="dialog"
+							aria-modal="true"
+							aria-label="Record JSON"
+							onClick={ ( event ) => event.stopPropagation() }
 						>
-							×
-						</button>
-						<pre
-							className="record-json__code"
-							dangerouslySetInnerHTML={ { __html: highlightedHtml } }
-						/>
-					</div>
-				</div>
-			) }
+							<button
+								ref={ closeRef }
+								type="button"
+								className="record-json__close"
+								aria-label="Close"
+								onClick={ close }
+							>
+								×
+							</button>
+							<pre
+								className="record-json__code"
+								dangerouslySetInnerHTML={ { __html: highlightedHtml } }
+							/>
+						</div>
+					</div>,
+					document.body
+				) }
 		</>
 	);
 }

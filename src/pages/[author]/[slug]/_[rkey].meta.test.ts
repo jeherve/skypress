@@ -129,4 +129,11 @@ describe( 'document page record JSON viewer', () => {
 			/<RecordJsonViewer\s+client:only="react"\s+highlightedHtml=\{\s*recordJson\s*\}/
 		);
 	} );
+
+	it( 'renders the record value only, not the { uri, cid } envelope', () => {
+		// `doc` is `document.value`; passing the whole `document` would leak the AT-URI/cid
+		// wrapper into the viewer. Lock the "value only" decision (design 2026-06-11).
+		expect( page ).toMatch( /const\s+doc\s*=\s*document\.value/ );
+		expect( page ).not.toMatch( /renderRecordJson\(\s*document\s*\)/ );
+	} );
 } );

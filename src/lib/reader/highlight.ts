@@ -79,3 +79,27 @@ function highlightOne( escapedSource: string ): string {
 export function highlightCodeBlocks( html: string ): string {
 	return html.replace( CODE_BLOCK, ( _full, inner: string ) => highlightOne( inner ) );
 }
+
+/** HTML-escape for the fallback path (hljs already escapes its own token output). */
+function escapeHtml( input: string ): string {
+	return input
+		.replace( /&/g, '&amp;' )
+		.replace( /</g, '&lt;' )
+		.replace( />/g, '&gt;' );
+}
+
+/**
+ * Highlight a JSON string as a standalone `<code class="hljs language-json">…</code>`
+ * fragment (no `<pre>` wrapper — the caller owns the chrome). Used by the reader's
+ * record-JSON viewer. `hljs.highlight` HTML-escapes the source, so untrusted record
+ * values can't inject markup; `record-json.ts` sanitises the result as the final gate.
+ */
+export function highlightJson( source: string ): string {
+	try {
+		const { value } = hljs.highlight( source, { language: 'json' } );
+		return `<code class="hljs language-json">${ value }</code>`;
+	} catch {
+		// Never let a highlighter error break a page — fall back to plain escaped JSON.
+		return `<code class="hljs language-json">${ escapeHtml( source ) }</code>`;
+	}
+}

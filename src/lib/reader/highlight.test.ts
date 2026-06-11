@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { highlightCodeBlocks } from './highlight';
+import { highlightCodeBlocks, highlightJson } from './highlight';
 
 const block = ( inner: string ) =>
 	`<pre class="wp-block-code"><code>${ inner }</code></pre>`;
@@ -73,5 +73,29 @@ describe( 'highlightCodeBlocks', () => {
 		expect( out ).toContain( '&lt;br&gt;' ); // literal example tag preserved as text
 		expect( out ).not.toContain( '\n' );     // not turned into a line break
 		expect( out ).toContain( 'class="hljs' ); // still highlighted
+	} );
+} );
+
+describe( 'highlightJson', () => {
+	it( 'tokenises JSON into hljs spans inside a language-json code element', () => {
+		const out = highlightJson( '{\n  "answer": 42\n}' );
+		expect( out ).toContain( '<code class="hljs language-json">' );
+		expect( out ).toContain( '<span class="hljs-' );
+		expect( out ).toContain( '</code>' );
+		// No <pre> wrapper — the caller owns the chrome.
+		expect( out ).not.toContain( '<pre' );
+	} );
+
+	it( 'keeps HTML in string values escaped (no raw tags from untrusted records)', () => {
+		const out = highlightJson( '{\n  "x": "</script><img src=x onerror=alert(1)>"\n}' );
+		expect( out ).toContain( '&lt;' );
+		expect( out ).not.toContain( '<img' );
+		expect( out ).not.toContain( '</script>' );
+	} );
+
+	it( 'handles an empty object without throwing', () => {
+		const out = highlightJson( '{}' );
+		expect( out ).toContain( '<code class="hljs language-json">' );
+		expect( out ).toContain( '</code>' );
 	} );
 } );

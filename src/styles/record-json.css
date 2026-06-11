@@ -1,0 +1,97 @@
+/**
+ * Reader "view record JSON" control + modal (`RecordJsonViewer`). A client:only React
+ * island, so Astro's component-scoped styles never reach its DOM — these rules are
+ * global (imported from `[rkey].astro`). The JSON `<pre>` reuses the dark code chrome,
+ * so the hljs token palette below mirrors the article's, scoped to `.record-json__code`.
+ */
+.record-json__trigger {
+	display: inline-flex;
+	align-items: center;
+	vertical-align: middle;
+	margin-left: 0.5rem;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--muted);
+	cursor: pointer;
+	line-height: 0;
+}
+.record-json__trigger:hover {
+	color: var(--sun);
+}
+.record-json__backdrop {
+	position: fixed;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1.5rem;
+	background: rgba( 0, 0, 0, 0.55 );
+	z-index: 1000;
+}
+.record-json__dialog {
+	position: relative;
+	display: flex;
+	width: min( 92vw, 48rem );
+	max-height: 82vh;
+	border-radius: var(--radius);
+	box-shadow: var(--shadow);
+	overflow: hidden;
+}
+.record-json__close {
+	position: absolute;
+	top: 0.5rem;
+	right: 0.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border: 0;
+	border-radius: 50%;
+	background: rgba( 0, 0, 0, 0.35 );
+	color: var(--paper);
+	font-size: 1.4rem;
+	line-height: 1;
+	cursor: pointer;
+}
+.record-json__close:hover {
+	background: rgba( 0, 0, 0, 0.55 );
+}
+.record-json__code {
+	flex: 1;
+	margin: 0;
+	overflow: auto;
+	padding: 1.5rem;
+	background: var(--ink);
+	color: var(--paper);
+	font-family: var(--font-mono);
+	font-size: 0.85rem;
+	line-height: 1.5;
+	white-space: pre;
+	tab-size: 2;
+}
+/* hljs token palette — mirrors the article's (see [rkey].astro), scoped here so the
+   modal is self-contained and doesn't depend on .reader__article being an ancestor. */
+.record-json__code .hljs-comment,
+.record-json__code .hljs-quote {
+	color: var(--muted);
+	font-style: italic;
+}
+.record-json__code .hljs-keyword,
+.record-json__code .hljs-literal,
+.record-json__code .hljs-selector-tag {
+	color: var(--sun);
+}
+.record-json__code .hljs-string,
+.record-json__code .hljs-attr,
+.record-json__code .hljs-symbol {
+	color: var(--sun-strong);
+}
+.record-json__code .hljs-number,
+.record-json__code .hljs-built_in {
+	color: #7fb2c9;
+}
+.record-json__code .hljs-punctuation {
+	color: var(--ink-soft);
+}

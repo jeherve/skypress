@@ -79,3 +79,26 @@ function highlightOne( escapedSource: string ): string {
 export function highlightCodeBlocks( html: string ): string {
 	return html.replace( CODE_BLOCK, ( _full, inner: string ) => highlightOne( inner ) );
 }
+
+function escapeHtml( source: string ): string {
+	return source
+		.replace( /&/g, '&amp;' )
+		.replace( /</g, '&lt;' )
+		.replace( />/g, '&gt;' );
+}
+
+/**
+ * Highlight a known-language source string into hljs token HTML, for static pages
+ * (e.g. the lexicon's JSON schema dump) that know their language up front and so
+ * skip the reader's auto-detection. Returns highlight.js's already-escaped token
+ * HTML, safe to inject; on any error (unregistered language, etc.) it falls back to
+ * plain entity-escaped text — the source still renders, never as raw markup. Keeping
+ * this here preserves the rule that highlight.js is imported in this module only.
+ */
+export function highlightSource( source: string, language: string ): string {
+	try {
+		return hljs.highlight( source, { language } ).value;
+	} catch {
+		return escapeHtml( source );
+	}
+}

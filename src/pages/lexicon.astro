@@ -9,9 +9,13 @@ import {
 	contentSchemaFields,
 } from '../lib/lexicon/schema-doc';
 import { parseInlineCode } from '../lib/lexicon/inline-code';
+import { highlightSource } from '../lib/reader/highlight';
 
 const contentFields = contentSchemaFields();
 const schemaJson = JSON.stringify( CONTENT_LEXICON, null, 2 );
+// The schema is JSON we control, so highlight it directly (known language) rather
+// than auto-detecting. Server-side at build time → no client JS, like the reader.
+const schemaJsonHtml = highlightSource( schemaJson, 'json' );
 
 // Hand-authored interop tables (site.standard.* are community-owned; see Decision 0005).
 const documentFields = [
@@ -100,7 +104,7 @@ const publicationFields = [
 				<code>textContent</code>, so your article is never unreadable. Here&rsquo;s
 				the full schema:
 			</p>
-			<pre class="lex-code"><code>{ schemaJson }</code></pre>
+			<pre class="lex-code"><code class="hljs language-json" set:html={ schemaJsonHtml } /></pre>
 		</section>
 
 		<section class="lex-section">
@@ -260,12 +264,51 @@ const publicationFields = [
 		overflow: auto;
 		font-size: 0.85rem;
 		line-height: 1.55;
+		/* String/number hues that read on the light code surface; the warm-orange
+		   and muted token colours below reuse brand tokens that already flip. */
+		--code-string: #3f7d4f;
+		--code-number: #2f6f86;
 	}
 	.lex-code code {
 		font-family: var( --font-mono );
 		background: none;
 		color: var( --ink );
 		padding: 0;
+	}
+	/* highlight.js token colours, scoped to this light code block (unlike the
+	   reader's dark <pre>). The spans arrive via set:html, so they need :global.
+	   No background/padding on .hljs, so the .lex-code chrome above is untouched. */
+	.lex-code :global( .hljs-comment ),
+	.lex-code :global( .hljs-quote ),
+	.lex-code :global( .hljs-punctuation ) {
+		color: var( --muted );
+	}
+	.lex-code :global( .hljs-comment ),
+	.lex-code :global( .hljs-quote ) {
+		font-style: italic;
+	}
+	.lex-code :global( .hljs-attr ),
+	.lex-code :global( .hljs-keyword ),
+	.lex-code :global( .hljs-selector-tag ),
+	.lex-code :global( .hljs-name ) {
+		color: var( --sun-strong );
+	}
+	.lex-code :global( .hljs-string ),
+	.lex-code :global( .hljs-symbol ),
+	.lex-code :global( .hljs-meta .hljs-string ) {
+		color: var( --code-string );
+	}
+	.lex-code :global( .hljs-number ),
+	.lex-code :global( .hljs-literal ),
+	.lex-code :global( .hljs-built_in ) {
+		color: var( --code-number );
+	}
+
+	@media ( prefers-color-scheme: dark ) {
+		.lex-code {
+			--code-string: #8fc98f;
+			--code-number: #7fb2c9;
+		}
 	}
 
 	.lex-actions {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { highlightCodeBlocks } from './highlight';
+import { highlightCodeBlocks, highlightSource } from './highlight';
 
 const block = ( inner: string ) =>
 	`<pre class="wp-block-code"><code>${ inner }</code></pre>`;
@@ -73,5 +73,31 @@ describe( 'highlightCodeBlocks', () => {
 		expect( out ).toContain( '&lt;br&gt;' ); // literal example tag preserved as text
 		expect( out ).not.toContain( '\n' );     // not turned into a line break
 		expect( out ).toContain( 'class="hljs' ); // still highlighted
+	} );
+} );
+
+describe( 'highlightSource', () => {
+	it( 'tokenises a known-language source string into hljs spans', () => {
+		// Unlike the reader blocks, static callers (e.g. the lexicon schema dump) know
+		// the language up front, so we highlight directly instead of auto-detecting.
+		const out = highlightSource( '{ "name": "potato", "value": 42 }', 'json' );
+		expect( out ).toContain( '<span class="hljs-' );
+		expect( out ).toContain( 'potato' );
+	} );
+
+	it( 'escapes angle brackets, never injecting raw markup', () => {
+		const out = highlightSource( '{ "tag": "<b>" }', 'json' );
+		expect( out ).not.toContain( '<b>' );
+		expect( out ).toContain( '&lt;b&gt;' );
+	} );
+
+	it( 'falls back to plain escaped text for an unregistered language', () => {
+		// An unknown grammar makes hljs throw; the source must still render as safe,
+		// entity-escaped text — never raw markup, never an error bubbling to the page.
+		const out = highlightSource( 'a < b && c > d', 'no-such-lang' );
+		expect( out ).not.toContain( 'hljs-' );
+		expect( out ).toContain( '&lt;' );
+		expect( out ).toContain( '&amp;' );
+		expect( out ).toContain( '&gt;' );
 	} );
 } );

@@ -51,4 +51,17 @@ describe( 'highlightCodeBlocks', () => {
 		expect( wrappers.length ).toBe( 2 );
 		expect( out ).toContain( '<p>mid</p>' );
 	} );
+
+	it( 'converts <br> line breaks in code to real newlines (never literal tag text)', () => {
+		// Some stored code blocks use <br /> as the line separator (render.ts passes it
+		// through; the sanitiser keeps it as a real break). Highlighting must tokenise
+		// clean multi-line source, not turn the breaks into literal "<br>" text.
+		const out = highlightCodeBlocks(
+			block( '{<br />  "name": "potato",<br />  "value": 42<br />}' )
+		);
+		expect( out ).not.toContain( '<br' );  // no raw <br> passed through to hljs
+		expect( out ).not.toContain( '&lt;' ); // and not escaped into literal "<br>" text
+		expect( out ).toContain( '\n' );       // line breaks preserved as real newlines
+		expect( out ).toContain( 'class="hljs' ); // still highlighted
+	} );
 } );

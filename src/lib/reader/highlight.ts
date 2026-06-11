@@ -55,7 +55,11 @@ for ( const [ name, lang ] of Object.entries( LANGUAGES ) ) {
 const CODE_BLOCK = /<pre class="wp-block-code"><code>([\s\S]*?)<\/code><\/pre>/g;
 
 function highlightOne( escapedSource: string ): string {
-	const raw = decodeEntities( escapedSource );
+	// Stored code may use <br> for line breaks (render.ts passes it through and the
+	// sanitiser keeps it as a real break). Turn those into real newlines BEFORE tokenising,
+	// or the highlighter treats "<br>" as an xml tag and emits literal "<br>" text,
+	// collapsing the code's line structure.
+	const raw = decodeEntities( escapedSource ).replace( /<br\s*\/?>/gi, '\n' );
 	try {
 		const { value, language, relevance } = hljs.highlightAuto( raw );
 		// Zero relevance / no detected language → no useful tokens; keep it plain.

@@ -21,8 +21,11 @@
 	text-decoration: none;
 }
 .app-bar__mark {
+	/* The inline mark inherits this via fill="currentColor"; --sun lightens in dark mode. */
 	color: var(--sun);
+	display: inline-flex;
 	flex: none;
+	line-height: 0;
 }
 .app-bar__word {
 	font-family: var(--font-display);

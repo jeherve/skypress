@@ -2,24 +2,17 @@ import { useState } from 'react';
 import { useAuth } from '../lib/auth/useAuth';
 import { displayNameFor, authorPath } from '../lib/auth/profile';
 import { appBarNav, type AppBarContext } from '../lib/auth/nav';
+import { skypressMark } from '../lib/brand/skypress-mark';
 
-/** Inline SkyPress mark — mirrors Logo.astro (that one is Astro-only, unusable in a React island). */
+/** SkyPress mark — shares the inline-SVG source with Logo.astro (Astro components
+ * can't render in a React island). `currentColor` lets it follow the --sun token. */
 function LogoMark() {
 	return (
-		<svg
+		<span
 			className="app-bar__mark"
-			width={ 24 }
-			height={ 24 }
-			viewBox="0 0 32 32"
-			fill="none"
-			aria-hidden="true"
-		>
-			<rect x="2.5" y="2.5" width="27" height="27" rx="7.5" stroke="currentColor" strokeWidth="2.2" />
-			<circle cx="16" cy="12.5" r="3.6" stroke="currentColor" strokeWidth="1.9" />
-			<circle cx="16" cy="12.5" r="0.9" fill="currentColor" />
-			<path d="M7 18.5h18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-			<path d="M9 22.8h14M9 25.6h9" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" opacity="0.55" />
-		</svg>
+			// eslint-disable-next-line react/no-danger -- static, app-authored SVG markup; no user input
+			dangerouslySetInnerHTML={ { __html: skypressMark( 24 ) } }
+		/>
 	);
 }
 

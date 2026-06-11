@@ -15,6 +15,8 @@
  * only the static logo is shown — nav/identity depend on auth state we don't
  * have yet.
  */
+import { skypressMark } from '../lib/brand/skypress-mark';
+
 interface Props {
 	/** Which island is loading; picks the skeleton shape + content width. */
 	variant: 'dashboard' | 'editor';
@@ -25,20 +27,7 @@ const { variant } = Astro.props;
 <div class="loading-scene" aria-busy="true">
 	<header class="app-bar">
 		<a class="app-bar__home" href="/" aria-label="SkyPress home">
-			<svg
-				class="app-bar__mark"
-				width="24"
-				height="24"
-				viewBox="0 0 32 32"
-				fill="none"
-				aria-hidden="true"
-			>
-				<rect x="2.5" y="2.5" width="27" height="27" rx="7.5" stroke="currentColor" stroke-width="2.2" />
-				<circle cx="16" cy="12.5" r="3.6" stroke="currentColor" stroke-width="1.9" />
-				<circle cx="16" cy="12.5" r="0.9" fill="currentColor" />
-				<path d="M7 18.5h18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
-				<path d="M9 22.8h14M9 25.6h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" opacity="0.55" />
-			</svg>
+			<span class="app-bar__mark" set:html={skypressMark( 24 )} />
 			<span class="app-bar__word">SkyPress</span>
 		</a>
 	</header>

@@ -1,4 +1,6 @@
 ---
+import { skypressMark } from '../lib/brand/skypress-mark';
+
 interface Props {
 	size?: number;
 	wordmark?: boolean;
@@ -7,27 +9,7 @@ const { size = 28, wordmark = true } = Astro.props;
 ---
 
 <span class="logo">
-	<svg
-		class="logo__mark"
-		width={size}
-		height={size}
-		viewBox="0 0 32 32"
-		fill="none"
-		aria-hidden="true"
-	>
-		<!-- the type block / page -->
-		<rect x="2.5" y="2.5" width="27" height="27" rx="7.5" stroke="currentColor" stroke-width="2.2" />
-		<!-- sun over the horizon: a halo ring with a glowing core (echoes the landing sun) -->
-		<g class="logo__sun">
-			<circle cx="16" cy="12.5" r="3.6" stroke="currentColor" stroke-width="1.9" />
-			<circle cx="16" cy="12.5" r="0.9" fill="currentColor" />
-		</g>
-		<!-- crescent moon: hidden by default; revealed only under a dark [data-phase] ancestor (landing) -->
-		<path class="logo__moon" d="M18.4 9.1a4 4 0 1 0 0 6.8 4.9 4.9 0 0 1 0-6.8Z" fill="currentColor" />
-		<path d="M7 18.5h18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
-		<!-- lines of set type (press) -->
-		<path d="M9 22.8h14M9 25.6h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" opacity="0.55" />
-	</svg>
+	<span class="logo__mark" set:html={skypressMark( size )} />
 	{wordmark && <span class="logo__word">SkyPress</span>}
 </span>
 
@@ -40,10 +22,12 @@ const { size = 28, wordmark = true } = Astro.props;
 		text-decoration: none;
 	}
 	.logo__mark {
-		color: var(--sun);
+		display: inline-flex;
 		flex: none;
+		line-height: 0;
+		/* The mark inherits this via fill="currentColor"; --sun lightens in dark mode. */
+		color: var(--sun);
 	}
-	.logo__moon { display: none; }
 	.logo__word {
 		font-family: var(--font-display);
 		font-weight: 700;

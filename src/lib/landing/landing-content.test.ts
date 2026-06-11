@@ -99,24 +99,3 @@ describe( 'playful: shooting star', () => {
 		expect( reduced ).toMatch( /\.shootingstar/ );
 	} );
 } );
-
-describe( 'playful: sun becomes moon', () => {
-	const logo = read( '../../components/Logo.astro' );
-	const index = read( '../../pages/index.astro' );
-
-	it( 'gives the logo mark distinct sun and moon parts', () => {
-		expect( logo ).toMatch( /class="logo__sun"/ );
-		expect( logo ).toMatch( /class="logo__moon"/ );
-	} );
-
-	it( 'hides the moon by default so non-landing pages keep the sun', () => {
-		const style = logo.match( /<style>([\s\S]*?)<\/style>/ )?.[ 1 ] ?? '';
-		expect( style ).toMatch( /\.logo__moon\s*\{[^}]*display:\s*none/ );
-	} );
-
-	it( 'swaps the mark to the moon for dark phases on the landing only', () => {
-		const style = index.match( /<style>([\s\S]*?)<\/style>/ )?.[ 1 ] ?? '';
-		expect( style ).toMatch( /:global\(\s*\[data-phase='night'\]\s*\)[\s\S]*?\.logo__moon/ );
-		expect( style ).toMatch( /:global\(\s*\[data-phase='night'\]\s*\)[\s\S]*?\.logo__sun/ );
-	} );
-} );

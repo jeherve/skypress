@@ -114,3 +114,19 @@ describe( 'document page focuses on publication + author', () => {
 		expect( page ).not.toMatch( /\.slice\(\s*0,\s*10\s*\)/ );
 	} );
 } );
+
+describe( 'document page record JSON viewer', () => {
+	it( 'imports the RecordJsonViewer island and the record-json renderer', () => {
+		expect( page ).toMatch( /import RecordJsonViewer from '[^']*components\/RecordJsonViewer/ );
+		expect( page ).toMatch(
+			/import\s*\{\s*renderRecordJson\s*\}\s*from\s*'[^']*lib\/reader\/record-json'/
+		);
+	} );
+
+	it( 'builds the highlighted JSON from the record value and feeds the island', () => {
+		expect( page ).toMatch( /renderRecordJson\(\s*doc\s*\)/ );
+		expect( page ).toMatch(
+			/<RecordJsonViewer\s+client:only="react"\s+highlightedHtml=\{\s*recordJson\s*\}/
+		);
+	} );
+} );

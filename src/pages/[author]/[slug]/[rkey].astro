@@ -10,6 +10,8 @@ import { themeStyleBlock } from '../../../lib/publish/themes';
 import { buildMetaTags } from '../../../lib/seo/meta';
 import ErrorScene from '../../../components/ErrorScene.astro';
 import PostActions from '../../../components/PostActions.tsx';
+import RecordJsonViewer from '../../../components/RecordJsonViewer.tsx';
+import { renderRecordJson } from '../../../lib/reader/record-json';
 
 // Frontend block styles only — no editor chrome, no JS.
 import '@wordpress/block-library/build-style/common.css';
@@ -17,6 +19,8 @@ import '@wordpress/block-library/build-style/style.css';
 import '@wordpress/block-library/build-style/theme.css';
 // Social action bar (a client:only island; its chrome is styled globally).
 import '../../../styles/post-actions.css';
+// "View record JSON" control + modal (a client:only island; chrome styled globally).
+import '../../../styles/record-json.css';
 
 // Read-through renderer: resolve + fetch at request time (Decision 0007).
 export const prerender = false;
@@ -51,6 +55,7 @@ let initial = '';
 let themeStyle = '';
 let ogImage = '';
 let bskyPostRef: { uri: string; cid: string } | null = null;
+let recordJson = '';
 
 if ( ctx && publication ) {
 	const { author: readAuthor, profile, document } = ctx;
@@ -62,6 +67,8 @@ if ( ctx && publication ) {
 	const rendered = renderArticle( doc, { pdsUrl, did }, { highlight: true } );
 	html = rendered.html;
 	const textContent = rendered.text;
+	// The PDS record body (just `value`) as highlighted, sanitised JSON for the viewer.
+	recordJson = renderRecordJson( doc );
 
 	title = doc.title ?? 'Untitled';
 	description = doc.description || deriveExcerpt( textContent );
@@ -150,6 +157,7 @@ if ( error ) {
 			{publishedLabel && <> · {publishedLabel}</>}
 			{updatedLabel && <> · updated {updatedLabel}</>}
 			· {readingMinutes} min read
+			<RecordJsonViewer client:only="react" highlightedHtml={recordJson} />
 		</p>
 		<h1 class="reader__title">{title}</h1>
 		<article class="reader__article" set:html={html} />

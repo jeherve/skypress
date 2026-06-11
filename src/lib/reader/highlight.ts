@@ -81,25 +81,36 @@ export function highlightCodeBlocks( html: string ): string {
 }
 
 /** HTML-escape for the fallback path (hljs already escapes its own token output). */
-function escapeHtml( input: string ): string {
-	return input
+function escapeHtml( source: string ): string {
+	return source
 		.replace( /&/g, '&amp;' )
 		.replace( /</g, '&lt;' )
 		.replace( />/g, '&gt;' );
 }
 
 /**
+ * Highlight a known-language source string into hljs token HTML, for static pages
+ * (e.g. the lexicon's JSON schema dump) that know their language up front and so
+ * skip the reader's auto-detection. Returns highlight.js's already-escaped token
+ * HTML, safe to inject; on any error (unregistered language, etc.) it falls back to
+ * plain entity-escaped text — the source still renders, never as raw markup. Keeping
+ * this here preserves the rule that highlight.js is imported in this module only.
+ */
+export function highlightSource( source: string, language: string ): string {
+	try {
+		return hljs.highlight( source, { language } ).value;
+	} catch {
+		return escapeHtml( source );
+	}
+}
+
+/**
  * Highlight a JSON string as a standalone `<code class="hljs language-json">…</code>`
  * fragment (no `<pre>` wrapper — the caller owns the chrome). Used by the reader's
- * record-JSON viewer. `hljs.highlight` HTML-escapes the source, so untrusted record
- * values can't inject markup; `record-json.ts` sanitises the result as the final gate.
+ * record-JSON viewer. `highlightSource` HTML-escapes the source on both the highlight
+ * and fallback paths, so untrusted record values can't inject markup; `record-json.ts`
+ * sanitises the result as the final gate.
  */
 export function highlightJson( source: string ): string {
-	try {
-		const { value } = hljs.highlight( source, { language: 'json' } );
-		return `<code class="hljs language-json">${ value }</code>`;
-	} catch {
-		// Never let a highlighter error break a page — fall back to plain escaped JSON.
-		return `<code class="hljs language-json">${ escapeHtml( source ) }</code>`;
-	}
+	return `<code class="hljs language-json">${ highlightSource( source, 'json' ) }</code>`;
 }

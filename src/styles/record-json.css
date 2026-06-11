@@ -1,8 +1,15 @@
 /**
  * Reader "view record JSON" control + modal (`RecordJsonViewer`). A client:only React
  * island, so Astro's component-scoped styles never reach its DOM — these rules are
- * global (imported from `[rkey].astro`). The JSON `<pre>` reuses the dark code chrome,
- * so the hljs token palette below mirrors the article's, scoped to `.record-json__code`.
+ * global (imported from `[rkey].astro`).
+ *
+ * The modal's code panel uses a FIXED dark editor palette (not the site/publication
+ * palette tokens). A publication theme recolours `--ink`/`--paper`/`--sun` etc., and a
+ * themed combination can collapse the JSON to near-invisible (e.g. dark `--sun-strong`
+ * keys on a dark-olive `--ink` background). This is a raw-record / developer view, so it
+ * stays a consistent, high-contrast code surface across every publication theme. The
+ * trigger button keeps the page tokens (`--muted`/`--sun`) — it lives inline in the
+ * eyebrow on the page surface, where those read fine.
  */
 .record-json__trigger {
 	display: inline-flex;
@@ -50,7 +57,7 @@
 	border: 0;
 	border-radius: 50%;
 	background: rgba( 0, 0, 0, 0.35 );
-	color: var(--paper);
+	color: #d6d9e0;
 	font-size: 1.4rem;
 	line-height: 1;
 	cursor: pointer;
@@ -63,35 +70,30 @@
 	margin: 0;
 	overflow: auto;
 	padding: 1.5rem;
-	background: var(--ink);
-	color: var(--paper);
+	background: #1e1f26;
+	color: #d6d9e0;
 	font-family: var(--font-mono);
 	font-size: 0.85rem;
 	line-height: 1.5;
 	white-space: pre;
 	tab-size: 2;
 }
-/* hljs token palette — mirrors the article's (see [rkey].astro), scoped here so the
-   modal is self-contained and doesn't depend on .reader__article being an ancestor. */
-.record-json__code .hljs-comment,
-.record-json__code .hljs-quote {
-	color: var(--muted);
-	font-style: italic;
+/* Fixed JSON token palette (theme-independent — see file header). highlight.js emits
+   only these classes for JSON: attr (keys), string, number, literal (true/false/null),
+   keyword, punctuation. The base `color` above covers structural braces/brackets. */
+.record-json__code .hljs-attr {
+	color: #8fbcbb;
 }
-.record-json__code .hljs-keyword,
+.record-json__code .hljs-string {
+	color: #a3be8c;
+}
+.record-json__code .hljs-number {
+	color: #d08770;
+}
 .record-json__code .hljs-literal,
-.record-json__code .hljs-selector-tag {
-	color: var(--sun);
-}
-.record-json__code .hljs-string,
-.record-json__code .hljs-attr,
-.record-json__code .hljs-symbol {
-	color: var(--sun-strong);
-}
-.record-json__code .hljs-number,
-.record-json__code .hljs-built_in {
-	color: #7fb2c9;
+.record-json__code .hljs-keyword {
+	color: #b48ead;
 }
 .record-json__code .hljs-punctuation {
-	color: var(--ink-soft);
+	color: #7b8294;
 }

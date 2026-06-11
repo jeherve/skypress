@@ -17,25 +17,40 @@ const schemaJson = JSON.stringify( CONTENT_LEXICON, null, 2 );
 // than auto-detecting. Server-side at build time → no client JS, like the reader.
 const schemaJsonHtml = highlightSource( schemaJson, 'json' );
 
-// Hand-authored interop tables (site.standard.* are community-owned; see Decision 0005).
-const documentFields = [
-	{ name: 'site', req: true, value: "your publication's at:// URI; it links the document to its publication, which Bluesky needs for the rich link card" },
-	{ name: 'title', req: true, value: 'the document title' },
-	{ name: 'publishedAt', req: true, value: 'when it was published (ISO datetime)' },
-	{ name: 'path', req: false, value: "/<rkey>, the document's own record key; the canonical URL is the publication url plus this path" },
-	{ name: 'description', req: false, value: 'a short excerpt' },
-	{ name: 'textContent', req: false, value: "plain text of the article; it's what Bluesky indexes for search and reading time, so we always write it" },
-	{ name: 'content', req: false, value: 'the open content union, where our blog.skypress.content.gutenberg object lives' },
-	{ name: 'bskyPostRef', req: false, value: 'a reference back to the companion Bluesky post' },
-	{ name: 'updatedAt', req: false, value: 'set when an article is edited' },
-];
-
-const publicationFields = [
-	{ name: 'url', req: true, value: 'https://skypress.blog/@<handle>, your SkyPress home; articles hang off it' },
-	{ name: 'name', req: true, value: 'the publication name (defaults from your handle)' },
-	{ name: 'description', req: false, value: 'an optional description' },
-	{ name: 'icon', req: false, value: 'an optional icon image' },
-];
+// A faithful, trimmed slice of a real published article's content object (the
+// "Potato buns, one way" recipe), so the page can show how the block tree
+// actually nests rather than describe it abstractly. The live record has 17
+// top-level blocks; this keeps the first heading and a two-item list, with the
+// `$type` union discriminator and `version` intact.
+const exampleContent = {
+	$type: 'blog.skypress.content.gutenberg',
+	version: 1,
+	blocks: [
+		{
+			name: 'core/heading',
+			attributes: { level: 2, content: 'Ingredients' },
+			innerBlocks: [],
+		},
+		{
+			name: 'core/list',
+			attributes: { ordered: false, values: '' },
+			innerBlocks: [
+				{
+					name: 'core/list-item',
+					attributes: { content: '600g T45 flour' },
+					innerBlocks: [],
+				},
+				{
+					name: 'core/list-item',
+					attributes: { content: '200g warm milk' },
+					innerBlocks: [],
+				},
+			],
+		},
+	],
+};
+const exampleJson = JSON.stringify( exampleContent, null, 2 );
+const exampleJsonHtml = highlightSource( exampleJson, 'json' );
 ---
 
 <Base
@@ -74,6 +89,14 @@ const publicationFields = [
 					to the article, so people can find it.
 				</li>
 			</ul>
+			<p>
+				The first two use the community
+				<a href="https://tangled.org/standard.site/lexicons" target="_blank" rel="noopener noreferrer">standard.site</a>
+				lexicons, not anything SkyPress-specific, so other tools and readers that
+				already speak them can pick up your writing too. The one format SkyPress
+				actually owns is the block content tucked inside the document; that&rsquo;s
+				the part below.
+			</p>
 			<p class="lex-honest">
 				One thing worth repeating: publishing also creates a public Bluesky post.
 				We&rsquo;ll always remind you before you hit publish&nbsp;:)
@@ -105,49 +128,44 @@ const publicationFields = [
 				the full schema:
 			</p>
 			<pre class="lex-code"><code class="hljs language-json" set:html={ schemaJsonHtml } /></pre>
+
+			<h3>What the blocks look like</h3>
+			<p>
+				The schema says <code>blocks</code> is &ldquo;the block tree exactly as
+				produced by the editor&rdquo;, which is a bit abstract. So here&rsquo;s a
+				real one. This is the <code>content</code> object from a published recipe,
+				<a href="/@jeherve.com/recipes/3mnwlydxcr22u">Potato buns, one way</a>,
+				trimmed to its first heading and a two-item list:
+			</p>
+			<pre class="lex-code"><code class="hljs language-json" set:html={ exampleJsonHtml } /></pre>
+			<p>
+				Every block is the same little shape: a <code>name</code> (the Gutenberg
+				block, like <code>core/heading</code>), an <code>attributes</code> object
+				for its content and settings, and <code>innerBlocks</code> for anything
+				nested inside it, which is how the list here holds its items. The same
+				shape repeats all the way down. The <code>$type</code> tells any reader
+				which format it&rsquo;s looking at; everything else is just blocks. You can
+				see the full record behind any article yourself with the
+				&ldquo;view&nbsp;record&rdquo; link in its eyebrow&nbsp;:)
+			</p>
 		</section>
 
 		<section class="lex-section">
-			<h2>Interop: the <code>site.standard.*</code> surface</h2>
+			<h2>Want to run your own?</h2>
 			<p>
-				The publication and document metadata reuse the community
-				<a href="https://tangled.org/standard.site/lexicons" target="_blank" rel="noopener noreferrer">standard.site</a>
-				lexicons rather than anything SkyPress-specific. That way your articles are
-				discoverable by other tools and readers that already speak them, not just by
-				SkyPress.
+				SkyPress is open source (GPL-2.0-or-later), and it&rsquo;s only ever an
+				editor, an OAuth client, and a public renderer, never a home for your
+				data. Your writing already lives in your AT&nbsp;Protocol account, in the
+				open records above, so nothing&rsquo;s tied to this particular site.
 			</p>
-
-			<h3><code>site.standard.document</code>, the article</h3>
-			<table class="lex-table">
-				<thead>
-					<tr><th scope="col">Field</th><th scope="col">Required</th><th scope="col">What SkyPress writes</th></tr>
-				</thead>
-				<tbody>
-					{ documentFields.map( ( f ) => (
-						<tr>
-							<td><code>{ f.name }</code></td>
-							<td>{ f.req ? 'yes' : 'optional' }</td>
-							<td>{ f.value }</td>
-						</tr>
-					) ) }
-				</tbody>
-			</table>
-
-			<h3><code>site.standard.publication</code>, your SkyPress home</h3>
-			<table class="lex-table">
-				<thead>
-					<tr><th scope="col">Field</th><th scope="col">Required</th><th scope="col">What SkyPress writes</th></tr>
-				</thead>
-				<tbody>
-					{ publicationFields.map( ( f ) => (
-						<tr>
-							<td><code>{ f.name }</code></td>
-							<td>{ f.req ? 'yes' : 'optional' }</td>
-							<td>{ f.value }</td>
-						</tr>
-					) ) }
-				</tbody>
-			</table>
+			<p>
+				If you&rsquo;d rather not use skypress.blog, you can host your own copy. It&rsquo;s
+				an Astro app that deploys to Cloudflare; the only thing you need to set is a
+				<code>PUBLIC_SITE_URL</code>, and the OAuth client metadata and redirect URIs
+				adapt to wherever you put it. The code, and the setup steps, live in the repo:
+				<a href="https://tangled.org/jeremy.herve.bzh/skypress" target="_blank" rel="noopener noreferrer">tangled.org/jeremy.herve.bzh/skypress</a>.
+				Fork it, send patches, or just have a read&nbsp;:)
+			</p>
 		</section>
 
 		<div class="lex-actions">

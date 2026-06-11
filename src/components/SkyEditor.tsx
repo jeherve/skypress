@@ -74,6 +74,11 @@ export default function SkyEditor( { onChange, mediaUpload, initialBlocks }: Sky
 		iso: {
 			moreMenu: false,
 			footer: true,
+			// Adds a settings (gear) button to the toolbar that opens the block
+			// inspector as a popover (e.g. an image block's Alt text field).
+			toolbar: {
+				inspector: true,
+			},
 			blocks: {
 				allowBlocks: [ ...ALLOWED_BLOCKS ],
 			},

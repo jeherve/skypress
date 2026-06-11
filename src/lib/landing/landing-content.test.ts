@@ -18,16 +18,16 @@ describe( 'site footer links', () => {
 	const footer = read( '../../components/Footer.astro' );
 
 	it( 'links the lexicon under a Docs label', () => {
-		expect( footer ).toMatch( /href="\/lexicon"[^>]*>[\s\S]*?Docs/ );
+		expect( footer ).toMatch( /href=["']\/lexicon["'][^>]*>[\s\S]*?Docs/ );
 	} );
 
 	it( 'links the future demo publication under a News label', () => {
-		expect( footer ).toMatch( /href="\/@skypress\.blog"[^>]*>[\s\S]*?News/ );
+		expect( footer ).toMatch( /href=["']\/@skypress\.blog["'][^>]*>[\s\S]*?News/ );
 	} );
 
 	it( 'links the SkyPress source repo on tangled.org with an accessible label and icon', () => {
 		expect( footer ).toMatch(
-			/href="https:\/\/tangled\.org\/jeremy\.herve\.bzh\/skypress"[\s\S]*?aria-label=[\s\S]*?<svg/
+			/href=["']https:\/\/tangled\.org\/jeremy\.herve\.bzh\/skypress["'][\s\S]*?aria-label=[\s\S]*?<svg/
 		);
 	} );
 } );

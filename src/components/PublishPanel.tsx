@@ -93,8 +93,10 @@ export function computePostPreview( input: {
 /**
  * Title + publish/update control. Publishing a NEW article targets a CHOSEN publication
  * (Decision 0010) and creates a public Bluesky post, so it requires an explicit confirmation
- * (brief §10). Editing updates the existing record in place, in its own publication, and does
- * NOT create a new post (Decision 0008).
+ * (brief §10) — the confirm dialog also discloses which mentioned accounts will be notified.
+ * Publishing is blocked when the assembled post exceeds 300 graphemes (the live counter flags
+ * it and the button is disabled). Editing updates the existing record in place, in its own
+ * publication, and does NOT create a new post (Decision 0008).
  */
 export default function PublishPanel( {
 	agent,

@@ -271,10 +271,12 @@ export interface BskyPostRecord {
 const BSKY_POST_MAX_GRAPHEMES = 300;
 
 /**
- * Build the companion Bluesky post (Decision 0005). Body text + link/mention facets come
- * from `assemblePostText` (shared with the editor's live counter). `description` populates
- * ONLY the embed card subtitle; the writer-typed lede goes in the body via `bodyLede`.
- * `associatedRefs` drive the standard.site rich card (Decision 0013).
+ * Build the companion Bluesky post (Decision 0005). Body text + facets come from
+ * `assemblePostText` (shared with the editor's live counter): the body is
+ * `title + lede + cc line + URL` (lede and cc line omitted when empty), and `facets` carries
+ * the article-URL link facet plus a `#mention` facet per cc-ed account. `description`
+ * populates ONLY the embed card subtitle; the writer-typed lede goes in the body via
+ * `bodyLede`. `associatedRefs` drive the standard.site rich card (Decision 0013).
  */
 export function buildBskyPost( input: {
 	title: string;

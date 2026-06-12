@@ -1,5 +1,5 @@
 import { createElement } from '@wordpress/element';
-import { addFilter } from '@wordpress/hooks';
+import { addFilter, hasFilter } from '@wordpress/hooks';
 import { lookupActor, type ActorPreview } from '../landing/actor-lookup';
 
 type LookupFn = ( query: string ) => Promise< ActorPreview | null >;
@@ -18,6 +18,7 @@ export function createMentionCompleter( lookup: LookupFn = lookupActor ) {
 	return {
 		name: 'skypress/mention',
 		triggerPrefix: '@',
+		isDebounced: true,
 		async options( query: string ): Promise< ActorPreview[] > {
 			const trimmed = query.trim();
 			if ( ! trimmed ) {
@@ -71,20 +72,18 @@ export function createMentionCompleter( lookup: LookupFn = lookupActor ) {
 	};
 }
 
-let registered = false;
+const MENTION_FILTER_NAMESPACE = 'skypress/mention-autocompleter';
 
-/** Add the mention completer to every RichText instance in the editor. */
+/** Add the mention completer to every RichText instance in the editor (idempotent). */
 export function registerMentionAutocompleter(): void {
-	if ( registered ) {
+	if ( hasFilter( 'editor.Autocomplete.completers', MENTION_FILTER_NAMESPACE ) ) {
 		return;
 	}
-	registered = true;
 	const completer = createMentionCompleter();
 	addFilter(
 		'editor.Autocomplete.completers',
-		'skypress/mention-autocompleter',
-		// The local `addFilter` type signs the callback as `( ...args: unknown[] )`,
-		// so accept `unknown` and narrow to the completers array here.
+		MENTION_FILTER_NAMESPACE,
+		// @wordpress/hooks types the callback as (...args) => unknown; cast the first arg.
 		( completers: unknown ) => [ ...( completers as unknown[] ), completer ]
 	);
 }

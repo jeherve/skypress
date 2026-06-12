@@ -36,5 +36,6 @@ declare module '@wordpress/hooks' {
 		callback: ( ...args: unknown[] ) => unknown,
 		priority?: number
 	): void;
+	export function hasFilter( hookName: string, namespace?: string ): boolean;
 	export function applyFilters( hookName: string, value: unknown, ...args: unknown[] ): unknown;
 }

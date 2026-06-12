@@ -7,6 +7,9 @@
 import type { BlockNode } from '../blocks/render';
 import type { BlobRefJson } from '../media/blob';
 import { parseBasicTheme, type BasicTheme } from './themes';
+import { assemblePostText, type PostFacet } from './post-text';
+import { graphemeLength } from './grapheme';
+import type { Mention } from './mentions';
 
 /**
  * Public origin for the stored publication + article URLs (and the Bluesky post link).
@@ -221,13 +224,6 @@ export function buildDocumentRecord( input: {
 	};
 }
 
-/** A richtext link facet (`app.bsky.richtext.facet#link`) over a UTF-8 byte range of `text`. */
-export interface BskyLinkFacet {
-	$type: 'app.bsky.richtext.facet';
-	index: { byteStart: number; byteEnd: number };
-	features: Array< { $type: 'app.bsky.richtext.facet#link'; uri: string } >;
-}
-
 /** A `com.atproto.repo.strongRef` as embedded in `external.associatedRefs` (Decision 0013). */
 export interface AssociatedRef extends StrongRef {
 	$type: 'com.atproto.repo.strongRef';
@@ -237,8 +233,8 @@ export interface BskyPostRecord {
 	$type: 'app.bsky.feed.post';
 	text: string;
 	createdAt: string;
-	/** Always present: marks the article URL in `text` as a clickable link (Decision 0013). */
-	facets: BskyLinkFacet[];
+	/** Marks the article URL as a clickable link, plus a #mention facet per cc-ed account (Decision 0013). */
+	facets: PostFacet[];
 	embed: {
 		$type: 'app.bsky.embed.external';
 		external: {
@@ -253,41 +249,48 @@ export interface BskyPostRecord {
 	};
 }
 
-/** UTF-8 byte length — facet offsets are byte-based, not JS string-index based. */
-function utf8ByteLength( value: string ): number {
-	return new TextEncoder().encode( value ).length;
-}
+/** Bluesky rejects posts longer than this many graphemes. */
+const BSKY_POST_MAX_GRAPHEMES = 300;
 
 /**
- * Build the companion Bluesky post (Decision 0005). The article URL is appended to the text and
- * marked as a clickable link via a richtext facet; `associatedRefs` (the document + publication
- * strongRefs) are embedded so Bluesky renders the rich standard.site link card (Decision 0013).
+ * Build the companion Bluesky post (Decision 0005). Body text + link/mention facets come
+ * from `assemblePostText` (shared with the editor's live counter). `description` populates
+ * ONLY the embed card subtitle; the writer-typed lede goes in the body via `bodyLede`.
+ * `associatedRefs` drive the standard.site rich card (Decision 0013).
  */
 export function buildBskyPost( input: {
 	title: string;
 	articleUrl: string;
 	createdAt: string;
 	description?: string;
+	/** The writer-typed lede, placed in the post body (omitted when blank). */
+	bodyLede?: string;
+	/** Accounts to cc + notify via #mention facets. */
+	mentions?: Mention[];
 	/** Optional image blob for the card's `thumb` (the og:image fallback, Decision 0014). */
 	thumb?: BlobRefJson;
 	/** Document + publication strongRefs, in that order, for the standard.site card. */
 	associatedRefs?: StrongRef[];
 } ): BskyPostRecord {
-	const text = `${ input.title }\n\n${ input.articleUrl }`;
-	// The URL is the trailing segment of `text`; mark its byte range as a link facet.
-	const byteStart = utf8ByteLength( `${ input.title }\n\n` );
-	const byteEnd = byteStart + utf8ByteLength( input.articleUrl );
+	const { text, facets } = assemblePostText( {
+		title: input.title,
+		articleUrl: input.articleUrl,
+		bodyLede: input.bodyLede,
+		mentions: input.mentions,
+	} );
+
+	const length = graphemeLength( text );
+	if ( length > BSKY_POST_MAX_GRAPHEMES ) {
+		throw new Error(
+			`Bluesky post is ${ length } characters; the limit is ${ BSKY_POST_MAX_GRAPHEMES }. Shorten the subtitle or remove a mention.`
+		);
+	}
+
 	return {
 		$type: 'app.bsky.feed.post',
 		text,
 		createdAt: input.createdAt,
-		facets: [
-			{
-				$type: 'app.bsky.richtext.facet',
-				index: { byteStart, byteEnd },
-				features: [ { $type: 'app.bsky.richtext.facet#link', uri: input.articleUrl } ],
-			},
-		],
+		facets,
 		embed: {
 			$type: 'app.bsky.embed.external',
 			external: {

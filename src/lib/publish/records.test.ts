@@ -353,3 +353,49 @@ describe( 'buildBskyPost', () => {
 		expect( buildBskyPost( { ...base, thumb } ).embed.external.thumb ).toEqual( thumb );
 	} );
 } );
+
+describe( 'buildBskyPost — lede + mentions', () => {
+	const URL = 'https://skypress.blog/@me/pub/3kabcde12345';
+
+	it( 'keeps the card description separate from the post body', () => {
+		const post = buildBskyPost( {
+			title: 'Title',
+			articleUrl: URL,
+			description: 'Card subtitle',
+			createdAt: '2026-06-12T00:00:00.000Z',
+			bodyLede: 'Body lede',
+		} );
+		expect( post.text ).toBe( `Title\n\nBody lede\n\n${ URL }` );
+		expect( post.embed.external.description ).toBe( 'Card subtitle' );
+	} );
+
+	it( 'emits a mention facet for each cc-ed account', () => {
+		const post = buildBskyPost( {
+			title: 'Title',
+			articleUrl: URL,
+			description: 'd',
+			createdAt: '2026-06-12T00:00:00.000Z',
+			mentions: [
+				{ did: 'did:plc:a', handle: 'alice.bsky.social', displayText: '@alice.bsky.social' },
+			],
+		} );
+		expect( post.text ).toContain( 'cc @alice.bsky.social' );
+		const hasMention = post.facets.some(
+			( f ) => f.features[ 0 ].$type === 'app.bsky.richtext.facet#mention'
+		);
+		expect( hasMention ).toBe( true );
+	} );
+
+	it( 'throws when the assembled post exceeds 300 graphemes', () => {
+		const longLede = 'x'.repeat( 320 );
+		expect( () =>
+			buildBskyPost( {
+				title: 'Title',
+				articleUrl: URL,
+				description: 'd',
+				createdAt: '2026-06-12T00:00:00.000Z',
+				bodyLede: longLede,
+			} )
+		).toThrow( /300/ );
+	} );
+} );

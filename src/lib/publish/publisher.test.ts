@@ -458,3 +458,63 @@ describe( 'publish — description fallback', () => {
 		expect( put[ 0 ].record.description ).toBe( deriveExcerpt( blocksToText( BLOCKS ) ) );
 	} );
 } );
+
+function mentionPara( handle: string, did: string ): BlockNode {
+	return {
+		name: 'core/paragraph',
+		attributes: {
+			content: `Hi <a class="skypress-mention" href="https://bsky.app/profile/${ handle }" data-did="${ did }">@${ handle }</a>`,
+		},
+		innerBlocks: [],
+	};
+}
+
+/** A fake atproto Agent that records the records it is asked to write. */
+function fakeAgent() {
+	const created: Array< { collection: string; record: any } > = [];
+	let n = 0;
+	const repo = {
+		createRecord: vi.fn( async ( { collection, record }: any ) => {
+			created.push( { collection, record } );
+			n++;
+			return { data: { uri: `at://did:plc:me/${ collection }/rkey${ n }`, cid: `cid${ n }` } };
+		} ),
+		putRecord: vi.fn( async ( { collection, record }: any ) => {
+			created.push( { collection, record } );
+			return { data: { uri: 'at://did:plc:me/doc/rkey', cid: 'cidX' } };
+		} ),
+	};
+	return { agent: { com: { atproto: { repo } } } as any, created };
+}
+
+describe( 'publish — mentions', () => {
+	it( "cc's mentioned accounts on the post and stores the flat list on the document", async () => {
+		const { agent, created } = fakeAgent();
+		await publish(
+			agent,
+			{ did: 'did:plc:me', handle: 'me.bsky.social' },
+			{
+				title: 'Hello',
+				description: 'My lede',
+				blocks: [ mentionPara( 'alice.bsky.social', 'did:plc:alice' ) ],
+				publicationUri: 'at://did:plc:me/site.standard.publication/pub',
+				publicationCid: 'cidpub',
+				publicationSlug: 'pub',
+			}
+		);
+
+		const post = created.find( ( c ) => c.collection === 'app.bsky.feed.post' )!.record;
+		expect( post.text ).toContain( 'My lede' );
+		expect( post.text ).toContain( 'cc @alice.bsky.social' );
+		expect(
+			post.facets.some(
+				( f: any ) => f.features[ 0 ].$type === 'app.bsky.richtext.facet#mention'
+			)
+		).toBe( true );
+
+		const doc = created.find( ( c ) => c.collection === 'site.standard.document' )!.record;
+		expect( doc.content.mentions ).toEqual( [
+			{ did: 'did:plc:alice', handle: 'alice.bsky.social' },
+		] );
+	} );
+} );

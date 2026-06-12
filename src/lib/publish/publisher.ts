@@ -10,6 +10,7 @@ import { listPublications } from './publications';
 import { firstImageBlobRef, normalizeBlobRefJson, type BlobRefJson } from '../media/blob';
 import { blocksToText, type BlockNode } from '../blocks/render';
 import { deriveExcerpt } from './excerpt';
+import { collectMentions } from './mentions';
 
 const DOCUMENT_COLLECTION = 'site.standard.document';
 const POST_COLLECTION = 'app.bsky.feed.post';
@@ -82,6 +83,9 @@ export async function publish(
 	// document description AND the Bluesky card description are never empty (the og:image's
 	// text twin). Written into the record, not just the rendered meta.
 	const description = input.description?.trim() || deriveExcerpt( textContent );
+	const mentions = collectMentions( input.blocks );
+	// The post BODY uses the writer-typed lede only (never the derived excerpt).
+	const bodyLede = input.description?.trim() || undefined;
 
 	// 1. Document first (no bskyPostRef yet) so the post can embed its strongRef.
 	const docRes = await agent.com.atproto.repo.createRecord( {
@@ -98,6 +102,7 @@ export async function publish(
 				publishedAt: now,
 				coverImage: input.coverImage,
 				description,
+				mentions,
 			} )
 		),
 	} );
@@ -113,6 +118,8 @@ export async function publish(
 				title: input.title,
 				articleUrl,
 				description,
+				bodyLede,
+				mentions,
 				createdAt: now,
 				// Prefer the writer's explicit cover; else reuse the first uploaded image (Decision 0014).
 				thumb: input.coverImage ?? firstImageBlobRef( input.blocks ),
@@ -138,6 +145,7 @@ export async function publish(
 				coverImage: input.coverImage,
 				description,
 				bskyPostRef,
+				mentions,
 			} )
 		),
 	} );
@@ -182,6 +190,7 @@ export async function updateDocument(
 	const articleUrl = canonicalArticleUrl( handle, input.publicationSlug, input.rkey );
 	const textContent = blocksToText( input.blocks );
 	const description = input.description?.trim() || deriveExcerpt( textContent );
+	const mentions = collectMentions( input.blocks );
 
 	const res = await agent.com.atproto.repo.putRecord( {
 		repo: did,
@@ -199,6 +208,7 @@ export async function updateDocument(
 				description,
 				bskyPostRef: input.bskyPostRef,
 				updatedAt: now,
+				mentions,
 			} )
 		),
 	} );

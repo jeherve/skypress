@@ -264,6 +264,17 @@ if ( error ) {
 	.reader__article :global(a) {
 		color: var(--sun);
 	}
+	/* @mentions read as part of the prose, brightening to --sun on hover — the same
+	   quiet treatment as the author handle link on profile pages. */
+	.reader__article :global(a.skypress-mention) {
+		color: inherit;
+		text-decoration: none;
+		transition: color 0.15s ease;
+	}
+	.reader__article :global(a.skypress-mention:hover),
+	.reader__article :global(a.skypress-mention:focus-visible) {
+		color: var(--sun);
+	}
 	/* First paragraph: a quiet editorial lead-in */
 	.reader__article :global(p:first-of-type) {
 		font-size: 1.32rem;

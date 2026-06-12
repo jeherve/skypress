@@ -7,7 +7,7 @@ export interface Mention {
 	displayText: string;
 }
 
-const PROFILE_RE = /^https?:\/\/bsky\.app\/profile\/(.+)$/;
+const PROFILE_RE = /^https?:\/\/bsky\.app\/profile\/([^/?#]+)/;
 
 /**
  * Scan a block tree for `skypress/mention` anchors (`<a data-did="…">`) and return

@@ -47,6 +47,22 @@ describe( 'collectMentions', () => {
 		expect( collectMentions( blocks ).map( ( m ) => m.did ) ).toEqual( [ 'did:plc:carol' ] );
 	} );
 
+	it( 'derives the handle from the text when the href is not a bsky profile', () => {
+		const blocks = [
+			{
+				name: 'core/paragraph',
+				attributes: {
+					content:
+						'<a class="skypress-mention" href="" data-did="did:plc:dave">@dave.example.com</a>',
+				},
+				innerBlocks: [],
+			},
+		];
+		expect( collectMentions( blocks ) ).toEqual( [
+			{ did: 'did:plc:dave', handle: 'dave.example.com', displayText: '@dave.example.com' },
+		] );
+	} );
+
 	it( 'returns [] when there are no blocks', () => {
 		expect( collectMentions( [] ) ).toEqual( [] );
 	} );

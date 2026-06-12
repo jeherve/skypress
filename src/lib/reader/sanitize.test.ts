@@ -35,4 +35,14 @@ describe( 'sanitizeArticleHtml', () => {
 		expect( clean ).toContain( 'rel="noopener noreferrer nofollow ugc"' );
 		expect( clean ).toContain( 'target="_blank"' );
 	} );
+
+	it( 'keeps a mention link (class + href) but strips its data-did', () => {
+		const dirty =
+			'<p>Hi <a class="skypress-mention" href="https://bsky.app/profile/alice.bsky.social" data-did="did:plc:alice">@alice.bsky.social</a></p>';
+		const clean = sanitizeArticleHtml( dirty );
+		expect( clean ).toContain( 'class="skypress-mention"' );
+		expect( clean ).toContain( 'href="https://bsky.app/profile/alice.bsky.social"' );
+		expect( clean ).not.toContain( 'data-did' );
+		expect( clean ).toContain( '@alice.bsky.social' );
+	} );
 } );

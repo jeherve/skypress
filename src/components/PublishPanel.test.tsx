@@ -137,6 +137,72 @@ async function clickPublish(
 	container.remove();
 }
 
+/**
+ * Render a PublishPanel and hand back its container for inspection (no interaction).
+ * Mirrors the prop shapes the click harnesses above build: a new-article panel passes
+ * `publications: [ PUB ]` and no `editing`; an editing panel passes `editing: EDITING`.
+ */
+async function renderPanel( props: {
+	editing?: typeof EDITING;
+	publications: unknown[];
+	description: string;
+} ): Promise< { container: HTMLDivElement; cleanup: () => void } > {
+	const container = document.createElement( 'div' );
+	document.body.appendChild( container );
+	const root = createRoot( container );
+	await act( async () => {
+		root.render(
+			createElement( PublishPanel, {
+				agent: {} as Agent,
+				identity: { did: 'did:plc:me', handle: 'me.test' },
+				blocks: [ { name: 'core/paragraph', attributes: { content: 'Body' }, innerBlocks: [] } ] as never,
+				blobRegistry: new Map(),
+				publications: props.publications as never,
+				editing: props.editing,
+				title: 'A title',
+				description: props.description,
+			} )
+		);
+	} );
+	const cleanup = () => {
+		act( () => {
+			root.unmount();
+		} );
+		container.remove();
+	};
+	return { container, cleanup };
+}
+
+describe( 'PublishPanel post-length gate', () => {
+	it( 'disables Publish and shows the over-limit counter on a too-long new article', async () => {
+		const { container, cleanup } = await renderPanel( {
+			publications: [ PUB ],
+			description: 'x'.repeat( 320 ),
+		} );
+		const button = Array.from( container.querySelectorAll( 'button' ) ).find(
+			( b ) => b.textContent === 'Publish…'
+		)!;
+		expect( button.disabled ).toBe( true );
+		expect( container.textContent ).toContain( 'Bluesky post:' );
+		expect( container.textContent ).toContain( 'too long to publish' );
+		cleanup();
+	} );
+
+	it( 'does not disable Update or show a counter when editing the same long content', async () => {
+		const { container, cleanup } = await renderPanel( {
+			editing: EDITING,
+			publications: [],
+			description: 'x'.repeat( 320 ),
+		} );
+		const button = Array.from( container.querySelectorAll( 'button' ) ).find(
+			( b ) => b.textContent === 'Update'
+		)!;
+		expect( button.disabled ).toBe( false );
+		expect( container.textContent ).not.toContain( 'Bluesky post:' );
+		cleanup();
+	} );
+} );
+
 describe( 'computePostPreview', () => {
 	it( 'reports the mentioned handles and a grapheme count', () => {
 		const preview = computePostPreview( {

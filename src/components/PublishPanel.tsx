@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Agent } from '@atproto/api';
 import type { BlockInstance } from '@wordpress/blocks';
 import {
@@ -124,15 +124,19 @@ export default function PublishPanel( {
 	const hasTarget = Boolean( target );
 
 	const previewHandle = identity.handle ?? identity.did;
-	const preview = target
-		? computePostPreview( {
-				title,
-				lede: description,
-				blocks: normalizeBlocks( blocks ),
-				handle: previewHandle,
-				slug: target.slug,
-		  } )
-		: null;
+	const preview = useMemo(
+		() =>
+			! isEditing && target
+				? computePostPreview( {
+						title,
+						lede: description,
+						blocks: normalizeBlocks( blocks ),
+						handle: previewHandle,
+						slug: target.slug,
+				  } )
+				: null,
+		[ isEditing, target, title, description, blocks, previewHandle ]
+	);
 
 	const canSubmit =
 		title.trim().length > 0 && blocks.length > 0 && hasTarget && ! preview?.overLimit;
@@ -247,7 +251,9 @@ export default function PublishPanel( {
 					aria-live="polite"
 				>
 					Bluesky post: { preview.graphemes }/300
-					{ preview.overLimit ? ' — shorten the subtitle to publish' : '' }
+					{ preview.overLimit
+						? ' — too long to publish; shorten the subtitle or remove a mention'
+						: '' }
 				</p>
 			) }
 

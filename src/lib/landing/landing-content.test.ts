@@ -21,8 +21,10 @@ describe( 'site footer links', () => {
 		expect( footer ).toMatch( /href=["']\/lexicon["'][^>]*>[\s\S]*?Docs/ );
 	} );
 
-	it( 'links the future demo publication under a News label', () => {
-		expect( footer ).toMatch( /href=["']\/@skypress\.blog["'][^>]*>[\s\S]*?News/ );
+	it( 'links the SkyPress launch article under a News label', () => {
+		expect( footer ).toMatch(
+			/href=["']https:\/\/skypress\.blog\/@skypress\.blog\/its-always-sunny-on-skypress["'][^>]*>[\s\S]*?News/
+		);
 	} );
 
 	it( 'links the SkyPress source repo on tangled.org with an accessible label and icon', () => {

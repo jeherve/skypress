@@ -13,7 +13,7 @@ describe( 'content lexicon doc', () => {
 
 	it( 'derives ordered field rows from the schema, with required flags', () => {
 		const fields = contentSchemaFields();
-		expect( fields.map( ( f ) => f.name ) ).toEqual( [ 'version', 'blocks' ] );
+		expect( fields.map( ( f ) => f.name ) ).toEqual( [ 'version', 'blocks', 'mentions' ] );
 
 		expect( fields[ 0 ] ).toMatchObject( {
 			name: 'version',
@@ -28,5 +28,12 @@ describe( 'content lexicon doc', () => {
 			required: true,
 		} );
 		expect( fields[ 1 ].description ).toContain( 'block tree' );
+
+		expect( fields[ 2 ] ).toMatchObject( {
+			name: 'mentions',
+			type: 'array',
+			required: false,
+		} );
+		expect( fields[ 2 ].description.length ).toBeGreaterThan( 0 );
 	} );
 } );

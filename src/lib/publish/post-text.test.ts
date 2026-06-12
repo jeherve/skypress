@@ -78,4 +78,21 @@ describe( 'assemblePostText', () => {
 		);
 		expect( slice ).toBe( '@alice.bsky.social' );
 	} );
+
+	it( 'computes correct byte offsets for a multibyte handle', () => {
+		const handle = 'señor.bsky.social';
+		const { text, facets } = assemblePostText( {
+			title: 'Hi',
+			articleUrl: URL,
+			mentions: [ { did: 'did:plc:s', handle, displayText: `@${ handle }` } ],
+		} );
+		const mention = facets.find(
+			( f ) => f.features[ 0 ].$type === 'app.bsky.richtext.facet#mention'
+		)!;
+		const buf = new TextEncoder().encode( text );
+		const slice = new TextDecoder().decode(
+			buf.slice( mention.index.byteStart, mention.index.byteEnd )
+		);
+		expect( slice ).toBe( `@${ handle }` );
+	} );
 } );

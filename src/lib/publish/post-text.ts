@@ -60,7 +60,8 @@ export function assemblePostText( input: {
 
 	// Mention facets (each @handle inside the cc line).
 	if ( ccLine ) {
-		const ccIndex = segments.indexOf( ccLine );
+		// The cc line, when present, is always the second-to-last segment (before the URL).
+		const ccIndex = segments.length - 2;
 		let local = utf8ByteLength( 'cc ' );
 		mentions.forEach( ( mention, i ) => {
 			if ( i > 0 ) {

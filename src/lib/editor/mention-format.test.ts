@@ -28,6 +28,7 @@ describe( 'skypress/mention format', () => {
 		expect( html ).toContain( 'href="https://bsky.app/profile/alice.bsky.social"' );
 		expect( html ).toContain( 'data-did="did:plc:alice"' );
 		expect( html ).toContain( '@alice.bsky.social' );
+		expect( html ).toContain( 'class="skypress-mention"' );
 	} );
 
 	it( 'is idempotent — calling register twice does not throw', () => {

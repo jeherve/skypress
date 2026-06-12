@@ -516,5 +516,15 @@ describe( 'publish — mentions', () => {
 		expect( doc.content.mentions ).toEqual( [
 			{ did: 'did:plc:alice', handle: 'alice.bsky.social' },
 		] );
+
+		// The step-3 putRecord (last document write) must ALSO carry the flat mentions list,
+		// alongside the bskyPostRef it back-links — so a regression dropping mentions from
+		// only that builder can't slip through.
+		const docWrites = created.filter( ( c ) => c.collection === 'site.standard.document' );
+		expect( docWrites.length ).toBeGreaterThanOrEqual( 2 );
+		expect( docWrites.at( -1 )!.record.content.mentions ).toEqual( [
+			{ did: 'did:plc:alice', handle: 'alice.bsky.social' },
+		] );
+		expect( docWrites.at( -1 )!.record.bskyPostRef ).toBeDefined();
 	} );
 } );

@@ -140,7 +140,7 @@ export interface GutenbergContent {
 	blocks: BlockNode[];
 	/**
 	 * Optional flat list of accounts this document mentions, derived from the inline
-	 * `<a data-did>` anchors. Additive interop hint for other appviews (Decision 0013);
+	 * `<a data-did>` anchors. Additive interop hint for other appviews (Decision 0019);
 	 * SkyPress's own reader resolves mentions from the anchors, not this field.
 	 */
 	mentions?: Array< { did: string; handle: string } >;

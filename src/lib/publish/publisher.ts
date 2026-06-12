@@ -3,6 +3,7 @@ import { TID } from '@atproto/common-web';
 import {
 	buildDocumentRecord,
 	buildBskyPost,
+	assertBskyPostWithinLimit,
 	canonicalArticleUrl,
 	type StrongRef,
 } from './records';
@@ -86,6 +87,11 @@ export async function publish(
 	const mentions = collectMentions( input.blocks );
 	// The post BODY uses the writer-typed lede only (never the derived excerpt).
 	const bodyLede = input.description?.trim() || undefined;
+
+	// Pre-flight the companion post's length BEFORE writing anything: if it's over the
+	// grapheme limit, fail here rather than after step 1 has already created an orphan
+	// document with no post (buildBskyPost repeats this check as a backstop).
+	assertBskyPostWithinLimit( { title: input.title, articleUrl, bodyLede, mentions } );
 
 	// 1. Document first (no bskyPostRef yet) so the post can embed its strongRef.
 	const docRes = await agent.com.atproto.repo.createRecord( {

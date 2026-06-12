@@ -527,4 +527,24 @@ describe( 'publish — mentions', () => {
 		] );
 		expect( docWrites.at( -1 )!.record.bskyPostRef ).toBeDefined();
 	} );
+
+	it( 'rejects an over-limit post before writing ANY record (no orphan document)', async () => {
+		const { agent, created } = fakeAgent();
+		await expect(
+			publish(
+				agent,
+				{ did: 'did:plc:me', handle: 'me.bsky.social' },
+				{
+					title: 'Hello',
+					description: 'x'.repeat( 320 ),
+					blocks: BLOCKS,
+					publicationUri: 'at://did:plc:me/site.standard.publication/pub',
+					publicationCid: 'cidpub',
+					publicationSlug: 'pub',
+				}
+			)
+		).rejects.toThrow( /300/ );
+		// The grapheme guard must fire pre-flight: nothing was written to the PDS.
+		expect( created ).toHaveLength( 0 );
+	} );
 } );

@@ -268,7 +268,28 @@ export interface BskyPostRecord {
 }
 
 /** Bluesky rejects posts longer than this many graphemes. */
-const BSKY_POST_MAX_GRAPHEMES = 300;
+export const BSKY_POST_MAX_GRAPHEMES = 300;
+
+/**
+ * Throw if the companion post would exceed Bluesky's grapheme limit. Call this as a
+ * PRE-FLIGHT in `publish()` (before any record is written) so the guard can't leave an
+ * orphaned document; `buildBskyPost` also calls it as a final backstop. Inputs match
+ * `assemblePostText`, so the assembled text is identical to what gets published.
+ */
+export function assertBskyPostWithinLimit( input: {
+	title: string;
+	articleUrl: string;
+	bodyLede?: string;
+	mentions?: Mention[];
+} ): void {
+	const { text } = assemblePostText( input );
+	const length = graphemeLength( text );
+	if ( length > BSKY_POST_MAX_GRAPHEMES ) {
+		throw new Error(
+			`Bluesky post is ${ length } characters; the limit is ${ BSKY_POST_MAX_GRAPHEMES }. Shorten the subtitle or remove a mention.`
+		);
+	}
+}
 
 /**
  * Build the companion Bluesky post (Decision 0005). Body text + facets come from
@@ -299,12 +320,13 @@ export function buildBskyPost( input: {
 		mentions: input.mentions,
 	} );
 
-	const length = graphemeLength( text );
-	if ( length > BSKY_POST_MAX_GRAPHEMES ) {
-		throw new Error(
-			`Bluesky post is ${ length } characters; the limit is ${ BSKY_POST_MAX_GRAPHEMES }. Shorten the subtitle or remove a mention.`
-		);
-	}
+	// Backstop: `publish()` already pre-flights this before writing any record.
+	assertBskyPostWithinLimit( {
+		title: input.title,
+		articleUrl: input.articleUrl,
+		bodyLede: input.bodyLede,
+		mentions: input.mentions,
+	} );
 
 	return {
 		$type: 'app.bsky.feed.post',

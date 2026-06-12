@@ -23,6 +23,8 @@ import '@automattic/isolated-block-editor/build-browser/isolated-block-editor.cs
 
 import { ALLOWED_BLOCKS } from '../lib/blocks/allowlist';
 import type { MediaUploadHandler } from '../lib/media/mediaUpload';
+import { registerMentionFormat } from '../lib/editor/mention-format';
+import { registerMentionAutocompleter } from '../lib/editor/mention-autocompleter';
 
 export const SPIKE_BLOCKS_KEY = 'skypress:spike:blocks';
 
@@ -52,12 +54,17 @@ export default function SkyEditor( { onChange, mediaUpload, initialBlocks }: Sky
 	// it from the accessibility tree and suppress the announcement) while idle.
 	const [ status, setStatus ] = useState< string >( '' );
 
-	// Load existing content (editing) by rebuilding block instances from the stored tree.
-	// Core blocks are registered globally by the time onLoad runs.
-	const onLoad =
-		initialBlocks && initialBlocks.length > 0
-			? () => toEditorBlocks( initialBlocks )
-			: undefined;
+	// Runs once per editor mount, after the isolated editor has registered its
+	// `@wordpress` stores and core blocks globally. We use it to activate the
+	// `@`-mention format + autocompleter (both idempotent) and, when editing, to
+	// rebuild block instances from the stored tree.
+	const onLoad = useCallback( (): BlockInstance[] => {
+		registerMentionFormat();
+		registerMentionAutocompleter();
+		return initialBlocks && initialBlocks.length > 0
+			? toEditorBlocks( initialBlocks )
+			: [];
+	}, [ initialBlocks ] );
 
 	const onSaveBlocks = useCallback(
 		( blocks: BlockInstance[] ) => {

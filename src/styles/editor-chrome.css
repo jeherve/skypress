@@ -114,6 +114,17 @@
 .publish__error {
 	color: var(--ember);
 }
+.publish__count {
+	margin: 0;
+	font-size: 0.8rem;
+	color: var(--muted);
+}
+.publish__count--over {
+	/* Fixed red, NOT a theme token: --ember is recolored per publication
+	   (themes.ts), which could leave this over-limit warning unreadable. */
+	color: #b00020;
+	font-weight: 600;
+}
 
 /* Mode bar */
 .studio__mode {
@@ -388,4 +399,22 @@
 	.studio__published {
 		animation: none;
 	}
+}
+
+/* @-mention autocomplete row (portaled into the editor's completer popover). */
+.skypress-mention-option {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+.skypress-mention-option__avatar {
+	border-radius: 50%;
+}
+.skypress-mention-option__handle {
+	color: var(--muted);
+}
+
+/* Rendered mention link in the article — inherits link styling; hook for theming. */
+.skypress-mention {
+	text-decoration: underline;
 }

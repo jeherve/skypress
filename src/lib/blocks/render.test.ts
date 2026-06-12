@@ -52,6 +52,25 @@ describe( 'renderBlocks — fidelity vs @wordpress/blocks.serialize()', () => {
 		expect( actual ).toBe( expected );
 	} );
 
+	it( 'reproduces a paragraph containing a skypress mention', async () => {
+		// Registering the mention format teaches @wordpress/blocks how to serialize the
+		// anchor (incl. data-did). Without it, serialize() would drop the attribute.
+		const { registerMentionFormat } = await import( '../editor/mention-format' );
+		registerMentionFormat();
+
+		const tree = [
+			createBlock( 'core/paragraph', {
+				content:
+					'Thanks <a class="skypress-mention" href="https://bsky.app/profile/alice.bsky.social" data-did="did:plc:alice">@alice.bsky.social</a>!',
+			} ),
+		];
+
+		const expected = normalize( stripDelimiters( serializeBlocks( tree ) ) );
+		const actual = normalize( renderBlocks( tree ) );
+
+		expect( actual ).toBe( expected );
+	} );
+
 	it( 'renders an ordered list as <ol>', () => {
 		const tree = [
 			createBlock( 'core/list', { ordered: true }, [

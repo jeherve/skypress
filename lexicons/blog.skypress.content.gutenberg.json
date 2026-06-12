@@ -16,6 +16,11 @@
           "type": "array",
           "description": "The Gutenberg block tree exactly as produced by the editor's `onSaveBlocks` (NOT rendered HTML). Each item is a block node: `{ name: string, attributes: object, innerBlocks: block[] }`, where `name` is the Gutenberg block name (e.g. `core/paragraph`). Items are typed `unknown` because block attributes are open-ended per block type.",
           "items": { "type": "unknown" }
+        },
+        "mentions": {
+          "type": "array",
+          "description": "Optional, additive. Accounts mentioned in the body, mirrored from the inline `<a data-did>` anchors in the block tree. A flat discovery list for other appviews; SkyPress's own reader renders mentions from the inline anchors, not this field. Each item is `{ did: string, handle: string }`.",
+          "items": { "type": "unknown" }
         }
       }
     }

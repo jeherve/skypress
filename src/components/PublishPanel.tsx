@@ -7,7 +7,15 @@ import {
 	type Identity,
 } from '../lib/publish/publisher';
 import type { Publication } from '../lib/publish/publications';
-import { normalizeBlocks, type StrongRef } from '../lib/publish/records';
+import {
+	canonicalArticleUrl,
+	normalizeBlocks,
+	type StrongRef,
+} from '../lib/publish/records';
+import { collectMentions } from '../lib/publish/mentions';
+import { assemblePostText } from '../lib/publish/post-text';
+import { graphemeLength } from '../lib/publish/grapheme';
+import type { BlockNode } from '../lib/blocks/render';
 import { attachBlobRefs } from '../lib/media/blob';
 import type { BlobRegistry } from '../lib/media/mediaUpload';
 import type { BlobRefJson } from '../lib/media/blob';
@@ -49,6 +57,39 @@ interface Props {
 	onComplete?: ( result: { articleUrl: string; isEditing: boolean } ) => void;
 }
 
+const POST_GRAPHEME_LIMIT = 300;
+const RKEY_PLACEHOLDER = 'aaaaaaaaaaaaa'; // 13 chars, TID length
+
+export interface PostPreview {
+	graphemes: number;
+	overLimit: boolean;
+	handles: string[];
+}
+
+/** Live preview of the companion Bluesky post: its grapheme count and who gets cc'd. */
+export function computePostPreview( input: {
+	title: string;
+	lede: string;
+	blocks: BlockNode[];
+	handle: string;
+	slug: string;
+} ): PostPreview {
+	const mentions = collectMentions( input.blocks );
+	const articleUrl = canonicalArticleUrl( input.handle, input.slug, RKEY_PLACEHOLDER );
+	const { text } = assemblePostText( {
+		title: input.title,
+		articleUrl,
+		bodyLede: input.lede,
+		mentions,
+	} );
+	const graphemes = graphemeLength( text );
+	return {
+		graphemes,
+		overLimit: graphemes > POST_GRAPHEME_LIMIT,
+		handles: mentions.map( ( m ) => `@${ m.handle }` ),
+	};
+}
+
 /**
  * Title + publish/update control. Publishing a NEW article targets a CHOSEN publication
  * (Decision 0010) and creates a public Bluesky post, so it requires an explicit confirmation
@@ -81,7 +122,20 @@ export default function PublishPanel( {
 	const editingPubName =
 		isEditing && pubs.find( ( pub ) => pub.uri === editing!.siteUri )?.name;
 	const hasTarget = Boolean( target );
-	const canSubmit = title.trim().length > 0 && blocks.length > 0 && hasTarget;
+
+	const previewHandle = identity.handle ?? identity.did;
+	const preview = target
+		? computePostPreview( {
+				title,
+				lede: description,
+				blocks: normalizeBlocks( blocks ),
+				handle: previewHandle,
+				slug: target.slug,
+		  } )
+		: null;
+
+	const canSubmit =
+		title.trim().length > 0 && blocks.length > 0 && hasTarget && ! preview?.overLimit;
 
 	// `publications` arrives asynchronously after mount, so the initial selection may not match
 	// any loaded publication. Lock onto the first one once they load (and recover if the current
@@ -187,6 +241,16 @@ export default function PublishPanel( {
 				</label>
 			) }
 
+			{ preview && (
+				<p
+					className={ `publish__count${ preview.overLimit ? ' publish__count--over' : '' }` }
+					aria-live="polite"
+				>
+					Bluesky post: { preview.graphemes }/300
+					{ preview.overLimit ? ' — shorten the subtitle to publish' : '' }
+				</p>
+			) }
+
 			{ ( phase === 'idle' || phase === 'error' || phase === 'done' ) && (
 				<button
 					className="publish__button"
@@ -204,6 +268,13 @@ export default function PublishPanel( {
 						⚠️ Publishing saves this article to <strong>your PDS</strong> and also
 						creates a <strong>public Bluesky post</strong> linking to it. Everyone
 						following you will see it.
+						{ preview && preview.handles.length > 0 && (
+							<>
+								{ ' ' }
+								It will notify{ ' ' }
+								<strong>{ preview.handles.join( ', ' ) }</strong>.
+							</>
+						) }
 					</p>
 					<div className="publish__actions">
 						<button className="publish__button" type="button" onClick={ run }>

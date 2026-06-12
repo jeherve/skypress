@@ -26,7 +26,18 @@ const { updateDocument, publish } = vi.hoisted( () => {
 // Mock the publish layer so we can assert what PublishPanel forwards.
 vi.mock( '../lib/publish/publisher', () => ( { publish, updateDocument } ) );
 
-import PublishPanel from './PublishPanel';
+import PublishPanel, { computePostPreview } from './PublishPanel';
+import type { BlockNode } from '../lib/blocks/render';
+
+function mentionPara( handle: string, did: string ): BlockNode {
+	return {
+		name: 'core/paragraph',
+		attributes: {
+			content: `Hi <a class="skypress-mention" href="https://bsky.app/profile/${ handle }" data-did="${ did }">@${ handle }</a>`,
+		},
+		innerBlocks: [],
+	};
+}
 
 const EDITING = {
 	rkey: '3kdoc',
@@ -125,6 +136,32 @@ async function clickPublish(
 	} );
 	container.remove();
 }
+
+describe( 'computePostPreview', () => {
+	it( 'reports the mentioned handles and a grapheme count', () => {
+		const preview = computePostPreview( {
+			title: 'Hello',
+			lede: 'A lede',
+			blocks: [ mentionPara( 'alice.bsky.social', 'did:plc:alice' ) ],
+			handle: 'me.bsky.social',
+			slug: 'pub',
+		} );
+		expect( preview.handles ).toEqual( [ '@alice.bsky.social' ] );
+		expect( preview.graphemes ).toBeGreaterThan( 0 );
+		expect( preview.overLimit ).toBe( false );
+	} );
+
+	it( 'flags overLimit when the assembled post exceeds 300 graphemes', () => {
+		const preview = computePostPreview( {
+			title: 'Hello',
+			lede: 'x'.repeat( 320 ),
+			blocks: [],
+			handle: 'me.bsky.social',
+			slug: 'pub',
+		} );
+		expect( preview.overLimit ).toBe( true );
+	} );
+} );
 
 describe( 'PublishPanel', () => {
 	it( 'forwards the lede to updateDocument as description', async () => {

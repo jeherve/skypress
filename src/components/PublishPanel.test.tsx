@@ -188,6 +188,20 @@ describe( 'PublishPanel post-length gate', () => {
 		cleanup();
 	} );
 
+	it( 'shows no counter for an in-limit new article', async () => {
+		const { container, cleanup } = await renderPanel( {
+			publications: [ PUB ],
+			description: 'A short subtitle',
+		} );
+		const button = Array.from( container.querySelectorAll( 'button' ) ).find(
+			( b ) => b.textContent === 'Publish…'
+		)!;
+		expect( button.disabled ).toBe( false );
+		// Under the limit the counter stays out of the way entirely.
+		expect( container.textContent ).not.toContain( 'Bluesky post:' );
+		cleanup();
+	} );
+
 	it( 'does not disable Update or show a counter when editing the same long content', async () => {
 		const { container, cleanup } = await renderPanel( {
 			editing: EDITING,

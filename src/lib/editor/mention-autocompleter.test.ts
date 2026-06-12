@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderToString } from 'react-dom/server';
-import { createMentionCompleter } from './mention-autocompleter';
+import {
+	createMentionCompleter,
+	replaceAtMentionCompleter,
+} from './mention-autocompleter';
 import type { ActorPreview } from '../landing/actor-lookup';
 
 const ALICE: ActorPreview = {
@@ -31,13 +34,34 @@ describe( 'mention autocompleter', () => {
 		expect( lookup ).not.toHaveBeenCalled();
 	} );
 
-	it( 'inserts a mention anchor with href + data-did on completion', () => {
+	it( 'completes to a mention anchor element (inserted at the caret, not block-replacing)', () => {
 		const completer = createMentionCompleter( async () => null );
+		// The completion is the anchor element itself, so the editor inserts it inline in
+		// place of the typed `@query` rather than swapping out the whole block.
 		const completion = completer.getOptionCompletion( ALICE );
-		expect( completion.action ).toBe( 'replace' );
-		const html = renderToString( completion.value );
+		const html = renderToString( completion );
 		expect( html ).toContain( 'href="https://bsky.app/profile/alice.bsky.social"' );
 		expect( html ).toContain( 'data-did="did:plc:alice"' );
 		expect( html ).toContain( '@alice.bsky.social' );
+	} );
+} );
+
+describe( 'replaceAtMentionCompleter', () => {
+	const mention = createMentionCompleter( async () => null );
+
+	it( "drops WordPress's built-in @ user completer and appends ours", () => {
+		const builtInUser = { name: 'user', triggerPrefix: '@' };
+		const blockCompleter = { name: 'block', triggerPrefix: '/' };
+		const result = replaceAtMentionCompleter(
+			[ builtInUser, blockCompleter ],
+			mention
+		);
+		// The '/' completer survives; the '@' user completer is gone; ours is last.
+		expect( result ).toEqual( [ blockCompleter, mention ] );
+	} );
+
+	it( 'returns only our completer when the base set is empty or not an array', () => {
+		expect( replaceAtMentionCompleter( [], mention ) ).toEqual( [ mention ] );
+		expect( replaceAtMentionCompleter( undefined, mention ) ).toEqual( [ mention ] );
 	} );
 } );

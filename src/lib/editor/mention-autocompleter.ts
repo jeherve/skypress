@@ -4,10 +4,14 @@ import { lookupActor, type ActorPreview } from '../landing/actor-lookup';
 
 type LookupFn = ( query: string ) => Promise< ActorPreview | null >;
 
-export interface MentionCompletion {
-	action: 'replace';
-	value: ReturnType< typeof createElement >;
-}
+/**
+ * The inline value an option completes to: a `skypress/mention` anchor element. Returning
+ * the element directly (rather than a `{ action: 'replace' }` object) makes the block editor
+ * insert it AT THE CARET in place of the typed `@query` — the same pattern as the core link
+ * completer. `action: 'replace'` would instead try to swap out the whole block, dropping the
+ * inline anchor.
+ */
+export type MentionCompletion = ReturnType< typeof createElement >;
 
 /**
  * A block-editor autocompleter for `@mentions`. `options` queries the public Bluesky
@@ -56,23 +60,40 @@ export function createMentionCompleter( lookup: LookupFn = lookupActor ) {
 			);
 		},
 		getOptionCompletion( option: ActorPreview ): MentionCompletion {
-			return {
-				action: 'replace',
-				value: createElement(
-					'a',
-					{
-						href: `https://bsky.app/profile/${ option.handle }`,
-						className: 'skypress-mention',
-						'data-did': option.did,
-					},
-					`@${ option.handle }`
-				),
-			};
+			return createElement(
+				'a',
+				{
+					href: `https://bsky.app/profile/${ option.handle }`,
+					className: 'skypress-mention',
+					'data-did': option.did,
+				},
+				`@${ option.handle }`
+			);
 		},
 	};
 }
 
 const MENTION_FILTER_NAMESPACE = 'skypress/mention-autocompleter';
+
+/**
+ * Swap WordPress's built-in `@` user-mention completer for the SkyPress one. The built-in
+ * completer queries `/wp/v2/users` (which 404s — SkyPress has no WP user table) and, because
+ * the block editor's `Autocomplete` resolves a trigger to the FIRST completer that claims it,
+ * appending ours leaves the built-in `@` completer shadowing it. So we drop every existing
+ * `@`-triggered completer and add ours in their place.
+ */
+export function replaceAtMentionCompleter(
+	completers: unknown,
+	mention: ReturnType< typeof createMentionCompleter >
+): unknown[] {
+	const list = Array.isArray( completers ) ? completers : [];
+	return [
+		...list.filter(
+			( c ) => ( c as { triggerPrefix?: string } )?.triggerPrefix !== '@'
+		),
+		mention,
+	];
+}
 
 /** Add the mention completer to every RichText instance in the editor (idempotent). */
 export function registerMentionAutocompleter(): void {
@@ -84,6 +105,6 @@ export function registerMentionAutocompleter(): void {
 		'editor.Autocomplete.completers',
 		MENTION_FILTER_NAMESPACE,
 		// @wordpress/hooks types the callback as (...args) => unknown; cast the first arg.
-		( completers: unknown ) => [ ...( completers as unknown[] ), completer ]
+		( completers: unknown ) => replaceAtMentionCompleter( completers, completer )
 	);
 }

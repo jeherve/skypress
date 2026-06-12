@@ -94,8 +94,9 @@ export function computePostPreview( input: {
  * Title + publish/update control. Publishing a NEW article targets a CHOSEN publication
  * (Decision 0010) and creates a public Bluesky post, so it requires an explicit confirmation
  * (brief §10) — the confirm dialog also discloses which mentioned accounts will be notified.
- * Publishing is blocked when the assembled post exceeds 300 graphemes (the live counter flags
- * it and the button is disabled). Editing updates the existing record in place, in its own
+ * Publishing is blocked when the assembled post exceeds 300 graphemes (an over-limit warning
+ * appears and the button is disabled; under the limit nothing is shown). Editing updates the
+ * existing record in place, in its own
  * publication, and does NOT create a new post (Decision 0008).
  */
 export default function PublishPanel( {
@@ -247,15 +248,11 @@ export default function PublishPanel( {
 				</label>
 			) }
 
-			{ preview && (
-				<p
-					className={ `publish__count${ preview.overLimit ? ' publish__count--over' : '' }` }
-					aria-live="polite"
-				>
-					Bluesky post: { preview.graphemes }/300
-					{ preview.overLimit
-						? ' — too long to publish; shorten the subtitle or remove a mention'
-						: '' }
+			{ /* Stay out of the way until the post is actually too long — only then warn. */ }
+			{ preview?.overLimit && (
+				<p className="publish__count publish__count--over" aria-live="polite">
+					Bluesky post: { preview.graphemes }/300 — too long to publish; shorten the
+					subtitle or remove a mention
 				</p>
 			) }
 

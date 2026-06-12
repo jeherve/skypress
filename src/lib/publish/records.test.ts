@@ -122,6 +122,20 @@ describe( 'buildContentObject', () => {
 	} );
 } );
 
+describe( 'buildContentObject — mentions', () => {
+	it( 'omits the mentions field when there are none', () => {
+		const content = buildContentObject( BLOCKS );
+		expect( 'mentions' in content ).toBe( false );
+	} );
+
+	it( 'stores a flat {did, handle} list when mentions are passed', () => {
+		const content = buildContentObject( BLOCKS, [
+			{ did: 'did:plc:a', handle: 'alice.bsky.social', displayText: '@alice.bsky.social' },
+		] );
+		expect( content.mentions ).toEqual( [ { did: 'did:plc:a', handle: 'alice.bsky.social' } ] );
+	} );
+} );
+
 describe( 'buildPublicationRecord', () => {
 	it( 'bakes the slug into the required url + name', () => {
 		const pub = buildPublicationRecord( {

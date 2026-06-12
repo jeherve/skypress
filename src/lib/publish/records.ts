@@ -138,11 +138,27 @@ export interface GutenbergContent {
 	$type: typeof CONTENT_TYPE;
 	version: number;
 	blocks: BlockNode[];
+	/**
+	 * Optional flat list of accounts this document mentions, derived from the inline
+	 * `<a data-did>` anchors. Additive interop hint for other appviews (Decision 0013);
+	 * SkyPress's own reader resolves mentions from the anchors, not this field.
+	 */
+	mentions?: Array< { did: string; handle: string } >;
 }
 
 /** Wrap the block tree as the document's `content` union member. */
-export function buildContentObject( blocks: BlockNode[] ): GutenbergContent {
-	return { $type: CONTENT_TYPE, version: CONTENT_VERSION, blocks };
+export function buildContentObject(
+	blocks: BlockNode[],
+	mentions: Mention[] = []
+): GutenbergContent {
+	return {
+		$type: CONTENT_TYPE,
+		version: CONTENT_VERSION,
+		blocks,
+		...( mentions.length
+			? { mentions: mentions.map( ( m ) => ( { did: m.did, handle: m.handle } ) ) }
+			: {} ),
+	};
 }
 
 export interface PublicationRecord {
@@ -208,6 +224,8 @@ export function buildDocumentRecord( input: {
 	bskyPostRef?: StrongRef;
 	/** Set on edit (Decision 0008); preserves publishedAt + bskyPostRef. */
 	updatedAt?: string;
+	/** Flat mention list to record on the content object (additive interop hint). */
+	mentions?: Mention[];
 } ): DocumentRecord {
 	return {
 		$type: 'site.standard.document',
@@ -216,7 +234,7 @@ export function buildDocumentRecord( input: {
 		path: articlePath( input.rkey ),
 		publishedAt: input.publishedAt,
 		textContent: input.textContent,
-		content: buildContentObject( input.blocks ),
+		content: buildContentObject( input.blocks, input.mentions ),
 		...( input.coverImage ? { coverImage: input.coverImage } : {} ),
 		...( input.description ? { description: input.description } : {} ),
 		...( input.bskyPostRef ? { bskyPostRef: input.bskyPostRef } : {} ),

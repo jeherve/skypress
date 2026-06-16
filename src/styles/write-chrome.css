@@ -1,0 +1,118 @@
+/* src/styles/write-chrome.css
+ * Chrome unique to the writing-first page (/write): the top-right corner (sign-in / pill),
+ * the sign-in panel, the publish stepper, and the in-header Publish button. The editor body
+ * itself reuses editor-chrome.css (.studio__title / .studio__lede / .studio__cover*).
+ */
+
+.write-corner {
+	display: flex;
+	justify-content: flex-end;
+	padding: 0.5rem 1rem;
+}
+
+.write-corner__signin,
+.write-publish {
+	font: inherit;
+	cursor: pointer;
+	border-radius: 999px;
+	border: 1px solid currentColor;
+	padding: 0.35rem 0.9rem;
+	background: transparent;
+}
+
+.write-publish[disabled] {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.write-header {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+}
+
+.write-header .studio__title {
+	flex: 1 1 auto;
+}
+
+.account-pill {
+	position: relative;
+}
+
+.account-pill__trigger {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+	font: inherit;
+}
+
+.account-pill__avatar {
+	border-radius: 999px;
+}
+
+.account-pill__avatar--fallback {
+	display: inline-grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 999px;
+	background: rgba( 0, 0, 0, 0.1 );
+}
+
+.account-pill__menu {
+	position: absolute;
+	right: 0;
+	margin-top: 0.4rem;
+	min-width: 12rem;
+	display: flex;
+	flex-direction: column;
+	background: Canvas;
+	border: 1px solid rgba( 0, 0, 0, 0.15 );
+	border-radius: 0.5rem;
+	box-shadow: 0 8px 24px rgba( 0, 0, 0, 0.12 );
+	overflow: hidden;
+}
+
+.account-pill__item {
+	padding: 0.6rem 0.9rem;
+	text-align: left;
+	background: transparent;
+	border: 0;
+	font: inherit;
+	cursor: pointer;
+	color: inherit;
+	text-decoration: none;
+}
+
+.account-pill__item:hover {
+	background: rgba( 0, 0, 0, 0.06 );
+}
+
+.write-signin,
+.writeflow {
+	max-width: 32rem;
+	margin: 1rem auto;
+	padding: 1rem 1.25rem;
+	border: 1px solid rgba( 0, 0, 0, 0.15 );
+	border-radius: 0.75rem;
+}
+
+.signin-panel__actions,
+.writeflow__actions {
+	display: flex;
+	gap: 0.75rem;
+	margin-top: 0.75rem;
+}
+
+.writeflow__warning {
+	font-size: 0.95rem;
+}
+
+.writeflow__count,
+.writeflow__error,
+.signin-panel__error {
+	color: #b3261e;
+}

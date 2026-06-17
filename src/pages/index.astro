@@ -3,7 +3,6 @@ import Base from '../layouts/Base.astro';
 import Logo from '../components/Logo.astro';
 import Footer from '../components/Footer.astro';
 import AccountMenu from '../components/AccountMenu.tsx';
-import HandleStart from '../components/HandleStart';
 import { PHASES, DEFAULT_PHASE } from '../lib/landing/time-of-day';
 
 const fallback = PHASES[ DEFAULT_PHASE ];
@@ -60,8 +59,6 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 				<p class="hero__lede" id="lede">{fallback.lede}</p>
 				<div class="hero__cta">
 					<a class="btn btn--primary hero__start" href="/write">Start writing &rarr;</a>
-					<p class="hero__signin-label">Already have an account?</p>
-					<HandleStart client:only="react" />
 				</div>
 				<p class="hero__free">Free &amp; open-source. Your words live in your account, not ours.</p>
 			</main>
@@ -446,21 +443,15 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		color: var(--ink-soft);
 	}
 
-	/* ===== Primary CTA + handle input island (live on the sky) ===== */
+	/* ===== Primary CTA (lives on the sky) ===== */
 	.hero__cta { width: 100%; max-width: 26rem; margin: 2rem auto 0; }
-	/* Primary "Start writing" action — the writing-first front door. Larger than the default
-	   .btn and lifted off the sky with a soft shadow so it reads at every phase. */
+	/* Primary "Start writing" action — the writing-first front door, and the home page's only
+	   CTA (sign-in happens via Publish on /write). Larger than the default .btn and lifted off
+	   the sky with a soft shadow so it reads at every phase. */
 	.hero__start {
 		font-size: 1.05rem;
 		padding: 0.8rem 1.6rem;
 		box-shadow: 0 6px 22px rgba(20, 10, 4, 0.28);
-	}
-	/* Demotes the handle sign-in below the primary CTA: it's the returning-user path now. */
-	.hero__signin-label {
-		color: var(--sky-soft);
-		font-size: 0.85rem;
-		margin: 1.5rem 0 0.75rem;
-		text-shadow: var(--sky-shadow);
 	}
 	.hero__free {
 		color: var(--sky-soft);
@@ -468,91 +459,9 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		margin-top: 1rem;
 		text-shadow: var(--sky-shadow);
 	}
-	.hero :global(.handlestart__row) { display: flex; gap: 0.5rem; }
-	.hero :global(.handlestart__field) {
-		flex: 1;
-		/* Allow the field to shrink below the input's intrinsic width so the row never
-		   overflows and clips the Start button on narrow viewports. */
-		min-width: 0;
-		display: flex;
-		align-items: center;
-		gap: 0.15rem;
-		background: var(--sky-chip);
-		border: 1px solid var(--sky-line);
-		border-radius: var(--radius-sm);
-		padding: 0.6rem 0.75rem;
-		backdrop-filter: blur(8px);
-		-webkit-backdrop-filter: blur(8px);
-	}
-	.hero :global(.handlestart__at) { color: var(--sky-soft); }
-	.hero :global(.handlestart__input) {
-		flex: 1;
-		/* Pair with the field's min-width: 0 — let the input collapse so the field can too. */
-		min-width: 0;
-		border: none;
-		background: transparent;
-		color: var(--sky-ink);
-		font: inherit;
-		outline: none;
-	}
-	.hero :global(.handlestart__input::placeholder) { color: var(--sky-soft); opacity: 0.7; }
-	.hero :global(.handlestart__spinner) {
-		width: 14px; height: 14px; flex: none;
-		border: 2px solid var(--sky-line);
-		border-top-color: var(--sky-ink);
-		border-radius: 50%;
-		animation: handlestart-spin 0.7s linear infinite;
-	}
-	.hero :global(.handlestart__go) {
-		border: none;
-		border-radius: var(--radius-sm);
-		padding: 0.6rem 1rem;
-		font: inherit;
-		font-weight: 650;
-		white-space: nowrap;
-		color: #fff;
-		background: var(--btn-primary);
-		cursor: pointer;
-		transition: background 0.12s ease, box-shadow 0.12s ease;
-	}
-	.hero :global(.handlestart__go:hover) { background: var(--btn-primary-hover); }
-	.hero :global(.handlestart__card) {
-		display: flex;
-		align-items: center;
-		gap: 0.55rem;
-		margin-top: 0.6rem;
-		padding: 0.45rem 0.6rem;
-		background: var(--sky-chip);
-		border: 1px solid var(--sky-line);
-		border-radius: var(--radius-sm);
-		backdrop-filter: blur(8px);
-		-webkit-backdrop-filter: blur(8px);
-		text-align: left;
-	}
-	.hero :global(.handlestart__avatar) {
-		width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: none;
-	}
-	.hero :global(.handlestart__avatar--fallback) {
-		display: inline-flex; align-items: center; justify-content: center;
-		background: var(--sun-tint); color: var(--sun); font-weight: 700;
-	}
-	.hero :global(.handlestart__who) { display: flex; flex-direction: column; line-height: 1.15; }
-	.hero :global(.handlestart__name) { font-weight: 680; font-size: 0.9rem; color: var(--sky-ink); }
-	.hero :global(.handlestart__handle) { font-size: 0.74rem; color: var(--sky-soft); }
-	.hero :global(.handlestart__check) { margin-left: auto; color: #6fce92; font-weight: 800; }
-	.hero :global(.handlestart__hint) {
-		color: var(--sky-soft);
-		font-size: 0.82rem;
-		margin: 0.6rem 0 0;
-		text-shadow: var(--sky-shadow);
-	}
-	.hero :global(.handlestart__hint--error) { color: #ffd0c4; }
-	@keyframes handlestart-spin { to { transform: rotate(360deg); } }
-
 	@media (prefers-reduced-motion: reduce) {
 		.shootingstar { animation: none; opacity: 0; }
 		.sky .stars, .sky .bloom, .sky .halo { transition: none; }
-		.hero :global(.handlestart__spinner) { animation: none; }
 		.masthead :global(.account-menu__dropdown) {
 			animation: none;
 		}

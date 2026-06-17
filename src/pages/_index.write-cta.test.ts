@@ -27,7 +27,8 @@ describe( 'home page leads with the writing-first experience', () => {
 		expect( src ).toMatch( /href="\/write"[^>]*>\s*Start writing/ );
 	} );
 
-	it( 'keeps the handle sign-in as the secondary, returning-user path', () => {
-		expect( src ).toContain( '<HandleStart' );
+	it( 'offers no sign-in island on the home page — signing in happens via Publish on /write', () => {
+		expect( src ).not.toContain( '<HandleStart' );
+		expect( src ).not.toMatch( /import HandleStart/ );
 	} );
 } );

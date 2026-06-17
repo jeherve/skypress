@@ -161,6 +161,25 @@ export function buildContentObject(
 	};
 }
 
+/**
+ * The lexicon's open `preferences` object. SkyPress only sets `showInDiscover` — a hint to
+ * standard.site-aware discovery surfaces that the (already wholly public) publication wants
+ * to be discoverable (Decision 0020). Other tools (Leaflet, …) add their own keys; we read
+ * back only `showInDiscover` and leave the field open.
+ */
+export interface PublicationPreferences {
+	showInDiscover?: boolean;
+}
+
+/** Keep only the `showInDiscover` boolean from a stored/incoming preferences object, or undefined. */
+export function parsePreferences( value: unknown ): PublicationPreferences | undefined {
+	if ( ! value || typeof value !== 'object' ) {
+		return undefined;
+	}
+	const showInDiscover = ( value as { showInDiscover?: unknown } ).showInDiscover;
+	return typeof showInDiscover === 'boolean' ? { showInDiscover } : undefined;
+}
+
 export interface PublicationRecord {
 	$type: 'site.standard.publication';
 	url: string;
@@ -170,6 +189,8 @@ export interface PublicationRecord {
 	icon?: BlobRefJson;
 	/** Optional sky-phase colour theme — the lexicon's `basicTheme` object (Decision 0012). */
 	basicTheme?: BasicTheme;
+	/** Open `preferences` object; SkyPress sets `showInDiscover` (Decision 0020). */
+	preferences?: PublicationPreferences;
 }
 
 export function buildPublicationRecord( input: {
@@ -180,12 +201,14 @@ export function buildPublicationRecord( input: {
 	description?: string;
 	icon?: BlobRefJson;
 	basicTheme?: BasicTheme;
+	preferences?: PublicationPreferences;
 } ): PublicationRecord {
 	const trimmedName = input.name?.trim();
 	const description = input.description?.trim();
 	// Validate the theme at the write boundary too (symmetric with the read path): an invalid
 	// theme is dropped rather than persisted, so no out-of-range channel can ever reach storage.
 	const basicTheme = parseBasicTheme( input.basicTheme );
+	const preferences = parsePreferences( input.preferences );
 	return {
 		$type: 'site.standard.publication',
 		url: publicationHomeUrl( input.handle, input.slug ),
@@ -193,6 +216,7 @@ export function buildPublicationRecord( input: {
 		...( description ? { description } : {} ),
 		...( input.icon ? { icon: input.icon } : {} ),
 		...( basicTheme ? { basicTheme } : {} ),
+		...( preferences ? { preferences } : {} ),
 	};
 }
 

@@ -1,10 +1,12 @@
 ---
 import Base from '../../../layouts/Base.astro';
 import PublicationFooter from '../../../components/PublicationFooter.astro';
+import SubscribeButton from '../../../components/SubscribeButton.tsx';
 import { resolvePublicationContext } from '../../../lib/reader/read-context';
 import { formatLongDate } from '../../../lib/reader/dates';
 import { themeStyleBlock } from '../../../lib/publish/themes';
 import ErrorScene from '../../../components/ErrorScene.astro';
+import '../../../styles/subscribe.css';
 
 export const prerender = false;
 
@@ -75,6 +77,13 @@ if ( error ) {
 							</a>
 						</p>
 						{publication!.description && <p class="pub__lede">{publication!.description}</p>}
+						<SubscribeButton
+							client:only="react"
+							publicationUri={publication!.uri}
+							publicationName={publication!.name}
+						>
+							<p slot="fallback" class="subscribe subscribe--loading">Loading…</p>
+						</SubscribeButton>
 					</div>
 				</div>
 

@@ -11,8 +11,10 @@ import { TID } from '@atproto/common-web';
 import {
 	buildPublicationRecord,
 	isSkyPressPublicationUrl,
+	parsePreferences,
 	publicationSlugFromUrl,
 	uniquePublicationSlug,
+	type PublicationPreferences,
 	type PublicationRecord,
 } from './records';
 import { normalizeBlobRefJson, type BlobRefJson } from '../media/blob';
@@ -22,6 +24,12 @@ import { detectProvider, type ProviderId } from './providers';
 const PUBLICATION_COLLECTION = 'site.standard.publication';
 const DOCUMENT_COLLECTION = 'site.standard.document';
 const POST_COLLECTION = 'app.bsky.feed.post';
+
+/**
+ * SkyPress publications are wholly public (public renderer + RSS + Bluesky POSSE), so they
+ * declare themselves discoverable to standard.site-aware surfaces by default (Decision 0020).
+ */
+const DEFAULT_PREFERENCES: PublicationPreferences = { showInDiscover: true };
 
 /** createRecord/putRecord type `record` as an open index signature; ours are precise. */
 function asRecord( value: object ): Record< string, unknown > {
@@ -44,6 +52,8 @@ export interface Publication {
 	description?: string;
 	icon?: BlobRefJson;
 	basicTheme?: BasicTheme;
+	/** The publication's `preferences` (SkyPress sets `showInDiscover`), round-tripped on edit. */
+	preferences?: PublicationPreferences;
 }
 
 /** A publication record written by another app sharing the lexicon (Leaflet, …). Read-only. */
@@ -83,6 +93,7 @@ function toPublication( record: {
 	// the portable `{ ref: { $link } }` shape the dashboard + form read from.
 	const icon = normalizeBlobRefJson( value.icon );
 	const basicTheme = parseBasicTheme( value.basicTheme );
+	const preferences = parsePreferences( value.preferences );
 	return {
 		uri: record.uri,
 		cid: record.cid,
@@ -92,6 +103,7 @@ function toPublication( record: {
 		...( value.description ? { description: value.description } : {} ),
 		...( icon ? { icon } : {} ),
 		...( basicTheme ? { basicTheme } : {} ),
+		...( preferences ? { preferences } : {} ),
 	};
 }
 
@@ -188,6 +200,7 @@ export async function createPublication(
 		description: input.description,
 		icon: input.icon,
 		basicTheme: input.basicTheme,
+		preferences: DEFAULT_PREFERENCES,
 	} );
 	const res = await agent.com.atproto.repo.createRecord( {
 		repo: did,
@@ -204,6 +217,7 @@ export async function createPublication(
 		...( record.description ? { description: record.description } : {} ),
 		...( record.icon ? { icon: record.icon } : {} ),
 		...( record.basicTheme ? { basicTheme: record.basicTheme } : {} ),
+		...( record.preferences ? { preferences: record.preferences } : {} ),
 	};
 }
 
@@ -225,6 +239,8 @@ export async function updatePublication(
 		description: input.description,
 		icon: input.icon,
 		basicTheme: input.basicTheme,
+		// Round-trip the stored preferences; a pre-preferences publication adopts the default.
+		preferences: existing.preferences ?? DEFAULT_PREFERENCES,
 	} );
 	const res = await agent.com.atproto.repo.putRecord( {
 		repo: did,
@@ -241,6 +257,7 @@ export async function updatePublication(
 		...( record.description ? { description: record.description } : {} ),
 		...( record.icon ? { icon: record.icon } : {} ),
 		...( record.basicTheme ? { basicTheme: record.basicTheme } : {} ),
+		...( record.preferences ? { preferences: record.preferences } : {} ),
 	};
 }
 

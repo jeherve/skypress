@@ -60,6 +60,23 @@ describe( 'splitAssets / mergeAssets', () => {
 		expect( merged.coverDataUrl ).toBe( DATA_A );
 	} );
 
+	it( 'drops a dangling token (held bytes missing) but keeps external image URLs', () => {
+		// localStorage skeleton survived but the IndexedDB bytes were evicted, so the
+		// `a0` token has no entry in `assets`. The merged image must not keep `a0` as a
+		// broken src; an external image alongside it stays untouched.
+		const skeleton = {
+			blocks: [
+				{ name: 'core/image', attributes: { url: 'a0', alt: 'gone' }, innerBlocks: [] },
+				{ name: 'core/image', attributes: { url: 'https://ext/x.png' }, innerBlocks: [] },
+			],
+			cover: 'cover',
+		};
+		const merged = mergeAssets( skeleton, {} );
+		expect( merged.blocks[ 0 ].attributes ).toEqual( { alt: 'gone' } );
+		expect( merged.blocks[ 1 ].attributes!.url ).toBe( 'https://ext/x.png' );
+		expect( merged.coverDataUrl ).toBe( null );
+	} );
+
 	it( 'leaves a null cover null and a tree with no data URLs unchanged', () => {
 		const plain: BlockNode[] = [
 			{ name: 'core/image', attributes: { url: 'https://ext/x.png' }, innerBlocks: [] },

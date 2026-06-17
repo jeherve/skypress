@@ -67,6 +67,11 @@ export function splitAssets(
 	return { skeleton: { blocks: skeletonBlocks, cover }, assets };
 }
 
+/** A body asset token allocated by `splitAssets` (`a0`, `a1`, …). */
+function isAssetToken( value: string ): boolean {
+	return /^a\d+$/.test( value );
+}
+
 /** Inverse of `splitAssets`: swap each token back to its `data:` URL. Pure. */
 export function mergeAssets(
 	skeleton: AssetSkeleton,
@@ -75,13 +80,23 @@ export function mergeAssets(
 	const walk = ( nodes: BlockNode[] ): BlockNode[] =>
 		nodes.map( ( node ) => {
 			const url = node.attributes?.url;
-			const restore =
-				IMAGE_BLOCKS.has( node.name ) && typeof url === 'string' && url in assets;
+			const isImage = IMAGE_BLOCKS.has( node.name ) && typeof url === 'string';
+			let attributes: Record< string, unknown >;
+			if ( isImage && ( url as string ) in assets ) {
+				attributes = { ...node.attributes, url: assets[ url as string ] };
+			} else if ( isImage && isAssetToken( url as string ) ) {
+				// Held bytes missing (e.g. IndexedDB evicted while the localStorage skeleton
+				// survived): drop the dangling token rather than emit a broken `a0` src that
+				// would also be published verbatim. External image URLs are not tokens, so
+				// they fall through and are preserved.
+				const { url: _dropped, ...rest } = node.attributes ?? {};
+				attributes = { ...rest };
+			} else {
+				attributes = { ...( node.attributes ?? {} ) };
+			}
 			return {
 				name: node.name,
-				attributes: restore
-					? { ...node.attributes, url: assets[ url as string ] }
-					: { ...( node.attributes ?? {} ) },
+				attributes,
 				innerBlocks: walk( node.innerBlocks ?? [] ),
 			};
 		} );

@@ -27,3 +27,11 @@ sign-in only.
 - Signed-in writers lose eager upload error feedback (errors surface at publish) — accepted for a
   single, simpler media path.
 - `data:`-URL drafts can be large; bytes go to IndexedDB to avoid the `localStorage` quota.
+
+## Update — home page leads with /write
+The route started as a hidden parallel experience, but it tested well, so the home page now
+**leads with it**: the hero's primary CTA is "Start writing →" → `/write`, with the handle
+sign-in (`HandleStart`) demoted to a secondary "Already have an account?" path. The masthead
+"Write" button and the signed-in account menu's "Write" item (`accountMenuItems`) also point at
+`/write` now. `/editor` still exists (edit-an-existing-article + the gated flow) but is no longer
+linked from the home page.

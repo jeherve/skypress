@@ -50,13 +50,15 @@ describe( 'sample/preview page is retired', () => {
 describe( 'landing hero redesign', () => {
 	const index = read( '../../pages/index.astro' );
 
-	it( 'mounts the HandleStart island as the primary CTA', () => {
+	it( 'still mounts the HandleStart island (now the secondary, returning-user sign-in path)', () => {
 		expect( index ).toMatch( /import HandleStart from '\.\.\/components\/HandleStart'/ );
 		expect( index ).toMatch( /<HandleStart\s+client:only="react"\s*\/>/ );
 	} );
 
-	it( 'drops the old multi-button hero actions', () => {
-		expect( index ).not.toMatch( /Start writing/ );
+	it( 'drops the old sample / lexicon / studio hero buttons', () => {
+		// The single "Start writing → /write" primary CTA is the NEW writing-first design
+		// (it leads the hero above HandleStart) — distinct from the old multi-button cluster,
+		// whose sample/lexicon/studio links stay gone.
 		expect( index ).not.toMatch( /Read a sample/ );
 		expect( index ).not.toMatch( /See the lexicon/ );
 		expect( index ).not.toMatch( /href="\/editor">Studio/ );

@@ -55,7 +55,7 @@ export interface MenuItem {
 export function accountMenuItems( profile: ViewerProfile ): MenuItem[] {
 	const items: MenuItem[] = [
 		{ label: 'Dashboard', href: '/dashboard' },
-		{ label: 'Write', href: '/editor' },
+		{ label: 'Write', href: '/write' },
 	];
 	const profileHref = authorPath( profile.handle );
 	if ( profileHref ) {

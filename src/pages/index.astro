@@ -49,7 +49,7 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 			<header class="masthead">
 				<Logo />
 				<div class="masthead__right">
-					<a class="btn btn--ghost masthead-write" href="/editor">Write</a>
+					<a class="btn btn--ghost masthead-write" href="/write">Write</a>
 					<AccountMenu client:only="react" />
 				</div>
 			</header>
@@ -59,6 +59,8 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 				<h1 class="hero__title" id="headline" set:html={fallback.headlineHtml} />
 				<p class="hero__lede" id="lede">{fallback.lede}</p>
 				<div class="hero__cta">
+					<a class="btn btn--primary hero__start" href="/write">Start writing &rarr;</a>
+					<p class="hero__signin-label">Already have an account?</p>
 					<HandleStart client:only="react" />
 				</div>
 				<p class="hero__free">Free &amp; open-source. Your words live in your account, not ours.</p>
@@ -444,8 +446,22 @@ const fallback = PHASES[ DEFAULT_PHASE ];
 		color: var(--ink-soft);
 	}
 
-	/* ===== Handle input island (lives on the sky) ===== */
+	/* ===== Primary CTA + handle input island (live on the sky) ===== */
 	.hero__cta { width: 100%; max-width: 26rem; margin: 2rem auto 0; }
+	/* Primary "Start writing" action — the writing-first front door. Larger than the default
+	   .btn and lifted off the sky with a soft shadow so it reads at every phase. */
+	.hero__start {
+		font-size: 1.05rem;
+		padding: 0.8rem 1.6rem;
+		box-shadow: 0 6px 22px rgba(20, 10, 4, 0.28);
+	}
+	/* Demotes the handle sign-in below the primary CTA: it's the returning-user path now. */
+	.hero__signin-label {
+		color: var(--sky-soft);
+		font-size: 0.85rem;
+		margin: 1.5rem 0 0.75rem;
+		text-shadow: var(--sky-shadow);
+	}
 	.hero__free {
 		color: var(--sky-soft);
 		font-size: 0.9rem;

@@ -62,7 +62,7 @@ describe( 'WriteStudio', () => {
 		expect( container.textContent?.toLowerCase() ).not.toContain( 'sign in' );
 	} );
 
-	it( 'signed in: renders the editor, the account pill, and the Publish action', async () => {
+	it( 'signed in: renders the editor and the Publish action, and does NOT duplicate the identity pill (the app bar carries it)', async () => {
 		auth.value = {
 			status: 'signed-in', agent: {}, did: 'did:plc:me', handle: 'me.test',
 			displayName: 'Me', avatar: null, pdsUrl: 'https://pds', signIn: vi.fn(), signOut: vi.fn(),
@@ -72,8 +72,10 @@ describe( 'WriteStudio', () => {
 			root.render( createElement( WriteStudio ) );
 		} );
 		expect( container.querySelector( '[data-testid="sky-editor"]' ) ).not.toBe( null );
-		expect( container.querySelector( '.account-pill' ) ).not.toBe( null );
 		expect( container.querySelector( '.write-publish' ) ).not.toBe( null );
+		// The app bar (mocked out here) is the single source of the signed-in identity —
+		// WriteStudio must not render its own duplicate pill.
+		expect( container.querySelector( '.account-pill' ) ).toBe( null );
 	} );
 
 	it( 'resume: a publish intent on a signed-in load opens the publish flow', async () => {

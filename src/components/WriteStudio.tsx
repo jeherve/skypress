@@ -8,14 +8,12 @@ import AppBar from './AppBar';
 import PublishedPill from './PublishedPill';
 import CoverImagePicker from './CoverImagePicker';
 import SignInPanel from './SignInPanel';
-import AccountPill from './AccountPill';
 import WritePublishFlow from './WritePublishFlow';
 import { createDeferredMediaUpload } from '../lib/write/deferred-media';
 import { createDraftStore, type WriteDraft } from '../lib/write/draft-store';
 import { listPublications, type Publication } from '../lib/publish/publications';
 import { normalizeBlocks } from '../lib/publish/records';
 import { validateCoverFile, type CoverUpload } from '../lib/media/cover';
-import { displayNameFor } from '../lib/auth/profile';
 import type { BlockNode } from '../lib/blocks/render';
 import type { BlobRefJson } from '../lib/media/blob';
 
@@ -35,8 +33,7 @@ function deferredCoverRef( file: File ): BlobRefJson {
 }
 
 function WriteSurface() {
-	const { status, agent, did, handle, displayName, avatar, pdsUrl, error, signIn, signOut } =
-		useAuth();
+	const { status, agent, did, handle, pdsUrl, error, signIn } = useAuth();
 
 	const draftStore = useMemo( () => createDraftStore(), [] );
 	const mediaUpload = useMemo( () => createDeferredMediaUpload(), [] );
@@ -155,18 +152,10 @@ function WriteSurface() {
 		<>
 			<AppBar current="editor" />
 
-			{ /* Right-aligned actions in the shared content column: the account pill (when
-			     signed in) and the always-present Publish button. The editor — not auth —
-			     stays the focus, so there is no standalone "Sign in" affordance. */ }
+			{ /* The Publish action, right-aligned in the shared content column. The signed-in
+			     identity + sign-out live in the app bar above, so there is no pill here — and
+			     no standalone "Sign in" affordance (signing in happens on the way to publish). */ }
 			<div className="write-actions">
-				{ signedIn && (
-					<AccountPill
-						displayName={ displayNameFor( { did: did!, handle, displayName, avatar } ) }
-						handle={ handle }
-						avatar={ avatar }
-						onSignOut={ () => void signOut() }
-					/>
-				) }
 				<button
 					type="button"
 					className="write-publish"

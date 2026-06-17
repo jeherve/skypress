@@ -1,6 +1,7 @@
 /* src/styles/write-chrome.css
- * Chrome unique to the writing-first page (/write): the top actions bar (account pill +
- * Publish), the sign-in panel, and the publish stepper. The editor body itself reuses
+ * Chrome unique to the writing-first page (/write): the top actions bar (the Publish button),
+ * the sign-in panel, and the publish stepper. The signed-in identity + sign-out live in the
+ * shared app bar (app-bar.css), not here. The editor body itself reuses
  * editor-chrome.css (.studio__title / .studio__lede / .studio__cover*), so the title/lede
  * stay direct children of the column — never wrap them, or they lose their shared alignment.
  */
@@ -33,66 +34,6 @@
 .write-publish:disabled {
 	opacity: 0.5;
 	cursor: not-allowed;
-}
-
-.account-pill {
-	position: relative;
-}
-
-.account-pill__trigger {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.5rem;
-	background: transparent;
-	border: 0;
-	cursor: pointer;
-	font: inherit;
-}
-
-.account-pill__avatar {
-	border-radius: 999px;
-}
-
-.account-pill__avatar--fallback {
-	display: inline-grid;
-	place-items: center;
-	width: 28px;
-	height: 28px;
-	border-radius: 999px;
-	background: var(--sun-tint);
-	color: var(--sun);
-	font-weight: 700;
-	font-size: 0.85rem;
-}
-
-.account-pill__menu {
-	position: absolute;
-	right: 0;
-	margin-top: 0.4rem;
-	min-width: 12rem;
-	display: flex;
-	flex-direction: column;
-	background: var(--paper-raised);
-	border: 1px solid var(--line-strong);
-	border-radius: 0.5rem;
-	box-shadow: var(--shadow);
-	overflow: hidden;
-	z-index: 5;
-}
-
-.account-pill__item {
-	padding: 0.6rem 0.9rem;
-	text-align: left;
-	background: transparent;
-	border: 0;
-	font: inherit;
-	cursor: pointer;
-	color: inherit;
-	text-decoration: none;
-}
-
-.account-pill__item:hover {
-	background: var(--panel);
 }
 
 /* Sign-in panel + publish stepper: framed cards in the centred column. Use the paper-raised

@@ -59,7 +59,10 @@
 	width: 28px;
 	height: 28px;
 	border-radius: 999px;
-	background: rgba( 0, 0, 0, 0.1 );
+	background: var(--sun-tint);
+	color: var(--sun);
+	font-weight: 700;
+	font-size: 0.85rem;
 }
 
 .account-pill__menu {
@@ -69,11 +72,12 @@
 	min-width: 12rem;
 	display: flex;
 	flex-direction: column;
-	background: Canvas;
-	border: 1px solid rgba( 0, 0, 0, 0.15 );
+	background: var(--paper-raised);
+	border: 1px solid var(--line-strong);
 	border-radius: 0.5rem;
-	box-shadow: 0 8px 24px rgba( 0, 0, 0, 0.12 );
+	box-shadow: var(--shadow);
 	overflow: hidden;
+	z-index: 5;
 }
 
 .account-pill__item {
@@ -88,31 +92,98 @@
 }
 
 .account-pill__item:hover {
-	background: rgba( 0, 0, 0, 0.06 );
+	background: var(--panel);
 }
 
+/* Sign-in panel + publish stepper: framed cards in the centred column. Use the paper-raised
+   surface + token border so they read correctly in light and dark (not a near-invisible
+   rgba hairline on the dark canvas). */
 .write-signin,
 .writeflow {
 	max-width: 32rem;
 	margin: 1rem auto;
-	padding: 1rem 1.25rem;
-	border: 1px solid rgba( 0, 0, 0, 0.15 );
-	border-radius: 0.75rem;
+	padding: 1.25rem 1.5rem;
+	background: var(--paper-raised);
+	border: 1px solid var(--line-strong);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow);
+}
+
+/* Sign-in panel — mirrors the editor's LoginForm (login.css) so signing in looks the same
+   wherever a signed-out writer meets it. */
+.signin-panel__title {
+	font-family: var(--font-display);
+	font-size: 1.5rem;
+	margin: 0 0 0.4rem;
+	color: var(--ink);
+}
+.signin-panel__lede {
+	color: var(--muted);
+	margin: 0 0 1.25rem;
+	font-size: 0.95rem;
+}
+.signin-panel__label {
+	display: block;
+	font-size: 0.85rem;
+	font-weight: 600;
+	margin-bottom: 0.35rem;
+	color: var(--ink);
+}
+.signin-panel__input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.6rem 0.7rem;
+	border: 1px solid var(--line-strong);
+	border-radius: 8px;
+	background: var(--paper);
+	color: var(--ink);
+	font: inherit;
+}
+.signin-panel__submit {
+	padding: 0.6rem 1.1rem;
+	border: 0;
+	border-radius: 8px;
+	background: var(--sun);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+.signin-panel__cancel {
+	padding: 0.6rem 1rem;
+	border: 1px solid var(--line-strong);
+	background: var(--paper-raised);
+	border-radius: 8px;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+.signin-panel__signup {
+	margin: 1rem 0 0;
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+.signin-panel__signup a {
+	color: var(--sun);
+	font-weight: 600;
 }
 
 .signin-panel__actions,
 .writeflow__actions {
 	display: flex;
 	gap: 0.75rem;
-	margin-top: 0.75rem;
+	margin-top: 1rem;
 }
 
 .writeflow__warning {
 	font-size: 0.95rem;
+	margin: 0 0 0.75rem;
 }
 
 .writeflow__count,
 .writeflow__error,
 .signin-panel__error {
-	color: #b3261e;
+	color: var(--ember);
+	font-size: 0.9rem;
+	margin: 0.75rem 0 0;
 }

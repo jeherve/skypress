@@ -126,6 +126,57 @@
 	margin-top: 1rem;
 }
 
+/* Publication picker (when the writer has more than one). Mirrors the editor's
+   .publish__target / .publish__select so it reads like the rest of the app. */
+.writeflow__target {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin: 0 0 1rem;
+}
+.writeflow__target > span {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--ink);
+}
+.writeflow__target select {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--line-strong);
+	border-radius: 8px;
+	background: var(--paper);
+	color: var(--ink);
+	font: inherit;
+	cursor: pointer;
+}
+.writeflow__target select:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+/* Primary publish action — same sun fill as the editor's publish button. */
+.writeflow__publish {
+	padding: 0.6rem 1.1rem;
+	border: 0;
+	border-radius: 8px;
+	background: var(--sun);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+.writeflow__publish:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.writeflow__status {
+	margin: 1rem 0 0;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+
 .writeflow__warning {
 	font-size: 0.95rem;
 	margin: 0 0 0.75rem;

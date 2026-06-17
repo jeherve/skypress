@@ -57,6 +57,8 @@ describe( 'WritePublishFlow', () => {
 		expect( container.textContent ).toContain( 'Solo' );
 		expect( container.textContent?.toLowerCase() ).toContain( 'bluesky' );
 		expect( publish ).not.toHaveBeenCalled();
+		// The confirm step offers only Publish — no "Keep editing" / cancel button.
+		expect( container.textContent ).not.toContain( 'Keep editing' );
 	} );
 
 	it( 'confirming uploads held assets then publishes', async () => {

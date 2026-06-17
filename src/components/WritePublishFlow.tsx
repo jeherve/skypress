@@ -175,9 +175,6 @@ export default function WritePublishFlow( {
 					>
 						Publish &amp; post to Bluesky
 					</button>
-					<button type="button" className="writeflow__cancel" onClick={ onCancel }>
-						Keep editing
-					</button>
 				</div>
 			) }
 

@@ -3,10 +3,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { BlockInstance } from '@wordpress/blocks';
 import { AuthProvider } from '../lib/auth/AuthProvider';
 import { useAuth } from '../lib/auth/useAuth';
-import SkyEditor from './SkyEditor';
+import EditorCanvas from './EditorCanvas';
 import AppBar from './AppBar';
 import PublishedPill from './PublishedPill';
-import CoverImagePicker from './CoverImagePicker';
 import SignInPanel from './SignInPanel';
 import WritePublishFlow from './WritePublishFlow';
 import { createDeferredMediaUpload } from '../lib/write/deferred-media';
@@ -210,33 +209,23 @@ function WriteSurface() {
 			) }
 
 			<div key={ editorKey }>
-				<textarea
-					className="studio__title"
-					rows={ 1 }
-					placeholder="Add title"
-					aria-label="Article title"
-					value={ title }
-					onKeyDown={ ( event ) => event.key === 'Enter' && event.preventDefault() }
-					onChange={ ( event ) => {
+				<EditorCanvas
+					title={ title }
+					onTitleChange={ ( value ) => {
 						setPublished( null );
-						setTitle( event.target.value );
+						setTitle( value );
 					} }
-				/>
-				<textarea
-					className="studio__lede"
-					rows={ 1 }
-					maxLength={ 3000 }
-					placeholder="Add a subtitle…"
-					aria-label="Subtitle"
-					value={ lede }
-					onChange={ ( event ) => setLede( event.target.value ) }
-				/>
-				<SkyEditor
-					onChange={ ( instances: BlockInstance[] ) => setBlocks( normalizeBlocks( instances ) ) }
+					lede={ lede }
+					onLedeChange={ setLede }
+					onBlocksChange={ ( instances: BlockInstance[] ) =>
+						setBlocks( normalizeBlocks( instances ) )
+					}
 					mediaUpload={ mediaUpload }
 					initialBlocks={ initialBlocksRef.current }
+					cover={ cover }
+					onCoverUpload={ uploadCover }
+					onCoverChange={ setCover }
 				/>
-				<CoverImagePicker cover={ cover } onUpload={ uploadCover } onChange={ setCover } />
 			</div>
 		</>
 	);

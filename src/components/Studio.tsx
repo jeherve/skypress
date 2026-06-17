@@ -1,12 +1,11 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { BlockInstance } from '@wordpress/blocks';
 import { AuthProvider } from '../lib/auth/AuthProvider';
 import { useAuth } from '../lib/auth/useAuth';
 import LoginForm from '../lib/auth/LoginForm';
-import SkyEditor from './SkyEditor';
+import EditorCanvas from './EditorCanvas';
 import PublishPanel from './PublishPanel';
 import PublishedPill from './PublishedPill';
-import CoverImagePicker from './CoverImagePicker';
 import AppBar from './AppBar';
 import { createMediaUpload, revokeBlobRegistry, type BlobRegistry } from '../lib/media/mediaUpload';
 import {
@@ -42,8 +41,6 @@ function StudioGate() {
 	const [ publications, setPublications ] = useState< Publication[] | null >( null );
 	// Shared between mediaUpload (writes blob refs) and publish (reads them).
 	const registry = useRef< BlobRegistry >( new Map() ).current;
-	const titleRef = useRef< HTMLTextAreaElement >( null );
-	const ledeRef = useRef< HTMLTextAreaElement >( null );
 
 	// Load the writer's SkyPress publications (the publish targets / selector).
 	useEffect( () => {
@@ -114,30 +111,6 @@ function StudioGate() {
 
 	// Release the preview object URLs this session minted when the Studio unmounts.
 	useEffect( () => () => revokeBlobRegistry( registry ), [ registry ] );
-
-	// Grow the title textarea to fit its content so long titles wrap into view
-	// instead of clipping on one line (esp. on narrow mobile viewports). Layout
-	// effect so it sizes before paint — same reasoning as the lede below.
-	useLayoutEffect( () => {
-		const el = titleRef.current;
-		if ( ! el ) {
-			return;
-		}
-		el.style.height = 'auto';
-		el.style.height = `${ el.scrollHeight }px`;
-	}, [ title ] );
-
-	// Grow the lede textarea to fit its content (and on hydrate from an edit-load).
-	// Layout effect so it sizes before paint — avoids a one-row collapse flash when
-	// opening an existing article with a multi-line lede.
-	useLayoutEffect( () => {
-		const el = ledeRef.current;
-		if ( ! el ) {
-			return;
-		}
-		el.style.height = 'auto';
-		el.style.height = `${ el.scrollHeight }px`;
-	}, [ excerpt ] );
 
 	const mediaUpload = useMemo( () => {
 		if ( ! agent || ! did || ! pdsUrl ) {
@@ -242,55 +215,24 @@ function StudioGate() {
 							}
 						} }
 					/>
-					<textarea
-						ref={ titleRef }
-						className="studio__title"
-						rows={ 1 }
-						placeholder="Add title"
-						aria-label="Article title"
-						value={ title }
-						// The title is a single-line string: let it wrap visually, but
-						// don't let Enter insert a literal newline into the stored value.
-						onKeyDown={ ( event ) => {
-							if ( event.key === 'Enter' ) {
-								event.preventDefault();
-							}
-						} }
-						onChange={ ( event ) => {
+					<EditorCanvas
+						title={ title }
+						onTitleChange={ ( value ) => {
 							setPublished( null );
-							setTitle( event.target.value );
+							setTitle( value );
 						} }
-					/>
-					<textarea
-						ref={ ledeRef }
-						className="studio__lede"
-						rows={ 1 }
-						maxLength={ 3000 }
-						placeholder="Add a subtitle…"
-						aria-label="Subtitle"
-						value={ excerpt }
-						onChange={ ( event ) => {
+						lede={ excerpt }
+						onLedeChange={ ( value ) => {
 							setPublished( null );
-							setExcerpt( event.target.value );
+							setExcerpt( value );
 						} }
-					/>
-					{ excerpt.length > 200 && (
-						<p className="studio__lede-hint">
-							Long subtitles get truncated on the Bluesky card.
-						</p>
-					) }
-					<SkyEditor
-						onChange={ setBlocks }
+						onBlocksChange={ setBlocks }
 						mediaUpload={ mediaUpload }
 						initialBlocks={ editing?.blocks }
+						cover={ cover }
+						onCoverUpload={ uploadCover }
+						onCoverChange={ setCover }
 					/>
-					{ uploadCover && (
-						<CoverImagePicker
-							cover={ cover }
-							onUpload={ uploadCover }
-							onChange={ setCover }
-						/>
-					) }
 				</div>
 			</>
 		);

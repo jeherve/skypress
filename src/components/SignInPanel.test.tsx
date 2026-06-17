@@ -24,11 +24,18 @@ const setInputValue = ( input: HTMLInputElement, value: string ) => {
 };
 
 describe( 'SignInPanel', () => {
-	it( 'for-publish variant frames the CTA around publishing and links out to signup', () => {
+	it( 'for-publish variant frames the CTA around publishing and links out to signup in a new tab', () => {
 		const c = mount( { forPublish: true, error: null, onSubmit: vi.fn() } );
 		expect( c.textContent?.toLowerCase() ).toContain( 'publish' );
-		const signup = c.querySelector( 'a[href*="bsky.app"]' );
+		const signup = c.querySelector( 'a[href*="bsky.app"]' ) as HTMLAnchorElement | null;
 		expect( signup ).not.toBe( null );
+		// Opens in a new tab, hardened, and labelled so the new-tab behaviour is announced.
+		expect( signup!.target ).toBe( '_blank' );
+		expect( signup!.rel ).toContain( 'noopener' );
+		expect( signup!.getAttribute( 'aria-label' )?.toLowerCase() ).toContain( 'new tab' );
+		// Carries the usual external-link icon (not a bare "→").
+		expect( signup!.querySelector( 'svg' ) ).not.toBe( null );
+		expect( signup!.textContent ).not.toContain( '→' );
 	} );
 
 	it( 'submits the typed handle', () => {

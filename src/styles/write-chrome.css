@@ -167,6 +167,16 @@
 	color: var(--sun);
 	font-weight: 600;
 }
+.signin-panel__signup-link {
+	/* Keep the external-link icon on the same line, snug against the label. */
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25em;
+	white-space: nowrap;
+}
+.signin-panel__external {
+	flex: none;
+}
 
 .signin-panel__actions,
 .writeflow__actions {

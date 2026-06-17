@@ -64,8 +64,30 @@ export default function SignInPanel( { forPublish, error, onSubmit, onCancel }: 
 			) }
 			<p className="signin-panel__signup">
 				Need an account?{ ' ' }
-				<a href="https://bsky.app" target="_blank" rel="noreferrer noopener">
-					Create one on Bluesky →
+				<a
+					className="signin-panel__signup-link"
+					href="https://bsky.app"
+					target="_blank"
+					rel="noopener noreferrer"
+					aria-label="Create an account on Bluesky (opens in a new tab)"
+				>
+					Create one on Bluesky
+					{ /* Standard external-link glyph — same icon as the author page's Bluesky link. */ }
+					<svg
+						className="signin-panel__external"
+						width="11"
+						height="11"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M7 17 17 7" />
+						<path d="M8 7h9v9" />
+					</svg>
 				</a>
 			</p>
 		</form>

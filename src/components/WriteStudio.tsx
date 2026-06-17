@@ -154,17 +154,20 @@ function WriteSurface() {
 
 			{ /* The Publish action, right-aligned in the shared content column. The signed-in
 			     identity + sign-out live in the app bar above, so there is no pill here — and
-			     no standalone "Sign in" affordance (signing in happens on the way to publish). */ }
-			<div className="write-actions">
-				<button
-					type="button"
-					className="write-publish"
-					disabled={ ! canPublish }
-					onClick={ onPublishClicked }
-				>
-					Publish…
-				</button>
-			</div>
+			     no standalone "Sign in" affordance (signing in happens on the way to publish).
+			     Hidden once the publish stepper takes over, so the button isn't shown twice. */ }
+			{ ! ( signedIn && flowOpen ) && (
+				<div className="write-actions">
+					<button
+						type="button"
+						className="write-publish"
+						disabled={ ! canPublish }
+						onClick={ onPublishClicked }
+					>
+						Publish…
+					</button>
+				</div>
+			) }
 
 			{ published && <PublishedPill url={ published.url } isEditing={ false } /> }
 

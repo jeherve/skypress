@@ -89,5 +89,7 @@ describe( 'WriteStudio', () => {
 			root.render( createElement( WriteStudio ) );
 		} );
 		expect( container.querySelector( '.writeflow' ) ).not.toBe( null );
+		// The top Publish action gives way to the stepper — no redundant button.
+		expect( container.querySelector( '.write-actions' ) ).toBe( null );
 	} );
 } );

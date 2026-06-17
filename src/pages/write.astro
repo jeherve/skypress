@@ -1,0 +1,21 @@
+---
+import Base from '../layouts/Base.astro';
+import WriteStudio from '../components/WriteStudio.tsx';
+import LoadingScene from '../components/LoadingScene.astro';
+// The island is `client:only`, so Astro's scoped styles never reach its DOM — its
+// chrome is styled globally from these shared stylesheets plus the write-specific one.
+import '../styles/app-bar.css';
+import '../styles/editor-chrome.css';
+import '../styles/login.css';
+import '../styles/write-chrome.css';
+---
+
+<Base title="Write — SkyPress">
+	<main class="editor-shell">
+		<!-- client:only — auth + editor run only in the browser (Decisions 0001 & 0004).
+		     Unlike /editor this surface never gates on auth: you can write signed out. -->
+		<WriteStudio client:only="react">
+			<LoadingScene slot="fallback" variant="editor" />
+		</WriteStudio>
+	</main>
+</Base>

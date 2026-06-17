@@ -76,7 +76,7 @@ describe( 'accountMenuItems', () => {
 	it( 'returns Dashboard, Write and Profile in order for a profile with a handle', () => {
 		expect( accountMenuItems( { ...base, handle: 'jane.bsky.social' } ) ).toEqual( [
 			{ label: 'Dashboard', href: '/dashboard' },
-			{ label: 'Write', href: '/editor' },
+			{ label: 'Write', href: '/write' },
 			{ label: 'Profile', href: '/@jane.bsky.social' },
 		] );
 	} );
@@ -84,7 +84,7 @@ describe( 'accountMenuItems', () => {
 	it( 'omits the Profile item when no handle is known', () => {
 		expect( accountMenuItems( { ...base, handle: null } ) ).toEqual( [
 			{ label: 'Dashboard', href: '/dashboard' },
-			{ label: 'Write', href: '/editor' },
+			{ label: 'Write', href: '/write' },
 		] );
 	} );
 } );

@@ -1,0 +1,191 @@
+/* src/styles/write-chrome.css
+ * Chrome unique to the writing-first page (/write): the top actions bar (the Publish button),
+ * the sign-in panel, and the publish stepper. The signed-in identity + sign-out live in the
+ * shared app bar (app-bar.css), not here. The editor body itself reuses
+ * editor-chrome.css (.studio__title / .studio__lede / .studio__cover*), so the title/lede
+ * stay direct children of the column — never wrap them, or they lose their shared alignment.
+ */
+
+/* Top actions bar: right-aligned account pill + Publish, in the SAME centred content column
+   as the app bar, title, and editor surface (var(--studio-measure)/--studio-gutter), so it
+   lines up with everything below instead of floating at the viewport edge. */
+.write-actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.75rem;
+	max-width: var(--studio-measure, 60rem);
+	margin: 0 auto;
+	padding: 0.75rem var(--studio-gutter, 1.25rem) 0;
+}
+
+/* Primary publish action — matches the editor's .publish__button (sun fill). */
+.write-publish {
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+	border: 0;
+	border-radius: 8px;
+	padding: 0.5rem 1rem;
+	background: var(--sun);
+	color: #fff;
+}
+
+.write-publish:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* Sign-in panel + publish stepper: framed cards in the centred column. Use the paper-raised
+   surface + token border so they read correctly in light and dark (not a near-invisible
+   rgba hairline on the dark canvas). */
+.write-signin,
+.writeflow {
+	max-width: 32rem;
+	margin: 1rem auto;
+	padding: 1.25rem 1.5rem;
+	background: var(--paper-raised);
+	border: 1px solid var(--line-strong);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow);
+}
+
+/* Sign-in panel — mirrors the editor's LoginForm (login.css) so signing in looks the same
+   wherever a signed-out writer meets it. */
+.signin-panel__title {
+	font-family: var(--font-display);
+	font-size: 1.5rem;
+	margin: 0 0 0.4rem;
+	color: var(--ink);
+}
+.signin-panel__lede {
+	color: var(--muted);
+	margin: 0 0 1.25rem;
+	font-size: 0.95rem;
+}
+.signin-panel__label {
+	display: block;
+	font-size: 0.85rem;
+	font-weight: 600;
+	margin-bottom: 0.35rem;
+	color: var(--ink);
+}
+.signin-panel__input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.6rem 0.7rem;
+	border: 1px solid var(--line-strong);
+	border-radius: 8px;
+	background: var(--paper);
+	color: var(--ink);
+	font: inherit;
+}
+.signin-panel__submit {
+	padding: 0.6rem 1.1rem;
+	border: 0;
+	border-radius: 8px;
+	background: var(--sun);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+.signin-panel__cancel {
+	padding: 0.6rem 1rem;
+	border: 1px solid var(--line-strong);
+	background: var(--paper-raised);
+	border-radius: 8px;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+.signin-panel__signup {
+	margin: 1rem 0 0;
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+.signin-panel__signup a {
+	color: var(--sun);
+	font-weight: 600;
+}
+.signin-panel__signup-link {
+	/* Keep the external-link icon on the same line, snug against the label. */
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25em;
+	white-space: nowrap;
+}
+.signin-panel__external {
+	flex: none;
+}
+
+.signin-panel__actions,
+.writeflow__actions {
+	display: flex;
+	gap: 0.75rem;
+	margin-top: 1rem;
+}
+
+/* Publication picker (when the writer has more than one). Mirrors the editor's
+   .publish__target / .publish__select so it reads like the rest of the app. */
+.writeflow__target {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin: 0 0 1rem;
+}
+.writeflow__target > span {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--ink);
+}
+.writeflow__target select {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--line-strong);
+	border-radius: 8px;
+	background: var(--paper);
+	color: var(--ink);
+	font: inherit;
+	cursor: pointer;
+}
+.writeflow__target select:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+/* Primary publish action — same sun fill as the editor's publish button. */
+.writeflow__publish {
+	padding: 0.6rem 1.1rem;
+	border: 0;
+	border-radius: 8px;
+	background: var(--sun);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+.writeflow__publish:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.writeflow__status {
+	margin: 1rem 0 0;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+
+.writeflow__warning {
+	font-size: 0.95rem;
+	margin: 0 0 0.75rem;
+}
+
+.writeflow__count,
+.writeflow__error,
+.signin-panel__error {
+	color: var(--ember);
+	font-size: 0.9rem;
+	margin: 0.75rem 0 0;
+}

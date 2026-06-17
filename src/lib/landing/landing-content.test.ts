@@ -50,13 +50,14 @@ describe( 'sample/preview page is retired', () => {
 describe( 'landing hero redesign', () => {
 	const index = read( '../../pages/index.astro' );
 
-	it( 'mounts the HandleStart island as the primary CTA', () => {
-		expect( index ).toMatch( /import HandleStart from '\.\.\/components\/HandleStart'/ );
-		expect( index ).toMatch( /<HandleStart\s+client:only="react"\s*\/>/ );
+	it( 'leads with a single "Start writing" CTA to /write and no on-page sign-in', () => {
+		// Writing-first: the hero's only action starts a draft on /write. The handle sign-in
+		// island was removed — signing in happens via Publish on /write, not from the home page.
+		expect( index ).toMatch( /href="\/write"[^>]*>\s*Start writing/ );
+		expect( index ).not.toMatch( /HandleStart/ );
 	} );
 
-	it( 'drops the old multi-button hero actions', () => {
-		expect( index ).not.toMatch( /Start writing/ );
+	it( 'drops the old sample / lexicon / studio hero buttons', () => {
 		expect( index ).not.toMatch( /Read a sample/ );
 		expect( index ).not.toMatch( /See the lexicon/ );
 		expect( index ).not.toMatch( /href="\/editor">Studio/ );

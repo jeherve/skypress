@@ -77,7 +77,13 @@ export default function SkyEditor( { onChange, mediaUpload, initialBlocks }: Sky
 
 	const settings = {
 		// Core block-editor settings: a custom mediaUpload routes uploads to the PDS (SP3).
-		editor: mediaUpload ? { mediaUpload } : {},
+		editor: {
+			...( mediaUpload ? { mediaUpload } : {} ),
+			// isolated-block-editor defaults to a fixed top toolbar (the block tools
+			// dock into the header). Turn that off so the contextual block toolbar
+			// floats with — and follows — the selected block as you write.
+			hasFixedToolbar: false,
+		},
 		iso: {
 			moreMenu: false,
 			footer: true,

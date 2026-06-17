@@ -47,17 +47,22 @@ beforeEach( () => {
 } );
 
 describe( 'WriteStudio', () => {
-	it( 'signed out: renders the editor AND a sign-in affordance (no gate)', async () => {
+	it( 'signed out: no gate — renders the editor and a Publish action, with no sign-in shown until Publish is hit', async () => {
 		auth.value = { status: 'signed-out', agent: null, did: null, handle: null, signIn: vi.fn(), signOut: vi.fn() };
 		const { container, root } = render();
 		await act( async () => {
 			root.render( createElement( WriteStudio ) );
 		} );
+		// The editor is always present (no login gate)…
 		expect( container.querySelector( '[data-testid="sky-editor"]' ) ).not.toBe( null );
-		expect( container.textContent?.toLowerCase() ).toContain( 'sign in' );
+		// …and the only auth-adjacent affordance is Publish — no persistent "Sign in" button,
+		// and no sign-in panel until the writer hits Publish.
+		expect( container.querySelector( '.write-publish' ) ).not.toBe( null );
+		expect( container.querySelector( '.signin-panel' ) ).toBe( null );
+		expect( container.textContent?.toLowerCase() ).not.toContain( 'sign in' );
 	} );
 
-	it( 'signed in: renders the editor AND the account pill', async () => {
+	it( 'signed in: renders the editor, the account pill, and the Publish action', async () => {
 		auth.value = {
 			status: 'signed-in', agent: {}, did: 'did:plc:me', handle: 'me.test',
 			displayName: 'Me', avatar: null, pdsUrl: 'https://pds', signIn: vi.fn(), signOut: vi.fn(),
@@ -68,6 +73,7 @@ describe( 'WriteStudio', () => {
 		} );
 		expect( container.querySelector( '[data-testid="sky-editor"]' ) ).not.toBe( null );
 		expect( container.querySelector( '.account-pill' ) ).not.toBe( null );
+		expect( container.querySelector( '.write-publish' ) ).not.toBe( null );
 	} );
 
 	it( 'resume: a publish intent on a signed-in load opens the publish flow', async () => {

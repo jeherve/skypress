@@ -47,7 +47,6 @@ function WriteSurface() {
 	const [ cover, setCover ] = useState< CoverUpload | null >( null );
 	const [ publications, setPublications ] = useState< Publication[] | null >( null );
 	const [ flowOpen, setFlowOpen ] = useState( false );
-	const [ pendingPublish, setPendingPublish ] = useState( false );
 	const [ signinOpen, setSigninOpen ] = useState( false );
 	const [ published, setPublished ] = useState< { url: string } | null >( null );
 	const [ editorKey, setEditorKey ] = useState( 0 );
@@ -55,7 +54,6 @@ function WriteSurface() {
 	// Restored content fed to the editor canvas once, captured so a later `blocks`
 	// change can't remount SkyEditor (which would wipe the canvas).
 	const initialBlocksRef = useRef< BlockNode[] >( [] );
-	const restoredRef = useRef( false );
 	const intentRef = useRef( false );
 
 	// One-shot restore + intent read on mount.
@@ -66,7 +64,6 @@ function WriteSurface() {
 			if ( cancelled || ! d ) {
 				return;
 			}
-			restoredRef.current = true;
 			initialBlocksRef.current = d.blocks;
 			setTitle( d.title );
 			setLede( d.lede );
@@ -124,10 +121,10 @@ function WriteSurface() {
 	}
 
 	async function onSignIn( value: string ) {
+		// Sign-in is only ever reached via Publish, so always stamp the intent that
+		// auto-resumes the publish flow when the OAuth redirect returns.
 		await persistDraft();
-		if ( pendingPublish ) {
-			draftStore.setPublishIntent();
-		}
+		draftStore.setPublishIntent();
 		await signIn( value ); // full-page redirect; never resolves
 	}
 
@@ -137,8 +134,8 @@ function WriteSurface() {
 			setFlowOpen( true );
 			return;
 		}
-		// Signed out → reveal the sign-in panel framed around publishing.
-		setPendingPublish( true );
+		// Signed out → reveal the sign-in panel framed around publishing. Signing in is
+		// only offered here, on the way to publishing — never as standalone chrome.
 		setSigninOpen( true );
 	}
 
@@ -158,26 +155,26 @@ function WriteSurface() {
 		<>
 			<AppBar current="editor" />
 
-			<div className="write-corner">
-				{ signedIn ? (
+			{ /* Right-aligned actions in the shared content column: the account pill (when
+			     signed in) and the always-present Publish button. The editor — not auth —
+			     stays the focus, so there is no standalone "Sign in" affordance. */ }
+			<div className="write-actions">
+				{ signedIn && (
 					<AccountPill
-						displayName={ displayName ? displayNameFor( { did: did!, handle, displayName, avatar } ) : ( handle ?? did! ) }
+						displayName={ displayNameFor( { did: did!, handle, displayName, avatar } ) }
 						handle={ handle }
 						avatar={ avatar }
 						onSignOut={ () => void signOut() }
 					/>
-				) : (
-					<button
-						type="button"
-						className="write-corner__signin"
-						onClick={ () => {
-							setPendingPublish( false );
-							setSigninOpen( true );
-						} }
-					>
-						Sign in
-					</button>
 				) }
+				<button
+					type="button"
+					className="write-publish"
+					disabled={ ! canPublish }
+					onClick={ onPublishClicked }
+				>
+					Publish…
+				</button>
 			</div>
 
 			{ published && <PublishedPill url={ published.url } isEditing={ false } /> }
@@ -185,7 +182,7 @@ function WriteSurface() {
 			{ ! signedIn && signinOpen && (
 				<div className="write-signin">
 					<SignInPanel
-						forPublish={ pendingPublish }
+						forPublish
 						error={ error }
 						onSubmit={ ( value ) => void onSignIn( value ) }
 						onCancel={ () => setSigninOpen( false ) }
@@ -221,28 +218,18 @@ function WriteSurface() {
 			) }
 
 			<div key={ editorKey }>
-				<div className="write-header">
-					<textarea
-						className="studio__title"
-						rows={ 1 }
-						placeholder="Add title"
-						aria-label="Article title"
-						value={ title }
-						onKeyDown={ ( event ) => event.key === 'Enter' && event.preventDefault() }
-						onChange={ ( event ) => {
-							setPublished( null );
-							setTitle( event.target.value );
-						} }
-					/>
-					<button
-						type="button"
-						className="write-publish"
-						disabled={ ! canPublish }
-						onClick={ onPublishClicked }
-					>
-						Publish…
-					</button>
-				</div>
+				<textarea
+					className="studio__title"
+					rows={ 1 }
+					placeholder="Add title"
+					aria-label="Article title"
+					value={ title }
+					onKeyDown={ ( event ) => event.key === 'Enter' && event.preventDefault() }
+					onChange={ ( event ) => {
+						setPublished( null );
+						setTitle( event.target.value );
+					} }
+				/>
 				<textarea
 					className="studio__lede"
 					rows={ 1 }

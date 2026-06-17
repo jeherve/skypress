@@ -1,38 +1,38 @@
 /* src/styles/write-chrome.css
- * Chrome unique to the writing-first page (/write): the top-right corner (sign-in / pill),
- * the sign-in panel, the publish stepper, and the in-header Publish button. The editor body
- * itself reuses editor-chrome.css (.studio__title / .studio__lede / .studio__cover*).
+ * Chrome unique to the writing-first page (/write): the top actions bar (account pill +
+ * Publish), the sign-in panel, and the publish stepper. The editor body itself reuses
+ * editor-chrome.css (.studio__title / .studio__lede / .studio__cover*), so the title/lede
+ * stay direct children of the column — never wrap them, or they lose their shared alignment.
  */
 
-.write-corner {
+/* Top actions bar: right-aligned account pill + Publish, in the SAME centred content column
+   as the app bar, title, and editor surface (var(--studio-measure)/--studio-gutter), so it
+   lines up with everything below instead of floating at the viewport edge. */
+.write-actions {
 	display: flex;
+	align-items: center;
 	justify-content: flex-end;
-	padding: 0.5rem 1rem;
+	gap: 0.75rem;
+	max-width: var(--studio-measure, 60rem);
+	margin: 0 auto;
+	padding: 0.75rem var(--studio-gutter, 1.25rem) 0;
 }
 
-.write-corner__signin,
+/* Primary publish action — matches the editor's .publish__button (sun fill). */
 .write-publish {
 	font: inherit;
+	font-weight: 600;
 	cursor: pointer;
-	border-radius: 999px;
-	border: 1px solid currentColor;
-	padding: 0.35rem 0.9rem;
-	background: transparent;
+	border: 0;
+	border-radius: 8px;
+	padding: 0.5rem 1rem;
+	background: var(--sun);
+	color: #fff;
 }
 
-.write-publish[disabled] {
+.write-publish:disabled {
 	opacity: 0.5;
-	cursor: default;
-}
-
-.write-header {
-	display: flex;
-	align-items: flex-start;
-	gap: 0.75rem;
-}
-
-.write-header .studio__title {
-	flex: 1 1 auto;
+	cursor: not-allowed;
 }
 
 .account-pill {

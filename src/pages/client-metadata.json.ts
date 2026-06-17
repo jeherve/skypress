@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { OAUTH_REDIRECT_PATHS } from '../lib/auth/config';
 
 /**
  * The atproto OAuth client metadata document (Decision 0004).
@@ -7,8 +8,10 @@ import type { APIRoute } from 'astro';
  * serving on Cloudflare proved unreliable at the deployed origin, and the worker route is
  * guaranteed to run. Generated from the REQUEST origin so `client_id` always equals the
  * URL it's fetched from (works on the apex domain, www, or any preview origin), and the
- * `redirect_uri` matches the editor's canonical path `/editor/` (trailing slash — see
- * docs/specs/sp7-deploy.md).
+ * `redirect_uris` cover every OAuth-island route (`/editor/` and `/write/`, canonical
+ * trailing slash — see `OAUTH_REDIRECT_PATHS` and docs/specs/sp7-deploy.md). Both are
+ * registered so signing in from the writing-first `/write` flow returns there, not to
+ * `/editor` (Decision 0020).
  *
  * In dev (loopback) the browser client builds its own metadata and never fetches this;
  * this is the production/hosted client.
@@ -21,7 +24,7 @@ export const GET: APIRoute = ( { url } ) => {
 		client_id: `${ origin }/client-metadata.json`,
 		client_name: 'SkyPress',
 		client_uri: origin,
-		redirect_uris: [ `${ origin }/editor/` ],
+		redirect_uris: OAUTH_REDIRECT_PATHS.map( ( path ) => `${ origin }${ path }` ),
 		scope: 'atproto transition:generic',
 		grant_types: [ 'authorization_code', 'refresh_token' ],
 		response_types: [ 'code' ],

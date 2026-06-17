@@ -26,6 +26,31 @@ export function clientMetadataUrl( origin: string ): string {
 	return `${ origin.replace( /\/$/, '' ) }/client-metadata.json`;
 }
 
+/**
+ * The routes that mount the OAuth island and may therefore be the page sign-in starts from
+ * (and returns to). Every entry MUST appear in `client-metadata.json`'s `redirect_uris`
+ * (it's generated from this list) — atproto only redirects back to a registered URI, and
+ * the browser client matches the callback page against the same list to exchange the code.
+ *
+ * `/editor/` stays first: it's the historical default and the safe fallback for any other
+ * page that ever reaches sign-in. (Decision 0020 — the writing-first `/write` flow shares
+ * the editor island, so signing in from there must come back to `/write/`, not `/editor/`.)
+ */
+export const OAUTH_REDIRECT_PATHS = [ '/editor/', '/write/' ] as const;
+
+/**
+ * The registered redirect URI for the page sign-in is starting on, so the full-page
+ * OAuth round-trip returns the writer to where they were (carrying the draft + publish
+ * intent that `draft-store` persisted). Unknown paths fall back to `/editor/` — passing
+ * an unregistered URI to `signIn()` would make atproto throw.
+ */
+export function redirectUriForLocation( origin: string, pathname: string ): string {
+	const base = origin.replace( /\/$/, '' );
+	const normalized = pathname.endsWith( '/' ) ? pathname : `${ pathname }/`;
+	const match = OAUTH_REDIRECT_PATHS.find( ( path ) => path === normalized );
+	return `${ base }${ match ?? OAUTH_REDIRECT_PATHS[ 0 ] }`;
+}
+
 /** Normalise a handle: trim, drop a leading `@`, lowercase. */
 export function normalizeHandle( input: string ): string {
 	return input.trim().replace( /^@/, '' ).toLowerCase();

@@ -9,7 +9,12 @@ import {
 import { Agent } from '@atproto/api';
 import type { BrowserOAuthClient, OAuthSession } from '@atproto/oauth-client-browser';
 import { createOAuthClient } from './oauth';
-import { isValidAccountInput, normalizeHandle } from './config';
+import {
+	isValidAccountInput,
+	normalizeHandle,
+	getClientMode,
+	redirectUriForLocation,
+} from './config';
 import { resolvePdsUrl } from '../media/pds';
 import { fetchViewerProfile } from './profile';
 
@@ -104,8 +109,25 @@ export function AuthProvider( { children }: { children: ReactNode } ) {
 		}
 		setError( null );
 		try {
+			// Hosted (prod) registers several redirect URIs (one per OAuth-island route),
+			// and atproto defaults to the first — so without this, signing in from /write
+			// always returned the writer to /editor, losing the in-progress draft. Pin the
+			// round-trip to the page sign-in started from. In loopback (dev) the client's
+			// single redirect URI already equals the current page, so we pass nothing.
+			// atproto brands `redirect_uri` as a URL template type; the value is a registered
+			// app URL (and atproto re-validates it against the client metadata), so cast the
+			// options object to the `signIn` parameter type.
+			const options =
+				getClientMode( window.location.hostname ) === 'hosted'
+					? ( {
+							redirect_uri: redirectUriForLocation(
+								window.location.origin,
+								window.location.pathname
+							),
+					  } as Parameters< BrowserOAuthClient[ 'signIn' ] >[ 1 ] )
+					: undefined;
 			// Redirects to the user's authorization server; the promise never resolves.
-			await client.signIn( normalizeHandle( input ) );
+			await client.signIn( normalizeHandle( input ), options );
 		} catch ( err ) {
 			setError( err instanceof Error ? err.message : String( err ) );
 		}

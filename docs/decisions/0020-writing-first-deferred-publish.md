@@ -35,3 +35,19 @@ sign-in (`HandleStart`) demoted to a secondary "Already have an account?" path. 
 "Write" button and the signed-in account menu's "Write" item (`accountMenuItems`) also point at
 `/write` now. `/editor` still exists (edit-an-existing-article + the gated flow) but is no longer
 linked from the home page.
+
+## Update — OAuth must return to the page sign-in started from
+The draft survives the redirect (above), but the round-trip itself returned the writer to the
+**wrong page**: signing in from `/write` landed them back on `/editor` with an empty editor (the
+draft was still on `/write`, recoverable only by navigating back manually). atproto only redirects
+to a **registered** `redirect_uri` and, when `signIn()` is called without one, defaults to
+`client-metadata.json`'s **first** `redirect_uris` entry — which was the single `/editor/`. Now
+that the editor island powers two routes, both must be registered and the round-trip pinned to the
+originating page:
+- `OAUTH_REDIRECT_PATHS` (`src/lib/auth/config.ts`) is the single source of truth — `['/editor/',
+  '/write/']`, `/editor/` first as the safe fallback. `client-metadata.json` generates its
+  `redirect_uris` from it.
+- `AuthProvider.signIn` passes `redirect_uri: redirectUriForLocation(origin, pathname)` in hosted
+  mode, so the browser client's `findRedirectUrl()` matches the same page at the callback/token
+  exchange. Loopback (dev) is unaffected: its lone auto-generated redirect URI already equals the
+  current page, so no `redirect_uri` is passed.

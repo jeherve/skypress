@@ -5,6 +5,8 @@ import {
 	normalizeHandle,
 	isValidAccountInput,
 	isValidHandleOrDid,
+	redirectUriForLocation,
+	OAUTH_REDIRECT_PATHS,
 	OAUTH_SCOPE,
 } from './config';
 
@@ -24,6 +26,49 @@ describe( 'clientMetadataUrl', () => {
 	it( 'points at /client-metadata.json on the app origin', () => {
 		expect( clientMetadataUrl( 'https://skypress.blog' ) ).toBe(
 			'https://skypress.blog/client-metadata.json'
+		);
+	} );
+} );
+
+describe( 'OAUTH_REDIRECT_PATHS', () => {
+	it( 'lists every route that mounts the OAuth island, /editor/ first (the default)', () => {
+		// Both editor surfaces must be registered redirect targets, or atproto rejects
+		// the round-trip; /editor/ stays first so it is the safe fallback for any other
+		// page that ever triggers sign-in.
+		expect( OAUTH_REDIRECT_PATHS ).toEqual( [ '/editor/', '/write/' ] );
+	} );
+} );
+
+describe( 'redirectUriForLocation', () => {
+	it( 'returns the originating page so the OAuth round-trip comes back to it', () => {
+		// The bug: signing in from /write returned the writer to /editor (the only
+		// registered redirect), orphaning the writing-first draft + publish intent.
+		expect( redirectUriForLocation( 'https://skypress.blog', '/write/' ) ).toBe(
+			'https://skypress.blog/write/'
+		);
+		expect( redirectUriForLocation( 'https://skypress.blog', '/editor/' ) ).toBe(
+			'https://skypress.blog/editor/'
+		);
+	} );
+
+	it( 'normalises a missing trailing slash to the registered (slashed) path', () => {
+		expect( redirectUriForLocation( 'https://skypress.blog', '/write' ) ).toBe(
+			'https://skypress.blog/write/'
+		);
+	} );
+
+	it( 'falls back to /editor/ for any non-editor path', () => {
+		expect( redirectUriForLocation( 'https://skypress.blog', '/' ) ).toBe(
+			'https://skypress.blog/editor/'
+		);
+		expect( redirectUriForLocation( 'https://skypress.blog', '/dashboard/' ) ).toBe(
+			'https://skypress.blog/editor/'
+		);
+	} );
+
+	it( 'strips a trailing slash off the origin before joining', () => {
+		expect( redirectUriForLocation( 'https://skypress.blog/', '/write/' ) ).toBe(
+			'https://skypress.blog/write/'
 		);
 	} );
 } );

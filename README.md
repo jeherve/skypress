@@ -99,9 +99,10 @@ trailing-slash path) live in [`docs/specs/sp7-deploy.md`](./docs/specs/sp7-deplo
 
 ## How it works
 
-- **Editor** (`/editor`): Automattic's [`isolated-block-editor`](https://github.com/Automattic/isolated-block-editor)
-  (standalone Gutenberg) as a single `client:only` React island. The canonical content is
-  the **Gutenberg block tree**.
+- **Editor** (`/editor`): Gutenberg composed directly from
+  [`@wordpress/block-editor`](https://www.npmjs.com/package/@wordpress/block-editor) and
+  friends, as a single `client:only` React island. The canonical content is the
+  **Gutenberg block tree**.
 - **Publish:** writes a `site.standard.publication` (once), a `site.standard.document`
   (block tree + plain-text `textContent`), and a companion `app.bsky.feed.post` — the POSSE
   pattern. Images upload to the PDS as blobs (`uploadBlob`); the document stores the typed
@@ -150,12 +151,12 @@ astro.config.mjs · wrangler.toml
 
 ## Notes if you fork
 
-- **React 18 only.** The bundled `@wordpress/*` packages require `react@^18.3`; React 19
+- **React 18 only.** `@wordpress/block-editor@15.x` peer-depends on `react@^18`; React 19
   will break the editor.
-- **The whole `@wordpress/*` tree is version-pinned** via `overrides` in `package.json` to
-  the exact line `isolated-block-editor` bundles. Caret ranges otherwise pull a newer line
-  and crash the editor with duplicate data registries. Bumping `isolated-block-editor`
-  means regenerating that override map.
+- **`@wordpress/*` is depended on directly** at the current release line — there's no
+  `@wordpress/*` `overrides` map (only `react`/`react-dom` stay pinned). The tree resolves
+  to a single coherent copy of every data registry on its own, so upgrading is a normal
+  `@wordpress` version bump rather than regenerating an override map.
 - **Reading pages never import `@wordpress`** — the editor stack is browser-only and can't
   render server-side. The reader uses the dependency-free `src/lib/blocks/render.ts`, whose
   output fidelity is locked to the real serializer by tests.

@@ -19,14 +19,21 @@ Read the relevant `docs/decisions/*` and `docs/specs/*` before working in an are
 
 ## Hard constraints (learned the hard way — see decisions)
 
-1. **React 18 only.** The bundled `@wordpress/*` packages require `react@^18.3`. Do not
+1. **React 18 only.** `@wordpress/block-editor@15.x` peer-depends on `react@^18`. Do not
    introduce React 19. (Decision 0001)
-2. **The entire `@wordpress/*` tree is version-pinned via `overrides` in
-   `package.json`** to the exact line `@automattic/isolated-block-editor@2.30.0` bundles.
-   Caret ranges otherwise pull a newer line and produce duplicate `@wordpress/data` /
-   `core-data` registries → the editor crashes (`reading 'get' of undefined`). If you
-   bump `isolated-block-editor`, **regenerate the whole override map** to its new line.
-   (Decision 0003)
+2. **SkyPress depends on `@wordpress/block-editor` and friends directly** at the current
+   release line; there is **no `@wordpress/*` `overrides` map** (only `react`/`react-dom`
+   stay pinned). Depending directly, the tree resolves to a single coherent copy of every
+   store singleton — `@wordpress/data`, `core-data`, `element`, `blocks`, `block-editor` —
+   without any overrides. The old duplicate-registry crash (`reading 'get' of undefined`)
+   came specifically from IBE pinning an old line while transitive caret ranges floated a
+   newer one; that root cause is gone. Upgrading is now a normal `@wordpress` version bump,
+   **not** regenerating an override map. One caveat: `core-data` / `notices` / `date` install
+   as multiple nested copies (no hoisted top-level one) and each registers its store →
+   `Store "core" is already registered` + a split registry. The fix is the bundler dedupe
+   backstop — run `npm dedupe`, then list them in `resolve.dedupe` in **both**
+   `astro.config.mjs` and `vitest.config.ts` (deduping before the hoist *breaks* the build).
+   (Decision 0021 — supersedes the pinning half of Decision 0003.)
 3. **Reading pages must never import `@wordpress/*`.** The editor stack is browser-only
    (touches `window`/`moment`/registries at import) and cannot render server-side. Use
    the dependency-free `src/lib/blocks/render.ts`. `@wordpress` belongs only in the
@@ -49,13 +56,20 @@ Read the relevant `docs/decisions/*` and `docs/specs/*` before working in an are
 7. **OAuth is a browser public client** (`@atproto/oauth-client-browser`, Decision 0004).
    In **dev you must serve on `http://127.0.0.1:<port>`, not `localhost`** (atproto
    loopback requirement), and the loopback `client_id` must be path-less — see
-   `src/lib/auth/oauth.ts`. Auth + editor live in the `Studio` client-only island.
+   `src/lib/auth/oauth.ts`. Auth + editor live in the `Studio` client-only
+   (`client:only="react"`) island — the editor is composed directly from
+   `@wordpress/block-editor`, not by wrapping `IsolatedBlockEditor`.
 8. **Colocated tests under `src/pages/` MUST be underscore-prefixed** (e.g.
    `_index.meta.test.ts`). Astro's file router imports every `.ts` in `src/pages/` during
    static-path collection; a `*.test.ts` there runs its top-level `import … from 'vitest'`,
    which throws outside the vitest runner → the build's prerender server 500s
    (`Vitest failed to access its internal state`). A leading `_` makes Astro ignore the
    file as a route while vitest's `src/**/*.test.ts` glob still finds it.
+9. **`@wordpress/*` is inlined via `ssr.noExternal` in the vitest config, but
+   `moment`/`moment-timezone` stay external** (native CJS). Inlining moment breaks
+   moment-timezone's augmentation of it (`moment.tz` ends up undefined). Separately,
+   `@wordpress/block-editor` ships no types, so its surface is declared in
+   `src/types/wordpress.d.ts`.
 
 ## Product guardrails (from the brief)
 

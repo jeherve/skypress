@@ -1,10 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-import { fileURLToPath } from 'node:url';
 import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
-
-const nodeModules = fileURLToPath( new URL( './node_modules', import.meta.url ) );
 
 // Static by default; the article/homepage routes render on demand (read-through
 // renderer, SP4). Deployed to Cloudflare Pages (SP7). `nodejs_compat` (set in
@@ -19,12 +16,24 @@ export default defineConfig( {
 	session: { driver: 'memory' },
 	integrations: [ react() ],
 	vite: {
-		// React 18 is required by the bundled @wordpress/* packages (Decision 0001).
-		// Force a single React instance shared between the app and the editor.
 		resolve: {
-			// React 18 is required by the bundled @wordpress/* packages (Decision 0001).
-			// Force a single shared instance of React and the WP store registry.
-			dedupe: [ 'react', 'react-dom', '@wordpress/element', '@wordpress/data' ],
+			// React 18 is required by the @wordpress/* packages (Decision 0001).
+			// Force a single shared instance of React and of every @wordpress store
+			// singleton. core-data/notices/date are installed as multiple nested copies
+			// (no hoisted top-level one); without deduping, each copy registers its store
+			// at load → "Store 'core' is already registered" and a split registry.
+			// Deduping collapses them to one copy in the bundle. (Decision 0021.)
+			dedupe: [
+				'react',
+				'react-dom',
+				'@wordpress/element',
+				'@wordpress/data',
+				'@wordpress/core-data',
+				'@wordpress/notices',
+				'@wordpress/date',
+				'@wordpress/blocks',
+				'@wordpress/block-editor',
+			],
 		},
 		// @wordpress/* packages expect these globals to exist at bundle time.
 		define: {
@@ -37,24 +46,6 @@ export default defineConfig( {
 			// moment (CJS/ESM interop) and crashes at load. Bundling resolves it — the
 			// same reason it works under Vitest. (Decision 0003.)
 			noExternal: [ /^@wordpress\//, /^moment/, 'clsx', 'tslib' ],
-		},
-		css: {
-			preprocessorOptions: {
-				scss: {
-					// isolated-block-editor's style.scss does `@import '@wordpress/base-styles/...'`.
-					// Bare specifiers only resolve when node_modules is on the Sass load path.
-					loadPaths: [ nodeModules ],
-					quietDeps: true,
-					silenceDeprecations: [
-						'import',
-						'global-builtin',
-						'color-functions',
-						'legacy-js-api',
-						'slash-div',
-						'mixed-decls',
-					],
-				},
-			},
 		},
 	},
 } );

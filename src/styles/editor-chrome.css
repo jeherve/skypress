@@ -216,100 +216,69 @@
 	margin-top: 0.75rem;
 }
 
-/* Editor surface. The bundled isolated-block-editor CSS hard-codes a
-   full-width white surface that ignores `prefers-color-scheme`. Constrain
-   and frame it as a contained writing panel, and drive its colours from the
-   design tokens so it follows light/dark like the rest of the app. */
+/* Editor surface. We compose @wordpress/block-editor directly (Decision 0021),
+   so these rules target our own chrome (`.skypress-editor__*`) plus the standard
+   `.block-editor-*`/`.components-*` classes — not isolated-block-editor's old
+   `.iso-*` DOM. The bundled block CSS hard-codes light surfaces and near-black
+   ink that ignore `prefers-color-scheme`; we frame the editor as a contained
+   writing panel and drive every colour from the design tokens so it follows
+   light/dark like the rest of the app. */
 .skypress-editor {
 	max-width: var(--studio-measure);
 	margin: 1.5rem auto 3rem;
-	padding: 0 var(--studio-gutter);
-}
-.skypress-editor .iso-editor {
 	background-color: var(--paper-raised);
 	border: 1px solid var(--line-strong);
 	border-radius: var(--radius);
 	color: var(--ink);
 	box-shadow: var(--shadow);
-	min-height: 70vh;
 }
-/* With `has-fixed-toolbar`, the fixed toolbar sits at the top of the layout,
-   flush against the framed surface's top edge. Pad the header region (which
-   holds the toolbar) so the tools aren't pinned to the border. Keeping the
-   breathing room on the header — rather than on the layout root or the content
-   below — gives a single, predictable source of top spacing. */
-.skypress-editor .iso-editor .interface-interface-skeleton__header {
-	padding-top: 1rem;
-}
-/* isolated-block-editor doesn't bundle `@wordpress/edit-post`'s header layout, so
-   `.editor-header` ships with no flex rule — the right-hand settings region (which
-   holds the Settings cog) has nothing pushing it to the top-right and reads as
-   missing. Lay the header out ourselves: tools on the left, settings on the right. */
-.skypress-editor .iso-editor .editor-header {
+/* Toolbar (our chrome): the block inserter on the left; undo/redo and the
+   block-settings cog pushed to the right by the spacer. Block-editor SVG icons
+   use `fill: currentColor`, so tinting the buttons to the ink token themes them
+   too — including the cog and inserter, which sit outside the floating toolbar. */
+.skypress-editor__toolbar {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	gap: 0.25rem;
+	padding: 0.5rem 0.75rem;
+	border-bottom: 1px solid var(--line);
 }
-.skypress-editor .iso-editor .edit-post-visual-editor {
-	background-color: transparent;
+.skypress-editor__toolbar-spacer {
+	flex: 1 1 auto;
 }
-/* Gutenberg sets `background: white` inline on the device-preview wrapper;
-   only !important lets the paper surface show through (esp. in dark mode). */
-.skypress-editor .iso-editor .edit-post-visual-editor .is-desktop-preview {
-	background: transparent !important;
+.skypress-editor__toolbar .components-button {
+	color: var(--ink);
+}
+/* The writing canvas. `min-height` keeps the panel tall enough to invite writing
+   even when empty; the gutter matches the title/lede column above. */
+.skypress-editor__body {
+	min-height: 60vh;
+	padding: 1rem var(--studio-gutter) 2rem;
 }
 
-/* Editor toolbar. The bundled chrome hard-codes white (#fff) surfaces and
-   near-black (#1e1e1e) ink/borders that ignore `prefers-color-scheme`, so the
-   toolbar reads as a white slab in dark mode. Re-skin it from the tokens. SVG
-   icons use `fill: currentColor`, so setting the button colour tints them too. */
-.skypress-editor .iso-editor .components-accessible-toolbar,
-.skypress-editor .iso-editor .components-toolbar,
-.skypress-editor .iso-editor .components-toolbar-group {
+/* The fixed `<BlockToolbar>` sits in our header, and toolbar popovers (link
+   editing, the "more" format menu) portal into the `Popover.Slot` inside
+   `.skypress-editor`. Both re-skin from the tokens here — without this the
+   toolbar reads as a light slab in dark mode. */
+.skypress-editor .components-accessible-toolbar,
+.skypress-editor .components-toolbar,
+.skypress-editor .components-toolbar-group {
 	background-color: var(--paper-raised);
 	border-color: var(--line-strong);
 	color: var(--ink);
 }
-.skypress-editor .iso-editor .components-toolbar-group {
+.skypress-editor .components-toolbar-group {
 	border-right-color: var(--line);
 }
-.skypress-editor .iso-editor .components-accessible-toolbar .components-button {
+.skypress-editor .components-accessible-toolbar .components-button {
 	color: var(--ink);
 }
-/* The Settings (cog) button lives in the header's settings region — outside the
-   toolbar groups re-skinned above — so it keeps Gutenberg's hard-coded near-black
-   (#1e1e1e) icon colour and disappears against the dark paper surface. Tint it
-   from the ink token like the toolbar buttons. */
-.skypress-editor .iso-editor .editor-header__settings .components-button {
-	color: var(--ink);
-}
-/* The block-inspector popover opened by that cog (`.iso-inspector`) collapses to
-   its content width: isolated-block-editor doesn't bundle `@wordpress/interface`'s
-   complementary-area sizing, so the panel has no width of its own. Give it the
-   standard editor sidebar width. The popover portals out of `.skypress-editor`,
-   so this rule is deliberately unscoped (the class is unique to this editor). */
-.iso-inspector .components-popover__content {
+/* Block-settings inspector, opened as a popover by the cog. The bare
+   `BlockInspector` has no width of its own, so give it the standard editor
+   sidebar width. The class is unique to this editor, so the rule is unscoped. */
+.skypress-editor__inspector .components-popover__content {
 	width: 280px;
 	max-width: calc( 100vw - 2rem );
-}
-/* Both toolbar rows (document tools: insert/undo/redo; and the block tools that
-   appear on selection) sat flush against the editor's left edge — and the block
-   row carried no inline padding at all, so it didn't line up with the row above.
-   Give them a matching gutter. */
-.skypress-editor .iso-editor .editor-document-tools,
-.skypress-editor .iso-editor .block-editor-block-contextual-toolbar {
-	padding-left: 0.75rem;
-	padding-right: 0.75rem;
-}
-/* We run the editor with `hasFixedToolbar: false` so the block tools float with
-   the selected block. But the package still renders a *docked* copy of the block
-   toolbar in the header (gated only by viewport, not by the fixed-toolbar setting),
-   so we'd get two block toolbars at once. Hide the docked one — the floating
-   contextual toolbar is the single source of block tools — along with its now-
-   pointless "Show/Hide block tools" collapse toggle (`<<`/`>>`). */
-.skypress-editor .iso-editor .editor-collapsible-block-toolbar,
-.skypress-editor .iso-editor .edit-post-header__block-tools-toggle {
-	display: none;
 }
 
 .skypress-editor__status {

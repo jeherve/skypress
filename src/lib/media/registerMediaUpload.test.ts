@@ -6,7 +6,7 @@ import './registerMediaUpload';
 describe( 'registerMediaUpload', () => {
 	it( 'replaces editor.MediaUpload with an inert, non-rendering component', () => {
 		// A stand-in for whatever component was registered before us (in the app, the
-		// wp.media-based one from isolated-block-editor).
+		// wp.media-based default from @wordpress/block-editor's MediaUpload).
 		const Bundled = () => 'wp.media frame';
 		const Filtered = applyFilters( 'editor.MediaUpload', Bundled ) as () => unknown;
 

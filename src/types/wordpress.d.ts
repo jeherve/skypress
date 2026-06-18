@@ -29,6 +29,29 @@ declare module '@wordpress/block-library' {
 	export function registerCoreBlocks(): void;
 }
 
+declare module '@wordpress/block-editor' {
+	import type { ComponentType, ReactNode } from 'react';
+	import type { BlockInstance } from '@wordpress/blocks';
+
+	export const BlockEditorProvider: ComponentType< {
+		value: BlockInstance[];
+		onInput?: ( blocks: BlockInstance[] ) => void;
+		onChange?: ( blocks: BlockInstance[] ) => void;
+		settings?: Record< string, unknown >;
+		children?: ReactNode;
+	} >;
+	export const BlockList: ComponentType< Record< string, unknown > >;
+	export const BlockTools: ComponentType< { children?: ReactNode } >;
+	export const BlockToolbar: ComponentType< { hideDragHandle?: boolean } >;
+	export const BlockInspector: ComponentType< Record< string, unknown > >;
+	export const Inserter: ComponentType< { rootClientId?: string } >;
+	export const WritingFlow: ComponentType< { children?: ReactNode } >;
+	export const ObserveTyping: ComponentType< { children?: ReactNode } >;
+	export const BlockEditorKeyboardShortcuts: ComponentType<
+		Record< string, unknown >
+	> & { Register: ComponentType< Record< string, unknown > > };
+}
+
 declare module '@wordpress/hooks' {
 	export function addFilter(
 		hookName: string,

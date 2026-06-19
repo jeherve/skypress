@@ -77,8 +77,12 @@ async step *before* the load-bearing order (Decision 0018), which is otherwise u
 3. `sanitizeArticleHtml` runs last, as always.
 
 The read route frontmatter (`src/pages/[author]/[slug]/[rkey].astro`, already SSR with
-`prerender = false`) calls `resolveEmbeds` before `renderArticle`. RSS, having no JS,
-renders the atproto card statically and a plain link for video.
+`prerender = false`) calls `resolveEmbeds` before `renderArticle`.
+
+**RSS scope (v1):** the RSS feed builder is a pure, test-locked module; routing async
+embed resolution through it is deferred. In v1 the RSS feed renders every embed as a
+plain link via the same `core/embed` link fallback (strictly better than today, where
+embeds render as nothing). Full atproto-card-in-RSS is a documented fast-follow.
 
 ### ATProto post card (the improvement)
 

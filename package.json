@@ -24,7 +24,7 @@
     "@atproto/common-web": "^0.5.0",
     "@atproto/oauth-client-browser": "^0.4.1",
     "@fontsource/ibm-plex-mono": "^5.2.7",
-    "@wordpress/api-fetch": "^7.48.1",
+    "@wordpress/api-fetch": "7.48.1",
     "@wordpress/block-editor": "15.21.1",
     "@wordpress/block-library": "9.48.1",
     "@wordpress/blocks": "15.21.1",

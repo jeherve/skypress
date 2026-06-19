@@ -41,6 +41,8 @@ function placeholder( label: string ): string {
  */
 export async function buildEmbedPreview(
 	url: string,
+	// Raw `fetch` (not `safeFetch`) is correct here: the editor is browser-only and
+	// runs post-OAuth against the fixed public AppView host, so there's no SSRF surface.
 	fetchImpl: FetchLike = ( u ) => fetch( u )
 ): Promise< EmbedPreview | null > {
 	const match = detectEmbed( url );

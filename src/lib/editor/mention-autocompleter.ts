@@ -1,9 +1,9 @@
 import { createElement } from '@wordpress/element';
 import { addFilter, hasFilter } from '@wordpress/hooks';
-import { lookupActor, type ActorPreview } from '../landing/actor-lookup';
+import { searchActors, type ActorPreview } from '../landing/actor-lookup';
 import { atmosphereProfileUrl } from '../social/atmosphere-url';
 
-type LookupFn = ( query: string ) => Promise< ActorPreview | null >;
+type SearchFn = ( query: string ) => Promise< ActorPreview[] >;
 
 /**
  * The inline value an option completes to: a `skypress/mention` anchor element. Returning
@@ -15,11 +15,13 @@ type LookupFn = ( query: string ) => Promise< ActorPreview | null >;
 export type MentionCompletion = ReturnType< typeof createElement >;
 
 /**
- * A block-editor autocompleter for `@mentions`. `options` queries the public Bluesky
- * AppView (reusing `actor-lookup`); selecting an account inserts the `skypress/mention`
- * anchor (class + href + data-did), with the DID resolved once, here, at pick time.
+ * A block-editor autocompleter for `@mentions`. `options` runs a typeahead search against
+ * the public Bluesky AppView (`searchActors`), so a short list of matching accounts appears
+ * as the writer types a partial name — not only when they type a complete, valid handle.
+ * Selecting an account inserts the `skypress/mention` anchor (class + href + data-did), with
+ * the DID resolved once, here, at pick time.
  */
-export function createMentionCompleter( lookup: LookupFn = lookupActor ) {
+export function createMentionCompleter( search: SearchFn = searchActors ) {
 	return {
 		name: 'skypress/mention',
 		triggerPrefix: '@',
@@ -29,8 +31,7 @@ export function createMentionCompleter( lookup: LookupFn = lookupActor ) {
 			if ( ! trimmed ) {
 				return [];
 			}
-			const found = await lookup( trimmed );
-			return found ? [ found ] : [];
+			return search( trimmed );
 		},
 		getOptionKeywords( option: ActorPreview ): string[] {
 			return [ option.handle, option.displayName ?? '' ].filter( Boolean );

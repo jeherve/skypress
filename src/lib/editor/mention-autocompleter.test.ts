@@ -13,29 +13,37 @@ const ALICE: ActorPreview = {
 	avatar: null,
 };
 
+const ALICIA: ActorPreview = {
+	did: 'did:plc:alicia',
+	handle: 'alicia.blog',
+	displayName: 'Alicia',
+	avatar: null,
+};
+
 describe( 'mention autocompleter', () => {
 	it( 'has an @ trigger prefix', () => {
-		const completer = createMentionCompleter( async () => null );
+		const completer = createMentionCompleter( async () => [] );
 		expect( completer.triggerPrefix ).toBe( '@' );
 	} );
 
-	it( 'returns the looked-up actor as the only option', async () => {
-		const lookup = vi.fn( async () => ALICE );
-		const completer = createMentionCompleter( lookup );
-		const options = await completer.options( 'alice' );
-		expect( options ).toEqual( [ ALICE ] );
-		expect( lookup ).toHaveBeenCalledWith( 'alice' );
+	it( 'returns the typeahead search results as options for a partial query', async () => {
+		const search = vi.fn( async () => [ ALICE, ALICIA ] );
+		const completer = createMentionCompleter( search );
+		const options = await completer.options( 'ali' );
+		expect( options ).toEqual( [ ALICE, ALICIA ] );
+		expect( search ).toHaveBeenCalledWith( 'ali' );
 	} );
 
-	it( 'returns no options for an empty query without calling lookup', async () => {
-		const lookup = vi.fn( async () => ALICE );
-		const completer = createMentionCompleter( lookup );
+	it( 'returns no options for an empty query without searching', async () => {
+		const search = vi.fn( async () => [ ALICE ] );
+		const completer = createMentionCompleter( search );
 		expect( await completer.options( '' ) ).toEqual( [] );
-		expect( lookup ).not.toHaveBeenCalled();
+		expect( await completer.options( '   ' ) ).toEqual( [] );
+		expect( search ).not.toHaveBeenCalled();
 	} );
 
 	it( 'completes to a mention anchor element (inserted at the caret, not block-replacing)', () => {
-		const completer = createMentionCompleter( async () => null );
+		const completer = createMentionCompleter( async () => [] );
 		// The completion is the anchor element itself, so the editor inserts it inline in
 		// place of the typed `@query` rather than swapping out the whole block.
 		const completion = completer.getOptionCompletion( ALICE );
@@ -47,7 +55,7 @@ describe( 'mention autocompleter', () => {
 } );
 
 describe( 'replaceAtMentionCompleter', () => {
-	const mention = createMentionCompleter( async () => null );
+	const mention = createMentionCompleter( async () => [] );
 
 	it( "drops WordPress's built-in @ user completer and appends ours", () => {
 		const builtInUser = { name: 'user', triggerPrefix: '@' };

@@ -37,3 +37,18 @@ collection and never scans custom records (`site.standard.document`) for facets.
 - Adding the format means a `render.ts` fidelity assertion and a sanitizer lock test.
 - DIDs are resolved once, at pick time, and baked into the block — publish never
   re-resolves.
+
+## Addendum (2026-06-19) — typeahead suggestions, not exact resolve
+
+The autocompleter's `options()` originally reused `lookupActor` (an exact
+`app.bsky.actor.getProfile` resolve), so the menu only appeared once a writer typed a
+complete, valid handle — partial input failed `isValidHandleOrDid` and surfaced nothing,
+making the feature undiscoverable. `options()` now calls `searchActors`
+(`src/lib/landing/actor-lookup.ts`), which queries the public, unauthenticated
+`app.bsky.actor.searchActorsTypeahead?q=<query>&limit=8` and returns a short list, so
+matches appear as the writer types (Bluesky-composer behaviour). Same safety posture as
+`lookupActor` (fixed host constant, `q` URL-encoded as the only user input, never throws —
+resolves to `[]` on any failure); deliberately **not** gated by `isValidHandleOrDid`, since
+partial input is the whole point. `getOptionKeywords`/`getOptionLabel`/`getOptionCompletion`
+and the inserted `skypress/mention` anchor format are unchanged — DIDs are still resolved
+once, at pick time.

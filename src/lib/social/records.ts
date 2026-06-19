@@ -96,16 +96,6 @@ export function buildQuote( input: {
 }
 
 /**
- * The bsky.app web URL for a post AT-URI, for "view thread on Bluesky" links.
- * `at://<did>/app.bsky.feed.post/<rkey>` → `https://bsky.app/profile/<did>/post/<rkey>`.
- * Falls back to the bsky.app home for an unparseable URI.
- */
-export function bskyPostWebUrl( postUri: string ): string {
-	const match = postUri.match( /^at:\/\/([^/]+)\/app\.bsky\.feed\.post\/(.+)$/ );
-	return match ? `https://bsky.app/profile/${ match[ 1 ] }/post/${ match[ 2 ] }` : 'https://bsky.app';
-}
-
-/**
  * Count user-perceived characters (grapheme clusters), matching Bluesky's 300-grapheme
  * rule. `Intl.Segmenter` is browser-native and counts ZWJ emoji / flags as one each, so
  * a family emoji costs one toward the cap — not the number of underlying codepoints.

@@ -265,10 +265,12 @@ if ( error ) {
 		color: var(--sun);
 	}
 	/* @mentions read as part of the prose and brighten to --sun on hover — the same
-	   treatment as the author handle link on profile pages. The Bluesky logo (left) and an
-	   external-link arrow (right) slide in on hover/focus, drawn as mask pseudo-elements
-	   because the mention arrives as sanitised HTML and can't carry nested <svg> children.
-	   (The sanitiser already gives the anchor target="_blank" + a safe rel.) */
+	   treatment as the author handle link on profile pages. A 🌀 emoji (left, via ::before
+	   content) and an external-link arrow (right, a mask pseudo-element) slide in on
+	   hover/focus; the arrow is a mask because the mention arrives as sanitised HTML and
+	   can't carry nested <svg> children. The emoji uses `content: "🌀" / ""` so its empty
+	   alt text keeps screen readers from announcing it (a pseudo-element can't take
+	   aria-hidden). (The sanitiser already gives the anchor target="_blank" + a safe rel.) */
 	.reader__article :global(a.skypress-mention) {
 		color: inherit;
 		text-decoration: none;
@@ -297,7 +299,7 @@ if ( error ) {
 			transform 0.15s ease;
 	}
 	.reader__article :global(a.skypress-mention)::before {
-		content: "🌀";
+		content: "🌀" / "";
 		width: auto;
 		height: auto;
 		margin-right: 0.15em;

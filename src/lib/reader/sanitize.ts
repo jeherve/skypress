@@ -17,10 +17,12 @@ const OPTIONS: sanitizeHtml.IOptions = {
 		'hr', 'figure', 'figcaption', 'img',
 		'strong', 'em', 'b', 'i', 's', 'del', 'ins', 'sub', 'sup', 'mark',
 		'a', 'br', 'span',
+		'button', // video-embed facade play button (no iframe — injected client-side, Task 7)
 	],
 	allowedAttributes: {
 		a: [ 'href', 'title', 'rel', 'target' ],
-		img: [ 'src', 'alt' ],
+		img: [ 'src', 'alt', 'loading' ],
+		button: [ 'type', 'data-embed-provider', 'data-embed-id' ],
 		'*': [ 'class' ],
 	},
 	allowedSchemes: [ 'http', 'https', 'mailto' ],

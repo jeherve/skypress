@@ -46,3 +46,35 @@ describe( 'sanitizeArticleHtml', () => {
 		expect( clean ).toContain( '@alice.bsky.social' );
 	} );
 } );
+
+describe( 'embed cards', () => {
+	it( 'keeps the atproto card structure', () => {
+		const html = sanitizeArticleHtml(
+			'<figure class="wp-block-embed skypress-embed skypress-embed--atproto"><a class="skypress-embed__link" href="https://mu.social/profile/x/post/y"><span class="skypress-embed__text">hi</span></a></figure>'
+		);
+		expect( html ).toContain( 'skypress-embed--atproto' );
+		expect( html ).toContain( 'href="https://mu.social/profile/x/post/y"' );
+	} );
+
+	it( 'keeps the video facade button + scoped data attributes', () => {
+		const html = sanitizeArticleHtml(
+			'<figure class="wp-block-embed skypress-embed skypress-embed--video"><button type="button" class="skypress-embed__play" data-embed-provider="youtube" data-embed-id="dQw4w9WgXcQ"><img class="skypress-embed__thumb" src="https://i/x.jpg" alt=""/></button></figure>'
+		);
+		expect( html ).toContain( '<button' );
+		expect( html ).toContain( 'data-embed-provider="youtube"' );
+		expect( html ).toContain( 'data-embed-id="dQw4w9WgXcQ"' );
+	} );
+
+	it( 'still strips a document-injected iframe', () => {
+		const html = sanitizeArticleHtml( '<p>x</p><iframe src="https://evil.com"></iframe>' );
+		expect( html ).not.toContain( '<iframe' );
+	} );
+
+	it( 'strips data attributes on non-button elements and onclick handlers', () => {
+		const html = sanitizeArticleHtml(
+			'<span data-embed-id="x" onclick="alert(1)">t</span>'
+		);
+		expect( html ).not.toContain( 'data-embed-id' );
+		expect( html ).not.toContain( 'onclick' );
+	} );
+} );

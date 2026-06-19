@@ -33,7 +33,7 @@ type Composer = 'reply' | 'quote' | null;
 interface Flash {
 	kind: 'success' | 'error';
 	message: string;
-	/** For a success, the bsky.app link to the freshly created post. */
+	/** For a success, the mu.social link to the freshly created post. */
 	href?: string;
 }
 

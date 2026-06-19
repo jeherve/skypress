@@ -74,7 +74,7 @@ export default function SignInPanel( { forPublish, error, onSubmit, onCancel }: 
 					aria-label="Create an account on the ATmosphere (opens in a new tab)"
 				>
 					Create one on the ATmosphere
-					{ /* Standard external-link glyph — same icon as the author page's Bluesky link. */ }
+					{ /* Standard external-link glyph — same icon as the author page's external link. */ }
 					<svg
 						className="signin-panel__external"
 						width="11"

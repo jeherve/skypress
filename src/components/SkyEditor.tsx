@@ -48,6 +48,7 @@ import { ALLOWED_BLOCKS } from '../lib/blocks/allowlist';
 import type { MediaUploadHandler } from '../lib/media/mediaUpload';
 import { registerMentionFormat } from '../lib/editor/mention-format';
 import { registerMentionAutocompleter } from '../lib/editor/mention-autocompleter';
+import { registerEmbedPreviewMiddleware } from '../lib/editor/embed-preview';
 import type { BlockNode } from '../lib/blocks/render';
 
 export const SPIKE_BLOCKS_KEY = 'skypress:spike:blocks';
@@ -94,6 +95,7 @@ export default function SkyEditor( { onChange, mediaUpload, initialBlocks }: Sky
 		registerSkyPressBlocks();
 		registerMentionFormat();
 		registerMentionAutocompleter();
+		registerEmbedPreviewMiddleware();
 		return initialBlocks && initialBlocks.length > 0 ? toEditorBlocks( initialBlocks ) : [];
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [] );

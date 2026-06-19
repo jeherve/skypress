@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { ATMOSPHERE_WEB_BASE } from '../lib/social/atmosphere-url';
+
 interface Props {
 	/** True when opened from "Publish" — the copy promises a publish on return. */
 	forPublish: boolean;
@@ -66,12 +68,12 @@ export default function SignInPanel( { forPublish, error, onSubmit, onCancel }: 
 				Need an account?{ ' ' }
 				<a
 					className="signin-panel__signup-link"
-					href="https://bsky.app"
+					href={ ATMOSPHERE_WEB_BASE }
 					target="_blank"
 					rel="noopener noreferrer"
-					aria-label="Create an account on Bluesky (opens in a new tab)"
+					aria-label="Create an account on the ATmosphere (opens in a new tab)"
 				>
-					Create one on Bluesky
+					Create one on the ATmosphere
 					{ /* Standard external-link glyph — same icon as the author page's Bluesky link. */ }
 					<svg
 						className="signin-panel__external"

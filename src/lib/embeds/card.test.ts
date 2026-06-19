@@ -59,3 +59,44 @@ describe( 'renderEmbedCard — video facade', () => {
 		expect( html ).not.toContain( '<iframe' );
 	} );
 } );
+
+describe( 'renderEmbedCard — URL scheme guard', () => {
+	it( 'neutralizes a javascript: viewUrl on an atproto card', () => {
+		const html = renderEmbedCard( {
+			kind: 'atproto',
+			authorName: 'Jeremy',
+			handle: 'jeremy.herve.bzh',
+			text: 'hi',
+			images: [],
+			viewUrl: 'javascript:alert(1)',
+		} );
+		expect( html ).not.toContain( 'href="javascript:alert(1)"' );
+		expect( html ).not.toContain( 'javascript:' );
+		expect( html ).toContain( 'href=""' );
+	} );
+
+	it( 'neutralizes a javascript: url in the video fallback href', () => {
+		const html = renderEmbedCard( {
+			kind: 'youtube',
+			id: 'dQw4w9WgXcQ',
+			title: 'x',
+			thumbnail: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+			url: 'javascript:alert(1)',
+		} );
+		expect( html ).not.toContain( 'href="javascript:alert(1)"' );
+		expect( html ).not.toContain( 'javascript:' );
+		expect( html ).toContain( 'href=""' );
+	} );
+
+	it( 'leaves a valid https url untouched in the href', () => {
+		const html = renderEmbedCard( {
+			kind: 'atproto',
+			authorName: 'Jeremy',
+			handle: 'jeremy.herve.bzh',
+			text: 'hi',
+			images: [],
+			viewUrl: 'https://mu.social/profile/did:plc:x/post/abc',
+		} );
+		expect( html ).toContain( 'href="https://mu.social/profile/did:plc:x/post/abc"' );
+	} );
+} );

@@ -4,6 +4,7 @@ import PublicationFooter from '../../../components/PublicationFooter.astro';
 import { resolveArticleContext } from '../../../lib/reader/read-context';
 import { formatLongDate } from '../../../lib/reader/dates';
 import { renderArticle } from '../../../lib/reader/render-article';
+import { resolveEmbeds } from '../../../lib/embeds/resolve';
 import { canonicalArticleUrl } from '../../../lib/publish/records';
 import { deriveExcerpt } from '../../../lib/publish/excerpt';
 import { themeStyleBlock } from '../../../lib/publish/themes';
@@ -21,6 +22,8 @@ import '@wordpress/block-library/build-style/theme.css';
 import '../../../styles/post-actions.css';
 // "View record JSON" control + modal (a client:only island; chrome styled globally).
 import '../../../styles/record-json.css';
+// Embed cards (atproto posts) + video facade — frontend only.
+import '../../../styles/embeds.css';
 
 // Read-through renderer: resolve + fetch at request time (Decision 0007).
 export const prerender = false;
@@ -63,8 +66,12 @@ if ( ctx && publication ) {
 	handle = readAuthor.handle;
 
 	const doc = document.value;
-	// Blob URLs, render, sanitise, and the text fallback all live in render-article.
-	const rendered = renderArticle( doc, { pdsUrl, did }, { highlight: true } );
+	// Resolve embeds (atproto cards + video facades) before rendering — async
+	// fetches can't run inside the synchronous render-article pipeline. The
+	// enriched blocks then flow through blob-resolve → render → sanitise.
+	const blocksWithEmbeds = await resolveEmbeds( doc.content?.blocks ?? [] );
+	const docWithEmbeds = { ...doc, content: { ...doc.content, blocks: blocksWithEmbeds } };
+	const rendered = renderArticle( docWithEmbeds, { pdsUrl, did }, { highlight: true } );
 	html = rendered.html;
 	const textContent = rendered.text;
 	// The PDS record body (just `value`) as highlighted, sanitised JSON for the viewer.
@@ -161,6 +168,7 @@ if ( error ) {
 		</p>
 		<h1 class="reader__title">{title}</h1>
 		<article class="reader__article" set:html={html} />
+		<script src="../../../scripts/embed-facade.ts"></script>
 		{bskyPostRef && (
 			<PostActions
 				client:only="react"

@@ -1,0 +1,87 @@
+/* src/styles/embeds.css — embed cards on the reading page. Utility surfaces use
+   fixed colors (not theme tokens) so per-publication themes don't recolor them. */
+.skypress-embed {
+	margin: 1.8rem 0;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	overflow: hidden;
+	background: var(--paper-raised);
+}
+.skypress-embed--atproto .skypress-embed__link {
+	display: block;
+	padding: 1rem 1.2rem;
+	text-decoration: none;
+	color: var(--ink);
+}
+.skypress-embed__head {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+.skypress-embed__avatar {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+.skypress-embed__author { font-weight: 600; }
+.skypress-embed__handle { color: var(--muted); font-size: 0.92rem; }
+.skypress-embed__text {
+	display: block;
+	white-space: pre-wrap;
+	line-height: 1.5;
+}
+.skypress-embed__media {
+	display: grid;
+	gap: 0.4rem;
+	margin-top: 0.75rem;
+}
+.skypress-embed__image { width: 100%; border-radius: 8px; }
+.skypress-embed__footer {
+	display: block;
+	margin-top: 0.75rem;
+	font-size: 0.88rem;
+	color: var(--muted);
+}
+/* Video facade */
+.skypress-embed--video { position: relative; }
+.skypress-embed__play {
+	display: block;
+	width: 100%;
+	padding: 0;
+	border: 0;
+	background: #000;
+	cursor: pointer;
+	position: relative;
+}
+.skypress-embed__thumb { width: 100%; display: block; opacity: 0.92; }
+.skypress-embed__playicon {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 3rem;
+	color: #fff;
+	text-shadow: 0 2px 8px rgba( 0, 0, 0, 0.5 );
+}
+.skypress-embed__title {
+	display: block;
+	padding: 0.6rem 1rem;
+	color: #fff;
+	background: #000;
+	text-align: left;
+	font-size: 0.95rem;
+}
+.skypress-embed__fallback {
+	display: block;
+	padding: 0.5rem 1rem;
+	font-size: 0.85rem;
+}
+.skypress-embed__iframe {
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	border: 0;
+	display: block;
+}

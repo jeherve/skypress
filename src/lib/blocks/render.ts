@@ -7,9 +7,13 @@
  * is locked to `@wordpress/blocks.serialize()` by `render.test.ts`, which uses the
  * real packages as the oracle.
  *
- * Covers the curated allowlist (Decision 0002). Image/gallery/pullquote/embed
- * rendering is stubbed pending SP3 (blobs) / SP4 (oEmbed + sanitisation).
+ * Covers the curated allowlist (Decision 0002). `core/embed` renders a resolved
+ * card (atproto post / video facade) when `resolveEmbeds` has attached a payload,
+ * else a plain link. Card markup intentionally diverges from `serialize()` — a
+ * read-time enhancement, like blob-image URL resolution (rule 4).
  */
+
+import { renderEmbedCard, type EmbedData } from '../embeds/card';
 
 export interface BlockNode {
 	name: string;
@@ -69,6 +73,17 @@ function renderBlock( node: BlockNode ): string {
 			const caption = attr( node, 'caption' );
 			const fig = caption ? `<figcaption>${ caption }</figcaption>` : '';
 			return `<figure class="wp-block-image"><img src="${ url }" alt="${ alt }"/>${ fig }</figure>`;
+		}
+
+		case 'core/embed': {
+			const data = node.attributes?._skypressEmbed as EmbedData | undefined;
+			if ( data ) {
+				return renderEmbedCard( data );
+			}
+			const url = attr( node, 'url' );
+			return url
+				? `<figure class="wp-block-embed"><a href="${ url }">${ url }</a></figure>`
+				: '';
 		}
 
 		default:

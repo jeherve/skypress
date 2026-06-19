@@ -111,3 +111,39 @@ describe( 'blocksToText (textContent extraction)', () => {
 		expect( blocksToText( blocks ) ).toBe( 'Before\n\nAfter' );
 	} );
 } );
+
+describe( 'core/embed', () => {
+	it( 'renders the resolved card when a payload is attached', () => {
+		const html = renderBlocks( [
+			{
+				name: 'core/embed',
+				attributes: {
+					url: 'https://bsky.app/profile/a/post/b',
+					_skypressEmbed: {
+						kind: 'atproto',
+						authorName: 'A',
+						handle: 'a.bsky.social',
+						text: 'hi',
+						images: [],
+						viewUrl: 'https://mu.social/profile/did:plc:a/post/b',
+					},
+				},
+			},
+		] );
+		expect( html ).toContain( 'skypress-embed--atproto' );
+		expect( html ).toContain( 'hi' );
+	} );
+
+	it( 'falls back to a plain link when there is no payload', () => {
+		const html = renderBlocks( [
+			{ name: 'core/embed', attributes: { url: 'https://example.com/x' } },
+		] );
+		expect( html ).toContain( '<a' );
+		expect( html ).toContain( 'https://example.com/x' );
+		expect( html ).not.toContain( 'skypress-embed' );
+	} );
+
+	it( 'renders nothing for an embed with no url and no payload', () => {
+		expect( renderBlocks( [ { name: 'core/embed', attributes: {} } ] ) ).toBe( '' );
+	} );
+} );

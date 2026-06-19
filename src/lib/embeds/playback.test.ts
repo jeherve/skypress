@@ -26,6 +26,8 @@ describe( 'isTrustedPlaybackUrl', () => {
 	it( 'rejects anything else', () => {
 		expect( isTrustedPlaybackUrl( 'https://evil.com/embed/x' ) ).toBe( false );
 		expect( isTrustedPlaybackUrl( 'https://www.youtube-nocookie.com.evil.com/embed/x' ) ).toBe( false );
+		expect( isTrustedPlaybackUrl( 'https://www.youtube-nocookie.com@evil.com/x' ) ).toBe( false );
+		expect( isTrustedPlaybackUrl( 'http://www.youtube-nocookie.com/x' ) ).toBe( false );
 		expect( isTrustedPlaybackUrl( 'javascript:alert(1)' ) ).toBe( false );
 	} );
 } );

@@ -27,7 +27,7 @@ describe( 'SignInPanel', () => {
 	it( 'for-publish variant frames the CTA around publishing and links out to signup in a new tab', () => {
 		const c = mount( { forPublish: true, error: null, onSubmit: vi.fn() } );
 		expect( c.textContent?.toLowerCase() ).toContain( 'publish' );
-		const signup = c.querySelector( 'a[href*="bsky.app"]' ) as HTMLAnchorElement | null;
+		const signup = c.querySelector( 'a[href*="mu.social"]' ) as HTMLAnchorElement | null;
 		expect( signup ).not.toBe( null );
 		// Opens in a new tab, hardened, and labelled so the new-tab behaviour is announced.
 		expect( signup!.target ).toBe( '_blank' );

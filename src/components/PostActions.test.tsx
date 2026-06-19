@@ -35,8 +35,8 @@ describe( 'PostActions render branches', () => {
 		const markup = renderGate( { status: 'signed-out' } );
 		expect( markup ).toContain( 'Sign in to react' );
 		expect( markup.toLowerCase() ).toContain( 'public' );
-		// Even signed-out, the thread is linkable on Bluesky.
-		expect( markup ).toContain( 'bsky.app/profile/did:plc:writer/post/3kpost' );
+		// Even signed-out, the thread is linkable on the ATmosphere.
+		expect( markup ).toContain( 'mu.social/profile/did:plc:writer/post/3kpost' );
 	} );
 
 	it( 'renders the four actions when signed in', () => {

@@ -6,7 +6,6 @@ import {
 	buildQuote,
 	graphemeLength,
 	validateReplyText,
-	bskyPostWebUrl,
 	MAX_REPLY_GRAPHEMES,
 	type StrongRef,
 } from './records';
@@ -95,18 +94,6 @@ describe( 'graphemeLength', () => {
 		expect( graphemeLength( '👨‍👩‍👧‍👦' ) ).toBe( 1 );
 		// Flag = two regional-indicator codepoints, one grapheme.
 		expect( graphemeLength( '🇫🇷' ) ).toBe( 1 );
-	} );
-} );
-
-describe( 'bskyPostWebUrl', () => {
-	it( 'maps an at:// post uri to its bsky.app profile/post URL', () => {
-		expect( bskyPostWebUrl( SUBJECT.uri ) ).toBe(
-			'https://bsky.app/profile/did:plc:writer/post/3kpost'
-		);
-	} );
-
-	it( 'falls back to bsky.app for an unparseable uri', () => {
-		expect( bskyPostWebUrl( 'not-an-at-uri' ) ).toBe( 'https://bsky.app' );
 	} );
 } );
 

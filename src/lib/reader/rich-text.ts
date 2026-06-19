@@ -10,6 +10,7 @@
  * Returns ordered segments; the caller renders them with auto-escaping, never `set:html`.
  */
 import { RichText } from '@atproto/api';
+import { atmosphereProfileUrl, atmosphereHashtagUrl } from '../social/atmosphere-url';
 
 export type BioSegment =
 	| { type: 'text'; text: string }
@@ -46,12 +47,10 @@ export function detectBioSegments( description: string ): BioSegment[] {
 			href = safeHttpHref( segment.link.uri );
 		} else if ( segment.isMention() ) {
 			const handle = segment.text.replace( /^@/, '' );
-			href = handle
-				? `https://bsky.app/profile/${ encodeURIComponent( handle ) }`
-				: null;
+			href = handle ? atmosphereProfileUrl( handle ) : null;
 		} else if ( segment.isTag() ) {
 			const tag = segment.text.replace( /^#/, '' );
-			href = tag ? `https://bsky.app/hashtag/${ encodeURIComponent( tag ) }` : null;
+			href = tag ? atmosphereHashtagUrl( tag ) : null;
 		}
 
 		segments.push(

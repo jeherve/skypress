@@ -32,7 +32,7 @@ describe( 'detectBioSegments', () => {
 			{
 				type: 'link',
 				text: '@alice.bsky.social',
-				href: 'https://bsky.app/profile/alice.bsky.social',
+				href: 'https://mu.social/profile/alice.bsky.social',
 			},
 		] );
 	} );
@@ -40,7 +40,7 @@ describe( 'detectBioSegments', () => {
 	it( 'links a hashtag to its Bluesky hashtag page', () => {
 		expect( detectBioSegments( 'love #design' ) ).toEqual( [
 			{ type: 'text', text: 'love ' },
-			{ type: 'link', text: '#design', href: 'https://bsky.app/hashtag/design' },
+			{ type: 'link', text: '#design', href: 'https://mu.social/hashtag/design' },
 		] );
 	} );
 
@@ -52,10 +52,10 @@ describe( 'detectBioSegments', () => {
 			{
 				type: 'link',
 				text: '@alice.bsky.social',
-				href: 'https://bsky.app/profile/alice.bsky.social',
+				href: 'https://mu.social/profile/alice.bsky.social',
 			},
 			{ type: 'text', text: ' ' },
-			{ type: 'link', text: '#design', href: 'https://bsky.app/hashtag/design' },
+			{ type: 'link', text: '#design', href: 'https://mu.social/hashtag/design' },
 			{ type: 'text', text: ' ' },
 			{ type: 'link', text: 'example.com', href: 'https://example.com' },
 		] );

@@ -40,7 +40,7 @@ describe( 'mention autocompleter', () => {
 		// place of the typed `@query` rather than swapping out the whole block.
 		const completion = completer.getOptionCompletion( ALICE );
 		const html = renderToString( completion );
-		expect( html ).toContain( 'href="https://bsky.app/profile/alice.bsky.social"' );
+		expect( html ).toContain( 'href="https://mu.social/profile/alice.bsky.social"' );
 		expect( html ).toContain( 'data-did="did:plc:alice"' );
 		expect( html ).toContain( '@alice.bsky.social' );
 	} );

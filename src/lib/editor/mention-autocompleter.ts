@@ -1,6 +1,7 @@
 import { createElement } from '@wordpress/element';
 import { addFilter, hasFilter } from '@wordpress/hooks';
 import { lookupActor, type ActorPreview } from '../landing/actor-lookup';
+import { atmosphereProfileUrl } from '../social/atmosphere-url';
 
 type LookupFn = ( query: string ) => Promise< ActorPreview | null >;
 
@@ -63,7 +64,7 @@ export function createMentionCompleter( lookup: LookupFn = lookupActor ) {
 			return createElement(
 				'a',
 				{
-					href: `https://bsky.app/profile/${ option.handle }`,
+					href: atmosphereProfileUrl( option.handle ),
 					className: 'skypress-mention',
 					'data-did': option.did,
 				},

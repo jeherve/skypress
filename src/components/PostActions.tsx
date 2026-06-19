@@ -15,10 +15,10 @@ import {
 import {
 	graphemeLength,
 	validateReplyText,
-	bskyPostWebUrl,
 	MAX_REPLY_GRAPHEMES,
 	type StrongRef,
 } from '../lib/social/records';
+import { atmospherePostWebUrl } from '../lib/social/atmosphere-url';
 
 export interface PostActionsProps {
 	/** The companion `app.bsky.feed.post` AT-URI (the article's Bluesky post). */
@@ -33,7 +33,7 @@ type Composer = 'reply' | 'quote' | null;
 interface Flash {
 	kind: 'success' | 'error';
 	message: string;
-	/** For a success, the bsky.app link to the freshly created post. */
+	/** For a success, the mu.social link to the freshly created post. */
 	href?: string;
 }
 
@@ -169,7 +169,7 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 			setFlash( {
 				kind: 'success',
 				message: composer === 'reply' ? 'Reply posted to Bluesky.' : 'Quote posted to Bluesky.',
-				href: bskyPostWebUrl( uri ),
+				href: atmospherePostWebUrl( uri ),
 			} );
 			refresh();
 		} catch ( err ) {
@@ -189,7 +189,7 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 		return null;
 	}
 
-	const threadUrl = bskyPostWebUrl( postUri );
+	const threadUrl = atmospherePostWebUrl( postUri );
 
 	// Signed-out: prompt sign-in (same OAuth flow as the editor) before any action.
 	if ( status !== 'signed-in' || ! agent || ! did ) {
@@ -227,7 +227,7 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 					</p>
 				) }
 				<a className="post-actions__thread" href={ threadUrl } target="_blank" rel="noopener noreferrer">
-					View this post on Bluesky
+					View this post on the ATmosphere
 				</a>
 			</div>
 		);
@@ -323,7 +323,7 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 					{ flash.message }{ ' ' }
 					{ flash.href && (
 						<a href={ flash.href } target="_blank" rel="noopener noreferrer">
-							View on Bluesky
+							View on the ATmosphere
 						</a>
 					) }
 				</p>

@@ -19,6 +19,26 @@ describe( 'collectMentions', () => {
 		] );
 	} );
 
+	it( 'parses a mention whose href points at mu.social', () => {
+		const blocks = [
+			para(
+				'Hi <a class="skypress-mention" href="https://mu.social/profile/alice.bsky.social" data-did="did:plc:alice">@alice.bsky.social</a>!'
+			),
+		];
+		expect( collectMentions( blocks ) ).toEqual( [
+			{ did: 'did:plc:alice', handle: 'alice.bsky.social', displayText: '@alice.bsky.social' },
+		] );
+	} );
+
+	it( 'derives the handle from a mu.social href even when the text is not a handle', () => {
+		const blocks = [
+			para(
+				'<a class="skypress-mention" href="https://mu.social/profile/alice.bsky.social" data-did="did:plc:alice">Alice</a>'
+			),
+		];
+		expect( collectMentions( blocks )[ 0 ].handle ).toBe( 'alice.bsky.social' );
+	} );
+
 	it( 'ignores ordinary links that are not mentions', () => {
 		const blocks = [ para( 'See <a href="https://example.com">the docs</a>.' ) ];
 		expect( collectMentions( blocks ) ).toEqual( [] );

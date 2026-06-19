@@ -20,6 +20,7 @@ export function activatePlay( button: HTMLElement ): void {
 	}
 	const iframe = document.createElement( 'iframe' );
 	iframe.setAttribute( 'src', src );
+	iframe.setAttribute( 'title', provider === 'youtube' ? 'YouTube video player' : 'Vimeo video player' );
 	iframe.setAttribute( 'allow', 'autoplay; fullscreen; picture-in-picture' );
 	iframe.setAttribute( 'allowfullscreen', 'true' );
 	iframe.setAttribute( 'loading', 'lazy' );

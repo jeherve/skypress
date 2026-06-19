@@ -76,6 +76,7 @@ function renderBlock( node: BlockNode ): string {
 		}
 
 		case 'core/embed': {
+			// Safe even if a hostile PDS pre-set `_skypressEmbed`: card values are escaped + scheme-guarded in card.ts, video cards carry no iframe, and output is sanitised last.
 			const data = node.attributes?._skypressEmbed as EmbedData | undefined;
 			if ( data ) {
 				return renderEmbedCard( data );

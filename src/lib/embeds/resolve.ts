@@ -19,11 +19,14 @@ const APPVIEW = 'https://public.api.bsky.app';
 const defaultFetch: FetchLike = ( url ) => safeFetch( url );
 
 function extractImages( embed: unknown ): AtprotoImage[] {
-	const e = embed as { $type?: string; images?: { fullsize?: string; thumb?: string; alt?: string }[] };
-	if ( ! e || ! Array.isArray( e.images ) ) {
+	type ImageView = { fullsize?: string; thumb?: string; alt?: string };
+	const e = embed as { $type?: string; images?: ImageView[]; media?: { images?: ImageView[] } };
+	// Direct `images#view` carries `images`; a `recordWithMedia#view` quote-post nests them under `media.images`.
+	const images = Array.isArray( e?.images ) ? e.images : Array.isArray( e?.media?.images ) ? e.media.images : null;
+	if ( ! images ) {
 		return [];
 	}
-	return e.images
+	return images
 		.map( ( img ) => ( { src: img.fullsize ?? img.thumb ?? '', alt: img.alt ?? '' } ) )
 		.filter( ( img ) => img.src );
 }

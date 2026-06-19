@@ -45,6 +45,29 @@ describe( 'fetchAtprotoCard', () => {
 		} );
 	} );
 
+	it( 'reads images from a recordWithMedia quote-post embed', async () => {
+		const fetchImpl = vi.fn().mockResolvedValueOnce(
+			jsonResponse( {
+				posts: [
+					{
+						uri: 'at://did:plc:abc/app.bsky.feed.post/xyz',
+						author: { handle: 'a.bsky.social' },
+						record: { text: 'quoting' },
+						embed: {
+							$type: 'app.bsky.embed.recordWithMedia#view',
+							media: {
+								$type: 'app.bsky.embed.images#view',
+								images: [ { fullsize: 'https://cdn/q.jpg', alt: 'quoted pic' } ],
+							},
+						},
+					},
+				],
+			} )
+		);
+		const card = await fetchAtprotoCard( { kind: 'atproto', id: 'did:plc:abc/xyz' }, fetchImpl );
+		expect( card?.images ).toEqual( [ { src: 'https://cdn/q.jpg', alt: 'quoted pic' } ] );
+	} );
+
 	it( 'skips profile resolution when the authority is already a DID', async () => {
 		const fetchImpl = vi.fn().mockResolvedValueOnce(
 			jsonResponse( {

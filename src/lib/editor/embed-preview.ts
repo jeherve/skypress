@@ -24,6 +24,33 @@ const PROVIDER_LABEL: Record< 'youtube' | 'vimeo', string > = {
 	vimeo: 'Vimeo',
 };
 
+/**
+ * Self-contained card styles for the editor preview. `core/embed` renders the
+ * preview html inside a sandboxed iframe (`<SandBox>`) that has no access to the
+ * editor's stylesheet OR the site's theme tokens, so these must be inlined with
+ * the html and use literal colors (not `var(--token)`). Kept roughly in sync with
+ * `src/styles/embeds.css` — the reader uses that external stylesheet (themed),
+ * this is only the in-editor preview approximation.
+ */
+const PREVIEW_STYLES =
+	'body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#1a1a1a}' +
+	'.skypress-embed{margin:0;border:1px solid #e6e3dd;border-radius:10px;overflow:hidden;background:#faf9f6}' +
+	'.skypress-embed--atproto .skypress-embed__link{display:block;padding:1rem 1.2rem;text-decoration:none;color:#1a1a1a}' +
+	'.skypress-embed__head{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}' +
+	'.skypress-embed__avatar{width:32px;height:32px;border-radius:50%;object-fit:cover}' +
+	'.skypress-embed__author{font-weight:600}' +
+	'.skypress-embed__handle{color:#6b6b6b;font-size:.92rem}' +
+	'.skypress-embed__text{display:block;white-space:pre-wrap;line-height:1.5}' +
+	'.skypress-embed__media{display:grid;gap:.4rem;margin-top:.75rem}' +
+	'.skypress-embed__image{width:100%;border-radius:8px}' +
+	'.skypress-embed__footer{display:block;margin-top:.75rem;font-size:.88rem;color:#6b6b6b}' +
+	'.skypress-embed--placeholder .skypress-embed__text{padding:1rem 1.2rem;color:#6b6b6b}';
+
+/** Prepend the inline preview styles so the card renders styled inside the SandBox iframe. */
+function withPreviewStyles( html: string ): string {
+	return `<style>${ PREVIEW_STYLES }</style>${ html }`;
+}
+
 function placeholder( label: string ): string {
 	return (
 		`<figure class="wp-block-embed skypress-embed skypress-embed--placeholder">` +
@@ -54,13 +81,13 @@ export async function buildEmbedPreview(
 		if ( ! card ) {
 			return null;
 		}
-		return { type: 'rich', version: '1.0', provider_name: 'Bluesky', html: renderEmbedCard( card ) };
+		return { type: 'rich', version: '1.0', provider_name: 'Bluesky', html: withPreviewStyles( renderEmbedCard( card ) ) };
 	}
 	return {
 		type: 'rich',
 		version: '1.0',
 		provider_name: PROVIDER_LABEL[ match.kind ],
-		html: placeholder( PROVIDER_LABEL[ match.kind ] ),
+		html: withPreviewStyles( placeholder( PROVIDER_LABEL[ match.kind ] ) ),
 	};
 }
 

@@ -32,3 +32,26 @@ describe( 'block-tree round trip', () => {
 		expect( markup2 ).toBe( markup1 );
 	} );
 } );
+
+describe( 'edit round-trip preserves the blob reference', () => {
+	// Reloading a published document for editing rebuilds each block with
+	// `createBlock` (SkyEditor's `toEditorBlocks`). `createBlock` sanitises
+	// attributes down to the registered schema, so the custom `skypressBlob`
+	// blob ref must be registered on `core/image` or it is silently dropped —
+	// which makes the PDS garbage-collect the blob on the next update commit.
+	it( 'createBlock keeps the custom skypressBlob attribute on core/image', () => {
+		const skypressBlob = {
+			$type: 'blob',
+			ref: { $link: 'bafkreifazdufln7f377eye4ql7tquarcnh75ew6xx4w2tcjt56s6bcb3di' },
+			mimeType: 'image/png',
+			size: 1234,
+		};
+
+		const block = createBlock( 'core/image', {
+			url: 'https://pds.example/xrpc/com.atproto.sync.getBlob?did=did:plc:x&cid=bafkreifazdufln7f377eye4ql7tquarcnh75ew6xx4w2tcjt56s6bcb3di',
+			skypressBlob,
+		} );
+
+		expect( block.attributes.skypressBlob ).toEqual( skypressBlob );
+	} );
+} );

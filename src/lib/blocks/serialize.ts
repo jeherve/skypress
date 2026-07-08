@@ -15,6 +15,7 @@ import {
 	unregisterBlockType,
 	type BlockInstance,
 } from '@wordpress/blocks';
+import { addFilter } from '@wordpress/hooks';
 import { registerCoreBlocks } from '@wordpress/block-library';
 import { ALLOWED_BLOCKS } from './allowlist';
 
@@ -22,6 +23,31 @@ let registered = false;
 
 /** Block names kept for parsing even when not user-insertable. */
 const FALLBACK_BLOCKS = [ 'core/missing', 'core/freeform' ];
+
+/**
+ * Teach `core/image` about `skypressBlob` — the typed atproto blob ref the publish
+ * flow attaches to uploaded images (`attachBlobRefs`). It is NOT a core attribute, so
+ * without this `createBlock`/`parse` sanitise it away when a published document is
+ * reloaded for editing. Losing it drops the document's only reference to the image
+ * blob, and the PDS garbage-collects that blob on the next update commit → the image
+ * 404s (`Blob not found`). Registering the attribute makes it survive the edit
+ * round-trip. Default-unset, so it never appears on images that don't have one — the
+ * dependency-free `render.ts` and its fidelity test are unaffected.
+ */
+function addImageBlobRefAttribute( ...args: unknown[] ): unknown {
+	const settings = args[ 0 ] as { attributes?: Record< string, unknown > };
+	const name = args[ 1 ] as string;
+	if ( name !== 'core/image' ) {
+		return settings;
+	}
+	return {
+		...settings,
+		attributes: {
+			...settings.attributes,
+			skypressBlob: { type: 'object' },
+		},
+	};
+}
 
 /**
  * Register exactly the curated block set (idempotent). Registers core blocks,
@@ -32,6 +58,13 @@ export function registerSkyPressBlocks(): void {
 	if ( registered ) {
 		return;
 	}
+	// Must be added before `registerCoreBlocks()` so the filter runs as `core/image`
+	// registers.
+	addFilter(
+		'blocks.registerBlockType',
+		'skypress/image-blob-ref',
+		addImageBlobRefAttribute
+	);
 	registerCoreBlocks();
 
 	const keep = new Set< string >( [ ...ALLOWED_BLOCKS, ...FALLBACK_BLOCKS ] );

@@ -8,7 +8,7 @@
 	flex-direction: column;
 	align-items: center;
 	gap: 0.5rem;
-	margin: 1.25rem 0 0;
+	margin: 2.5rem 0 0;
 }
 .subscribe--loading {
 	color: var(--muted);

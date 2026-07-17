@@ -14,7 +14,9 @@ import {
 	normalizeHandle,
 	getClientMode,
 	redirectUriForLocation,
+	oauthCallbackUri,
 } from './config';
+import { setOAuthReturn } from './oauth-return';
 import { resolvePdsUrl } from '../media/pds';
 import { fetchViewerProfile } from './profile';
 
@@ -30,7 +32,14 @@ export interface AuthContextValue {
 	/** The writer's PDS endpoint (for getBlob URLs); null until resolved. */
 	pdsUrl: string | null;
 	error: string | null;
-	signIn: ( input: string ) => Promise< void >;
+	/**
+	 * Start the OAuth round-trip. `opts.returnTo` (a same-origin path) marks sign-in as coming
+	 * from an OFF-ISLAND page that can't be a registered redirect URI — the public publication
+	 * page. In hosted mode the round-trip then goes through the static `/oauth/callback/` route
+	 * and bounces back to `returnTo`; loopback (dev) already returns to the current page, so it
+	 * only needs the intent the caller stashed separately.
+	 */
+	signIn: ( input: string, opts?: { returnTo?: string } ) => Promise< void >;
 	signOut: () => Promise< void >;
 }
 
@@ -98,7 +107,7 @@ export function AuthProvider( { children }: { children: ReactNode } ) {
 		};
 	}, [ adoptSession ] );
 
-	const signIn = useCallback( async ( input: string ) => {
+	const signIn = useCallback( async ( input: string, opts?: { returnTo?: string } ) => {
 		const client = clientRef.current;
 		if ( ! client ) {
 			return;
@@ -112,20 +121,26 @@ export function AuthProvider( { children }: { children: ReactNode } ) {
 			// Hosted (prod) registers several redirect URIs (one per OAuth-island route),
 			// and atproto defaults to the first — so without this, signing in from /write
 			// always returned the writer to /editor, losing the in-progress draft. Pin the
-			// round-trip to the page sign-in started from. In loopback (dev) the client's
-			// single redirect URI already equals the current page, so we pass nothing.
+			// round-trip to the page sign-in started from. When sign-in starts from an
+			// OFF-ISLAND page (`opts.returnTo` — the dynamic publication page, which can't be
+			// a registered redirect URI), route through the static `/oauth/callback/` route
+			// instead and stash where to bounce back to. In loopback (dev) the client's single
+			// redirect URI already equals the current page, so we pass nothing either way.
 			// atproto brands `redirect_uri` as a URL template type; the value is a registered
 			// app URL (and atproto re-validates it against the client metadata), so cast the
 			// options object to the `signIn` parameter type.
-			const options =
-				getClientMode( window.location.hostname ) === 'hosted'
-					? ( {
-							redirect_uri: redirectUriForLocation(
-								window.location.origin,
-								window.location.pathname
-							),
-					  } as Parameters< BrowserOAuthClient[ 'signIn' ] >[ 1 ] )
-					: undefined;
+			let options: Parameters< BrowserOAuthClient[ 'signIn' ] >[ 1 ];
+			if ( getClientMode( window.location.hostname ) === 'hosted' ) {
+				const origin = window.location.origin;
+				let redirect_uri: string;
+				if ( opts?.returnTo ) {
+					setOAuthReturn( opts.returnTo );
+					redirect_uri = oauthCallbackUri( origin );
+				} else {
+					redirect_uri = redirectUriForLocation( origin, window.location.pathname );
+				}
+				options = { redirect_uri } as Parameters< BrowserOAuthClient[ 'signIn' ] >[ 1 ];
+			}
 			// Redirects to the user's authorization server; the promise never resolves.
 			await client.signIn( normalizeHandle( input ), options );
 		} catch ( err ) {

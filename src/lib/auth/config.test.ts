@@ -6,7 +6,9 @@ import {
 	isValidAccountInput,
 	isValidHandleOrDid,
 	redirectUriForLocation,
+	oauthCallbackUri,
 	OAUTH_REDIRECT_PATHS,
+	OAUTH_CALLBACK_PATH,
 	OAUTH_SCOPE,
 } from './config';
 
@@ -36,6 +38,25 @@ describe( 'OAUTH_REDIRECT_PATHS', () => {
 		// the round-trip; /editor/ stays first so it is the safe fallback for any other
 		// page that ever triggers sign-in.
 		expect( OAUTH_REDIRECT_PATHS ).toEqual( [ '/editor/', '/write/' ] );
+	} );
+} );
+
+describe( 'OAUTH_CALLBACK_PATH / oauthCallbackUri', () => {
+	it( 'is a single static return-only route, distinct from the island start routes', () => {
+		// Dynamic pages (the publication page /[author]/[slug]/) can't be registered redirect
+		// URIs, so the round-trip returns to this one static callback route, which then bounces
+		// to the stored return path. It must NOT be an island start route.
+		expect( OAUTH_CALLBACK_PATH ).toBe( '/oauth/callback/' );
+		expect( OAUTH_REDIRECT_PATHS ).not.toContain( OAUTH_CALLBACK_PATH );
+	} );
+
+	it( 'joins onto the app origin, stripping a trailing slash off the origin', () => {
+		expect( oauthCallbackUri( 'https://skypress.blog' ) ).toBe(
+			'https://skypress.blog/oauth/callback/'
+		);
+		expect( oauthCallbackUri( 'https://skypress.blog/' ) ).toBe(
+			'https://skypress.blog/oauth/callback/'
+		);
 	} );
 } );
 

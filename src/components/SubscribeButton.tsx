@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AuthProvider } from '../lib/auth/AuthProvider';
 import { useAuth } from '../lib/auth/useAuth';
 import { subscribe, unsubscribe, fetchSubscriptionUri } from '../lib/subscribe/subscriptions';
+import { saveSubscribeIntent, consumeSubscribeIntent } from '../lib/subscribe/intent';
 
 export interface SubscribeButtonProps {
 	/** The `site.standard.publication` AT-URI the reader subscribes to. */
@@ -34,6 +35,9 @@ export function SubscribeGate( { publicationUri, publicationName }: SubscribeBut
 		mounted.current = false;
 	}, [] );
 
+	// Fires the pending-intent auto-subscribe at most once per mount (see the effect below).
+	const autoSubscribeRan = useRef( false );
+
 	// Load the reader's current subscription state once auth settles. Best-effort: a failed
 	// read just leaves the button in its "Subscribe" state rather than blocking the action.
 	useEffect( () => {
@@ -48,6 +52,36 @@ export function SubscribeGate( { publicationUri, publicationName }: SubscribeBut
 			cancelled = true;
 		};
 	}, [ status, agent, did, publicationUri ] );
+
+	// Auto-complete a subscribe that began signed-out. A reader who hit "Sign in to subscribe"
+	// stashed the target publication (`subscribe/intent`) before the OAuth redirect; on return
+	// — signed-in, and once the current subscription state has loaded — we consume that intent
+	// and, if it targets THIS publication and the reader isn't already subscribed, write the
+	// record so the button's promise actually holds. Fires at most once (ref + storage consume),
+	// after the load effect above resolves `subscriptionUri` away from `undefined`.
+	useEffect( () => {
+		if ( status !== 'signed-in' || ! agent || ! did ) {
+			return;
+		}
+		if ( subscriptionUri === undefined || autoSubscribeRan.current ) {
+			return;
+		}
+		autoSubscribeRan.current = true;
+		const intended = consumeSubscribeIntent();
+		if ( intended !== publicationUri || subscriptionUri !== null ) {
+			return; // no intent, an intent for another publication, or already subscribed
+		}
+		setBusy( true );
+		setErrorMsg( null );
+		subscribe( agent, did, publicationUri )
+			.then( ( uri ) => mounted.current && setSubscriptionUri( uri ) )
+			.catch(
+				( err ) =>
+					mounted.current &&
+					setErrorMsg( errorText( err, 'Could not update your subscription.' ) )
+			)
+			.finally( () => mounted.current && setBusy( false ) );
+	}, [ status, agent, did, publicationUri, subscriptionUri ] );
 
 	const onToggle = async () => {
 		if ( ! agent || ! did || busy ) {
@@ -90,7 +124,11 @@ export function SubscribeGate( { publicationUri, publicationName }: SubscribeBut
 					className="subscribe__signin"
 					onSubmit={ ( event ) => {
 						event.preventDefault();
-						void signIn( handle );
+						// Remember the target publication and this page so the full-page OAuth
+						// round-trip (via the static /oauth/callback/ route in prod) returns here
+						// and auto-writes the subscription — sign-in alone wouldn't subscribe.
+						saveSubscribeIntent( publicationUri );
+						void signIn( handle, { returnTo: window.location.pathname } );
 					} }
 				>
 					<input

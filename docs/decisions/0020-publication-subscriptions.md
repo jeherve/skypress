@@ -70,3 +70,31 @@ read by the Bluesky allowlist and has **no** effect on the card button.
   auth island, and a second OAuth-client init on one page is a real risk; deferred until an
   `AuthProvider` can wrap both islands.
 - Subscriber counts, a following feed, and any cross-PDS aggregation (relay territory).
+
+## Amendment (2026-07-17) — OAuth round-trip from the dynamic publication page
+
+The initial cut had a gap: sign-in from the publication page couldn't come back to it, and
+sign-in alone didn't subscribe.
+
+- **Problem.** atproto only redirects back to a `redirect_uri` **registered** in
+  `client-metadata.json` (generated from `OAUTH_REDIRECT_PATHS`, static island routes). The
+  publication page is a **dynamic** route (`/[author]/[slug]/`) — unboundedly many, so it can
+  never be registered. `redirectUriForLocation` fell back to `/editor/`, so signing in from
+  the Subscribe button dropped the reader on the editor. And even fixed, OAuth only
+  *establishes a session* — the `subscribe()` write happens on a button click that never came,
+  so no `site.standard.graph.subscription` record was created.
+- **Fix — a static return-only callback route.** Add one registered route,
+  `OAUTH_CALLBACK_PATH = '/oauth/callback/'` (in `redirect_uris` alongside the island routes).
+  Off-island sign-in (`signIn(handle, { returnTo })`) routes the hosted round-trip there and
+  stashes the originating path (`auth/oauth-return.ts`); the `OAuthCallback` island completes
+  the token exchange, then `location.replace`s back to the stashed path — guarded by
+  `safeOAuthReturnPath` (same-origin absolute paths only, no open redirect). Loopback (dev)
+  needs no callback: its per-page client already redirects back to the current page.
+- **Fix — subscribe intent survives the round-trip.** The button stashes the target
+  publication (`subscribe/intent.ts`) before redirecting; back on the publication page,
+  signed-in and once current state has loaded, `SubscribeGate` consumes the intent and, if it
+  targets this publication and the reader isn't already subscribed, auto-writes the record —
+  so "Sign in to subscribe" actually subscribes. Both stores use `localStorage` (survives the
+  OAuth excursion, same rationale as the writing-first `draft-store`).
+- **Reusable.** The callback route + `oauth-return` are generic: any future signed-out action
+  on a non-island page returns through the same path.

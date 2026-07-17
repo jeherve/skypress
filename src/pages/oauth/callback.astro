@@ -1,0 +1,27 @@
+---
+import Base from '../../layouts/Base.astro';
+import OAuthCallback from '../../components/OAuthCallback.tsx';
+// The callback island is `client:only` (auth runs only in the browser, Decisions 0001 &
+// 0004); its chrome reuses the subscribe stylesheet for the transient "Finishing sign-in…"
+// message. This is the single static route the OAuth round-trip returns to when sign-in
+// started from a page that can't itself be a registered redirect URI — the dynamic
+// publication page (OAUTH_CALLBACK_PATH, Decision 0020).
+import '../../styles/subscribe.css';
+---
+
+<Base title="Signing in — SkyPress">
+	<main class="pub">
+		<OAuthCallback client:only="react">
+			<p slot="fallback" class="subscribe subscribe--loading">Finishing sign-in…</p>
+		</OAuthCallback>
+	</main>
+</Base>
+
+<style>
+	.pub {
+		max-width: 44rem;
+		margin: 0 auto;
+		padding: 4rem 1.5rem;
+		text-align: center;
+	}
+</style>

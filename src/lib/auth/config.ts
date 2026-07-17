@@ -39,6 +39,23 @@ export function clientMetadataUrl( origin: string ): string {
 export const OAUTH_REDIRECT_PATHS = [ '/editor/', '/write/' ] as const;
 
 /**
+ * The single static route the OAuth round-trip returns to when sign-in starts from an
+ * OFF-ISLAND page — i.e. one that can't be a registered redirect URI. The publication page
+ * lives at a dynamic route (`/[author]/[slug]/`), of which there are unboundedly many, so it
+ * can never appear in `redirect_uris`. Instead such pages redirect here (a real page that
+ * mounts the OAuth-callback island); the island completes the token exchange, then bounces to
+ * the return path the initiating page stashed (`oauth-return.ts`). It is registered in
+ * `client-metadata.json` alongside `OAUTH_REDIRECT_PATHS` but is return-only: no one signs in
+ * *from* it. (Decision 0020 — subscribe from the public publication page.)
+ */
+export const OAUTH_CALLBACK_PATH = '/oauth/callback/';
+
+/** The registered callback redirect URI on `origin` (see `OAUTH_CALLBACK_PATH`). */
+export function oauthCallbackUri( origin: string ): string {
+	return `${ origin.replace( /\/$/, '' ) }${ OAUTH_CALLBACK_PATH }`;
+}
+
+/**
  * The registered redirect URI for the page sign-in is starting on, so the full-page
  * OAuth round-trip returns the writer to where they were (carrying the draft + publish
  * intent that `draft-store` persisted). Unknown paths fall back to `/editor/` — passing

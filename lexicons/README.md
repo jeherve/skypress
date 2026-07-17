@@ -14,6 +14,7 @@ rationale.
 |---|---|---|
 | `site.standard.publication` | community ([standard.site]) | interop — other readers (Leaflet, Pocketblog, pdsls, Bluesky cards) already speak it |
 | `site.standard.document` | community ([standard.site]) | interop — the discoverable article surface |
+| `site.standard.graph.subscription` | community ([standard.site]) | interop — the portable follow primitive; written to the reader's repo |
 | `blog.skypress.content.gutenberg` | **SkyPress** | the Gutenberg block-tree content format; reverse-DNS of `skypress.blog` |
 | `app.bsky.feed.post` | Bluesky | the social signal (POSSE) |
 
@@ -63,6 +64,24 @@ Record key: **TID** (not a `self` singleton — reused by listing existing recor
 | `description` | | optional |
 | `icon` | | optional blob (≤1MB) |
 | `basicTheme` | | optional `site.standard.theme.basic` object — a sky-phase colour theme (`background`/`foreground`/`accent`/`accentForeground` as RGB); applied on the public reader and honoured by other standard.site readers (Decision 0012) |
+| `preferences` | | open `preferences` object; SkyPress sets `{ showInDiscover: true }` so the (already public) publication declares itself discoverable to standard.site-aware surfaces (Decision 0020) |
+
+## `site.standard.graph.subscription` — reader follows a publication
+
+Record key: **TID**. Written to the **reader's** repo (not the writer's), exactly like
+the `app.bsky.feed.like`/`repost` social actions — a reader's OAuth agent creates it on
+their own PDS, and deletes it to unsubscribe. SkyPress reads back only the reader's *own*
+subscriptions (to toggle the Subscribe button); it does **not** aggregate them into
+counts or a following feed — that would be relay/AppView work the brief rules out
+(Decision 0020).
+
+| Field | Req | SkyPress value |
+|---|---|---|
+| `publication` | ✓ | the `site.standard.publication` `at://` URI being followed — a bare URI, not a strongRef, so a publication edit never invalidates the subscription |
+| `createdAt` | | ISO datetime of the subscribe action |
+
+Builders live in [`src/lib/subscribe/records.ts`](../src/lib/subscribe/records.ts);
+orchestration in [`subscriptions.ts`](../src/lib/subscribe/subscriptions.ts).
 
 ## `app.bsky.feed.post` — the social signal
 

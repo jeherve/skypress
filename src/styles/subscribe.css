@@ -1,0 +1,71 @@
+/**
+ * Publication subscribe control (`SubscribeButton`). The component is a `client:only`
+ * React island mounted on the publication page, so Astro's component-scoped styles never
+ * reach its DOM — these rules must be global (imported from the publication `index.astro`).
+ */
+.subscribe {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 2.5rem 0 0;
+}
+.subscribe--loading {
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.subscribe__signin {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.5rem;
+}
+.subscribe__signin-input {
+	padding: 0.55rem 0.85rem;
+	border: 1px solid var(--line-strong, var(--line));
+	border-radius: 999px;
+	background: var(--paper);
+	color: var(--ink);
+	font: inherit;
+	font-size: 0.95rem;
+	min-width: 14rem;
+}
+.subscribe__btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.55rem 1.4rem;
+	border: 1px solid var(--sun);
+	border-radius: 999px;
+	background: var(--sun);
+	color: var(--sun-contrast, #fff);
+	font: inherit;
+	font-size: 0.95rem;
+	font-weight: 560;
+	cursor: pointer;
+}
+.subscribe__btn:hover {
+	filter: brightness(0.96);
+}
+.subscribe__btn:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+.subscribe__btn.is-active {
+	background: transparent;
+	color: var(--ink);
+	border-color: var(--line-strong, var(--line));
+}
+.subscribe__note {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.78rem;
+	text-align: center;
+	max-width: 32ch;
+}
+.subscribe__error {
+	margin: 0;
+	color: var(--danger, #b00020);
+	font-size: 0.85rem;
+	text-align: center;
+}

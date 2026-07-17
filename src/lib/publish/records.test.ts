@@ -188,6 +188,19 @@ describe( 'buildPublicationRecord', () => {
 		expect( 'basicTheme' in bare ).toBe( false );
 	} );
 
+	it( 'includes preferences when provided and omits them otherwise', () => {
+		const withPrefs = buildPublicationRecord( {
+			handle: 'a.b',
+			slug: 's',
+			name: 'N',
+			preferences: { showInDiscover: true },
+		} );
+		expect( withPrefs.preferences ).toEqual( { showInDiscover: true } );
+
+		const bare = buildPublicationRecord( { handle: 'a.b', slug: 's', name: 'N' } );
+		expect( 'preferences' in bare ).toBe( false );
+	} );
+
 	it( 'stamps the colour union $type so the stored basicTheme validates against the lexicon', () => {
 		// `site.standard.theme.basic` colours are a union of `site.standard.theme.color#rgb`; without
 		// the `$type` discriminator the record is invalid and Bluesky drops the enhanced link card.

@@ -267,6 +267,13 @@ describe( 'createPublication', () => {
 		expect( 'basicTheme' in created[ 0 ].record ).toBe( false );
 		expect( pub.basicTheme ).toBeUndefined();
 	} );
+
+	it( 'declares the publication discoverable by default (Decision 0020)', async () => {
+		const { agent, created } = mockAgent();
+		const pub = await createPublication( agent, DID, 'me.bsky.social', { name: 'My Blog' } );
+		expect( created[ 0 ].record.preferences ).toEqual( { showInDiscover: true } );
+		expect( pub.preferences ).toEqual( { showInDiscover: true } );
+	} );
 } );
 
 describe( 'updatePublication', () => {
@@ -308,6 +315,29 @@ describe( 'updatePublication', () => {
 		expect( put[ 0 ].record.basicTheme ).toEqual( THEME_PRESETS[ 1 ].colors );
 		expect( updated.basicTheme ).toEqual( THEME_PRESETS[ 1 ].colors );
 	} );
+
+	it( 'preserves existing preferences and defaults to discoverable when absent', async () => {
+		const { agent, put } = mockAgent();
+		const base = {
+			uri: `at://${ DID }/site.standard.publication/a`,
+			cid: 'bafy-a',
+			rkey: 'a',
+			slug: 'my-blog',
+			name: 'My Blog',
+		};
+		// An explicit existing preference is round-tripped, not clobbered.
+		await updatePublication(
+			agent,
+			DID,
+			'me.bsky.social',
+			{ ...base, preferences: { showInDiscover: false } },
+			{ name: 'My Blog' }
+		);
+		expect( put[ 0 ].record.preferences ).toEqual( { showInDiscover: false } );
+		// A publication created before preferences existed picks up the discoverable default on edit.
+		await updatePublication( agent, DID, 'me.bsky.social', base, { name: 'My Blog' } );
+		expect( put[ 1 ].record.preferences ).toEqual( { showInDiscover: true } );
+	} );
 } );
 
 describe( 'toPublication basicTheme', () => {
@@ -324,6 +354,22 @@ describe( 'toPublication basicTheme', () => {
 		const pubs = await listPublications( agent, DID );
 		expect( pubs.find( ( p ) => p.slug === 'a' )?.basicTheme ).toEqual( good );
 		expect( pubs.find( ( p ) => p.slug === 'b' )?.basicTheme ).toBeUndefined();
+	} );
+
+	it( 'surfaces stored preferences and ignores a malformed one', async () => {
+		const { agent } = mockAgent( {
+			'site.standard.publication': [
+				pubRecord( 'a', `${ SITE_BASE }/@me.bsky.social/a`, {
+					preferences: { showInDiscover: true },
+				} ),
+				pubRecord( 'b', `${ SITE_BASE }/@me.bsky.social/b`, {
+					preferences: { showInDiscover: 'yes' },
+				} ),
+			],
+		} );
+		const pubs = await listPublications( agent, DID );
+		expect( pubs.find( ( p ) => p.slug === 'a' )?.preferences ).toEqual( { showInDiscover: true } );
+		expect( pubs.find( ( p ) => p.slug === 'b' )?.preferences ).toBeUndefined();
 	} );
 } );
 

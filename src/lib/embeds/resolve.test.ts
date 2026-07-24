@@ -1,6 +1,12 @@
 // src/lib/embeds/resolve.test.ts
 import { describe, expect, it, vi } from 'vitest';
-import { fetchAtprotoCard, fetchVideoCard, resolveEmbeds } from './resolve';
+import {
+	EMBED_RESOLUTION_CONCURRENCY,
+	MAX_EMBEDS_PER_DOCUMENT,
+	fetchAtprotoCard,
+	fetchVideoCard,
+	resolveEmbeds,
+} from './resolve';
 import type { EmbedMatch } from './registry';
 
 function jsonResponse( body: unknown, ok = true ): Response {
@@ -139,5 +145,61 @@ describe( 'resolveEmbeds', () => {
 		const out = await resolveEmbeds( blocks, { only: [ 'atproto' ], fetchImpl } );
 		expect( fetchImpl ).not.toHaveBeenCalled();
 		expect( out[ 1 ].attributes ).not.toHaveProperty( '_skypressEmbed' );
+	} );
+
+	const videoOembed = () => jsonResponse( { title: 'V', thumbnail_url: 'https://t/x.jpg' } );
+	const embedBlock = ( url: string ) => ( { name: 'core/embed', attributes: { url } } );
+
+	it( 'caps the resolved embeds per document, leaving the overflow as plain links', async () => {
+		const fetchImpl = vi.fn().mockResolvedValue( videoOembed() );
+		const many = Array.from( { length: MAX_EMBEDS_PER_DOCUMENT + 5 }, ( _, i ) =>
+			embedBlock( `https://vimeo.com/${ i + 1 }` )
+		);
+		const out = await resolveEmbeds( many, { fetchImpl } );
+		const resolvedCount = out.filter( ( b ) => b.attributes?._skypressEmbed ).length;
+		// Only the first N distinct URLs resolve; the rest keep no payload.
+		expect( resolvedCount ).toBe( MAX_EMBEDS_PER_DOCUMENT );
+		expect( fetchImpl ).toHaveBeenCalledTimes( MAX_EMBEDS_PER_DOCUMENT );
+		expect( out.at( -1 )?.attributes ).not.toHaveProperty( '_skypressEmbed' );
+	} );
+
+	it( 'resolves through a bounded pool, never exceeding the concurrency limit in flight', async () => {
+		let inFlight = 0;
+		let peak = 0;
+		const fetchImpl = vi.fn( async () => {
+			inFlight++;
+			peak = Math.max( peak, inFlight );
+			await Promise.resolve(); // yield so co-scheduled workers can pile up
+			inFlight--;
+			return videoOembed();
+		} );
+		const many = Array.from( { length: MAX_EMBEDS_PER_DOCUMENT }, ( _, i ) =>
+			embedBlock( `https://vimeo.com/${ i + 1 }` )
+		);
+		await resolveEmbeds( many, { fetchImpl } );
+		expect( peak ).toBeLessThanOrEqual( EMBED_RESOLUTION_CONCURRENCY );
+	} );
+
+	it( 'deduplicates identical embed URLs, fetching each once but carding every node', async () => {
+		const fetchImpl = vi.fn().mockResolvedValue( videoOembed() );
+		const dupes = Array.from( { length: 4 }, () => embedBlock( 'https://vimeo.com/123' ) );
+		const out = await resolveEmbeds( dupes, { fetchImpl } );
+		expect( fetchImpl ).toHaveBeenCalledTimes( 1 );
+		expect( out.every( ( b ) => b.attributes?._skypressEmbed ) ).toBe( true );
+	} );
+
+	it( 'bounds embeds nested inside inner blocks too', async () => {
+		const fetchImpl = vi.fn().mockResolvedValue( videoOembed() );
+		const nested = [
+			{
+				name: 'core/quote',
+				attributes: {},
+				innerBlocks: Array.from( { length: MAX_EMBEDS_PER_DOCUMENT + 3 }, ( _, i ) =>
+					embedBlock( `https://vimeo.com/${ i + 1 }` )
+				),
+			},
+		];
+		await resolveEmbeds( nested, { fetchImpl } );
+		expect( fetchImpl ).toHaveBeenCalledTimes( MAX_EMBEDS_PER_DOCUMENT );
 	} );
 } );

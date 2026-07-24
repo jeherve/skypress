@@ -32,8 +32,34 @@ function rkeyFromUri( uri: string ): string {
 	return uri.split( '/' ).pop() ?? '';
 }
 
+/** The repo DID that authored an AT-URI: the authority between `at://` and the first `/`. */
+function repoDidFromAtUri( uri: string ): string | null {
+	const match = /^at:\/\/([^/]+)\//.exec( uri );
+	return match ? match[ 1 ] : null;
+}
+
+/**
+ * Confused-deputy guard: the companion post ref (`subject`) is read verbatim from the
+ * article author's PDS document — an untrusted, author-writable field — so before the
+ * reader's authenticated agent writes a like/repost/reply/quote against it, require the
+ * ref's own repo DID to equal the article author's DID. This blocks a malicious or
+ * compromised publication from pointing `bskyPostRef` at an arbitrary post and silently
+ * redirecting the reader's public action onto content the author does not own.
+ */
+function assertCompanionAuthority( subject: StrongRef, authorDid: string ): void {
+	if ( repoDidFromAtUri( subject.uri ) !== authorDid ) {
+		throw new Error( 'This post does not belong to the article’s author, so the action was blocked.' );
+	}
+}
+
 /** Like the companion post; returns the created like record's AT-URI (for unliking). */
-export async function like( agent: Agent, did: string, subject: StrongRef ): Promise< string > {
+export async function like(
+	agent: Agent,
+	did: string,
+	subject: StrongRef,
+	authorDid: string
+): Promise< string > {
+	assertCompanionAuthority( subject, authorDid );
 	const res = await agent.com.atproto.repo.createRecord( {
 		repo: did,
 		collection: LIKE_COLLECTION,
@@ -52,7 +78,13 @@ export async function unlike( agent: Agent, did: string, likeUri: string ): Prom
 }
 
 /** Repost the companion post; returns the created repost record's AT-URI. */
-export async function repost( agent: Agent, did: string, subject: StrongRef ): Promise< string > {
+export async function repost(
+	agent: Agent,
+	did: string,
+	subject: StrongRef,
+	authorDid: string
+): Promise< string > {
+	assertCompanionAuthority( subject, authorDid );
 	const res = await agent.com.atproto.repo.createRecord( {
 		repo: did,
 		collection: REPOST_COLLECTION,
@@ -74,8 +106,10 @@ export async function unrepost( agent: Agent, did: string, repostUri: string ): 
 export async function postReply(
 	agent: Agent,
 	did: string,
-	input: { text: string; subject: StrongRef }
+	input: { text: string; subject: StrongRef },
+	authorDid: string
 ): Promise< string > {
+	assertCompanionAuthority( input.subject, authorDid );
 	const res = await agent.com.atproto.repo.createRecord( {
 		repo: did,
 		collection: POST_COLLECTION,
@@ -90,8 +124,10 @@ export async function postReply(
 export async function postQuote(
 	agent: Agent,
 	did: string,
-	input: { text: string; subject: StrongRef }
+	input: { text: string; subject: StrongRef },
+	authorDid: string
 ): Promise< string > {
+	assertCompanionAuthority( input.subject, authorDid );
 	const res = await agent.com.atproto.repo.createRecord( {
 		repo: did,
 		collection: POST_COLLECTION,

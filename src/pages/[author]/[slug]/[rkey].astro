@@ -58,11 +58,13 @@ let initial = '';
 let themeStyle = '';
 let ogImage = '';
 let bskyPostRef: { uri: string; cid: string } | null = null;
+let authorDid = '';
 let recordJson = '';
 
 if ( ctx && publication ) {
 	const { author: readAuthor, profile, document } = ctx;
 	const { did, pdsUrl } = readAuthor;
+	authorDid = did;
 	handle = readAuthor.handle;
 
 	const doc = document.value;
@@ -174,6 +176,7 @@ if ( error ) {
 				client:only="react"
 				postUri={bskyPostRef.uri}
 				postCid={bskyPostRef.cid}
+				authorDid={authorDid}
 			>
 				<p slot="fallback" class="reader__actions-loading">Loading actions…</p>
 			</PostActions>

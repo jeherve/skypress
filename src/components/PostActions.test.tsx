@@ -4,7 +4,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { ActionsGate } from './PostActions';
 import { AuthContext, type AuthContextValue } from '../lib/auth/AuthProvider';
 
-const PROPS = { postUri: 'at://did:plc:writer/app.bsky.feed.post/3kpost', postCid: 'bafypost' };
+const PROPS = {
+	postUri: 'at://did:plc:writer/app.bsky.feed.post/3kpost',
+	postCid: 'bafypost',
+	authorDid: 'did:plc:writer',
+};
 
 /** Render ActionsGate under a hand-rolled auth context (bypasses real OAuth). */
 function renderGate( auth: Partial< AuthContextValue > ): string {

@@ -12,6 +12,8 @@ import {
 import type { StrongRef } from './records';
 
 const DID = 'did:plc:reader';
+/** The article author's DID — the repo that authored the companion post `SUBJECT`. */
+const AUTHOR_DID = 'did:plc:writer';
 const SUBJECT: StrongRef = {
 	uri: 'at://did:plc:writer/app.bsky.feed.post/3kpost',
 	cid: 'bafypost',
@@ -52,7 +54,7 @@ function mockAgent( overrides: Record< string, unknown > = {} ) {
 describe( 'like', () => {
 	it( 'creates an app.bsky.feed.like in the reader repo and returns its uri', async () => {
 		const agent = mockAgent();
-		const uri = await like( agent, DID, SUBJECT );
+		const uri = await like( agent, DID, SUBJECT, AUTHOR_DID );
 		const { createRecord } = ( agent as never as { _spies: { createRecord: ReturnType< typeof vi.fn > } } )._spies;
 		expect( createRecord ).toHaveBeenCalledTimes( 1 );
 		const arg = createRecord.mock.calls[ 0 ][ 0 ];
@@ -81,7 +83,7 @@ describe( 'unlike', () => {
 describe( 'repost / unrepost', () => {
 	it( 'creates an app.bsky.feed.repost', async () => {
 		const agent = mockAgent();
-		await repost( agent, DID, SUBJECT );
+		await repost( agent, DID, SUBJECT, AUTHOR_DID );
 		const { createRecord } = ( agent as never as { _spies: { createRecord: ReturnType< typeof vi.fn > } } )._spies;
 		const arg = createRecord.mock.calls[ 0 ][ 0 ];
 		expect( arg.collection ).toBe( 'app.bsky.feed.repost' );
@@ -104,7 +106,7 @@ describe( 'repost / unrepost', () => {
 describe( 'postReply', () => {
 	it( 'creates a post threaded under the companion post', async () => {
 		const agent = mockAgent();
-		await postReply( agent, DID, { text: 'great read', subject: SUBJECT } );
+		await postReply( agent, DID, { text: 'great read', subject: SUBJECT }, AUTHOR_DID );
 		const { createRecord } = ( agent as never as { _spies: { createRecord: ReturnType< typeof vi.fn > } } )._spies;
 		const arg = createRecord.mock.calls[ 0 ][ 0 ];
 		expect( arg.collection ).toBe( 'app.bsky.feed.post' );
@@ -116,7 +118,7 @@ describe( 'postReply', () => {
 describe( 'postQuote', () => {
 	it( 'creates a standalone post embedding the companion post', async () => {
 		const agent = mockAgent();
-		await postQuote( agent, DID, { text: 'worth a read', subject: SUBJECT } );
+		await postQuote( agent, DID, { text: 'worth a read', subject: SUBJECT }, AUTHOR_DID );
 		const { createRecord } = ( agent as never as { _spies: { createRecord: ReturnType< typeof vi.fn > } } )._spies;
 		const arg = createRecord.mock.calls[ 0 ][ 0 ];
 		expect( arg.collection ).toBe( 'app.bsky.feed.post' );
@@ -125,6 +127,48 @@ describe( 'postQuote', () => {
 			record: SUBJECT,
 		} );
 		expect( arg.record.reply ).toBeUndefined();
+	} );
+} );
+
+describe( 'companion-post authority guard', () => {
+	// `subject` is read verbatim from the author's untrusted PDS document. A malicious
+	// publication can point it at a foreign post; every write must refuse when the ref's
+	// repo DID does not match the article author's DID (confused-deputy prevention).
+	const FOREIGN: StrongRef = {
+		uri: 'at://did:plc:attacker/app.bsky.feed.post/3kevil',
+		cid: 'bafyevil',
+	};
+
+	it( 'refuses to like a post whose repo DID is not the article author, without writing', async () => {
+		const agent = mockAgent();
+		await expect( like( agent, DID, FOREIGN, AUTHOR_DID ) ).rejects.toThrow();
+		const { createRecord } = ( agent as never as { _spies: { createRecord: ReturnType< typeof vi.fn > } } )._spies;
+		expect( createRecord ).not.toHaveBeenCalled();
+	} );
+
+	it( 'refuses to repost a foreign post, without writing', async () => {
+		const agent = mockAgent();
+		await expect( repost( agent, DID, FOREIGN, AUTHOR_DID ) ).rejects.toThrow();
+		const { createRecord } = ( agent as never as { _spies: { createRecord: ReturnType< typeof vi.fn > } } )._spies;
+		expect( createRecord ).not.toHaveBeenCalled();
+	} );
+
+	it( 'refuses to reply under a foreign post, without writing', async () => {
+		const agent = mockAgent();
+		await expect(
+			postReply( agent, DID, { text: 'hi', subject: FOREIGN }, AUTHOR_DID )
+		).rejects.toThrow();
+		const { createRecord } = ( agent as never as { _spies: { createRecord: ReturnType< typeof vi.fn > } } )._spies;
+		expect( createRecord ).not.toHaveBeenCalled();
+	} );
+
+	it( 'refuses to quote a foreign post, without writing', async () => {
+		const agent = mockAgent();
+		await expect(
+			postQuote( agent, DID, { text: 'hi', subject: FOREIGN }, AUTHOR_DID )
+		).rejects.toThrow();
+		const { createRecord } = ( agent as never as { _spies: { createRecord: ReturnType< typeof vi.fn > } } )._spies;
+		expect( createRecord ).not.toHaveBeenCalled();
 	} );
 } );
 

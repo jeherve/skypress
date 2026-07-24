@@ -25,6 +25,12 @@ export interface PostActionsProps {
 	postUri: string;
 	/** Its cid — together with `postUri` it forms the strongRef every action targets. */
 	postCid: string;
+	/**
+	 * The article author's DID. `postUri`/`postCid` come verbatim from the author's
+	 * (untrusted) PDS document, so every write authorises the ref against this DID before
+	 * targeting it — a publication can't redirect the reader's action onto a foreign post.
+	 */
+	authorDid: string;
 }
 
 type Composer = 'reply' | 'quote' | null;
@@ -42,7 +48,7 @@ interface Flash {
  * companion post's counts + the viewer's like/repost state, and writes like / repost /
  * reply / quote records to the reader's own PDS.
  */
-export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
+export function ActionsGate( { postUri, postCid, authorDid }: PostActionsProps ) {
 	const { status, agent, did, signIn, error: authError } = useAuth();
 	const subject: StrongRef = { uri: postUri, cid: postCid };
 
@@ -117,7 +123,7 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 			if ( state?.viewerLikeUri ) {
 				await unlike( agent, did, state.viewerLikeUri );
 			} else {
-				await like( agent, did, subject );
+				await like( agent, did, subject, authorDid );
 			}
 			refresh();
 		} catch ( err ) {
@@ -137,7 +143,7 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 			if ( state?.viewerRepostUri ) {
 				await unrepost( agent, did, state.viewerRepostUri );
 			} else {
-				await repost( agent, did, subject );
+				await repost( agent, did, subject, authorDid );
 			}
 			refresh();
 		} catch ( err ) {
@@ -163,7 +169,7 @@ export function ActionsGate( { postUri, postCid }: PostActionsProps ) {
 		setSubmitting( true );
 		try {
 			const action = composer === 'reply' ? postReply : postQuote;
-			const uri = await action( agent, did, { text, subject } );
+			const uri = await action( agent, did, { text, subject }, authorDid );
 			setComposer( null );
 			setText( '' );
 			setFlash( {

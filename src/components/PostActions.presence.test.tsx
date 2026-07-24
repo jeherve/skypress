@@ -15,7 +15,11 @@ vi.mock( '../lib/social/interactions', () => ( { fetchPostState, fetchPostExists
 import { ActionsGate } from './PostActions';
 import { AuthContext, type AuthContextValue } from '../lib/auth/AuthProvider';
 
-const PROPS = { postUri: 'at://did:plc:writer/app.bsky.feed.post/3kpost', postCid: 'bafypost' };
+const PROPS = {
+	postUri: 'at://did:plc:writer/app.bsky.feed.post/3kpost',
+	postCid: 'bafypost',
+	authorDid: 'did:plc:writer',
+};
 
 function authValue( overrides: Partial< AuthContextValue > ): AuthContextValue {
 	return {

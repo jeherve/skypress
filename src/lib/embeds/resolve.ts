@@ -137,22 +137,95 @@ async function resolveOne( url: string, only: EmbedKind[] | undefined, fetchImpl
 		: fetchVideoCard( match, fetchImpl );
 }
 
+/**
+ * Read-time bound on how many DISTINCT embed URLs one document may resolve.
+ * `content.blocks` is untrusted PDS data with no lexicon cap on its length, and
+ * each recognised `core/embed` fires one-to-two outbound fetches (a handle-form
+ * atproto URL forces both a getProfile and a getPosts). Without a cap a single
+ * small record could carry thousands of embeds and turn one page view into
+ * thousands of concurrent subrequests — exhausting the worker's budget and
+ * turning SkyPress into a traffic-amplification proxy (CWE-400). Embeds beyond
+ * the cap keep no payload → `render.ts` falls back to a plain link, exactly like
+ * a failed resolve.
+ */
+const MAX_EMBEDS_PER_DOCUMENT = 50;
+
+/**
+ * How many embed resolutions run at once. Bounds peak concurrent outbound
+ * fetches (and in-flight `Response` objects) instead of firing every embed in a
+ * single unbounded `Promise.all`.
+ */
+const EMBED_RESOLUTION_CONCURRENCY = 6;
+
+/** Depth-first walk collecting distinct embed URLs in document order, stopping once `limit` is reached. */
+function collectEmbedUrls( blocks: BlockNode[], out: Set< string >, limit: number ): void {
+	for ( const block of blocks ) {
+		if ( out.size >= limit ) {
+			return;
+		}
+		if ( block.name === 'core/embed' && typeof block.attributes?.url === 'string' ) {
+			out.add( block.attributes.url );
+		}
+		if ( block.innerBlocks?.length ) {
+			collectEmbedUrls( block.innerBlocks, out, limit );
+		}
+	}
+}
+
+/** Resolve `urls` through a fixed-size worker pool → a `url → card data` map (misses omitted). */
+async function resolveInPool(
+	urls: string[],
+	only: EmbedKind[] | undefined,
+	fetchImpl: FetchLike
+): Promise< Map< string, AtprotoCardData | VideoCardData > > {
+	const resolved = new Map< string, AtprotoCardData | VideoCardData >();
+	let cursor = 0;
+	const worker = async (): Promise< void > => {
+		while ( cursor < urls.length ) {
+			const url = urls[ cursor++ ];
+			const data = await resolveOne( url, only, fetchImpl );
+			if ( data ) {
+				resolved.set( url, data );
+			}
+		}
+	};
+	const workers = Math.min( EMBED_RESOLUTION_CONCURRENCY, urls.length );
+	await Promise.all( Array.from( { length: workers }, () => worker() ) );
+	return resolved;
+}
+
+/** Rebuild the tree, attaching resolved card data onto every embed whose URL resolved. */
+function attachEmbeds(
+	blocks: BlockNode[],
+	resolved: Map< string, AtprotoCardData | VideoCardData >
+): BlockNode[] {
+	return blocks.map( ( block ) => {
+		const innerBlocks = attachEmbeds( block.innerBlocks ?? [], resolved );
+		let attributes = { ...block.attributes };
+		if ( block.name === 'core/embed' && typeof block.attributes?.url === 'string' ) {
+			const data = resolved.get( block.attributes.url );
+			if ( data ) {
+				attributes = { ...attributes, _skypressEmbed: data };
+			}
+		}
+		return { name: block.name, attributes, innerBlocks };
+	} );
+}
+
 export async function resolveEmbeds(
 	blocks: BlockNode[],
 	options: { only?: EmbedKind[]; fetchImpl?: FetchLike } = {}
 ): Promise< BlockNode[] > {
 	const fetchImpl = options.fetchImpl ?? defaultFetch;
-	return Promise.all(
-		blocks.map( async ( block ) => {
-			const innerBlocks = await resolveEmbeds( block.innerBlocks ?? [], options );
-			let attributes = { ...block.attributes };
-			if ( block.name === 'core/embed' && typeof block.attributes?.url === 'string' ) {
-				const data = await resolveOne( block.attributes.url, options.only, fetchImpl );
-				if ( data ) {
-					attributes = { ...attributes, _skypressEmbed: data };
-				}
-			}
-			return { name: block.name, attributes, innerBlocks };
-		} )
-	);
+	// Bound the fan-out over untrusted content: collect at most
+	// MAX_EMBEDS_PER_DOCUMENT distinct URLs, resolve them through a fixed-size
+	// pool, then attach the results back onto every matching node. Deduplicating
+	// and capping the URLs — not the nodes — means repeated or overflow embeds
+	// never multiply the outbound fetch count.
+	const urls = new Set< string >();
+	collectEmbedUrls( blocks, urls, MAX_EMBEDS_PER_DOCUMENT );
+	const resolved = await resolveInPool( [ ...urls ], options.only, fetchImpl );
+	return attachEmbeds( blocks, resolved );
 }
+
+export { MAX_EMBEDS_PER_DOCUMENT, EMBED_RESOLUTION_CONCURRENCY };

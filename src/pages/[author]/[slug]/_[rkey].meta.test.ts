@@ -137,3 +137,32 @@ describe( 'document page record JSON viewer', () => {
 		expect( page ).not.toMatch( /renderRecordJson\(\s*document\s*\)/ );
 	} );
 } );
+
+describe( 'document page AT Tags', () => {
+	it( 'builds the tags through the shared builder and renders them', () => {
+		expect( page ).toMatch(
+			/import\s*\{\s*buildAtTags\s*\}\s*from\s*'[^']*lib\/seo\/at-tags'/
+		);
+		expect( page ).toMatch( /buildAtTags\(/ );
+		expect( page ).toMatch( /atTags\.map/ );
+	} );
+
+	it( 'declares the document as canonical, the publication as an alternate', () => {
+		expect( page ).toMatch( /canonical:\s*\[\s*docUri\s*\]/ );
+		expect( page ).toMatch( /alternate:\s*\[\s*publication\.uri/ );
+	} );
+
+	it( 'declares the companion Bluesky post as an alternate only when there is one', () => {
+		expect( page ).toMatch( /bskyPostRef\s*\?\s*\[\s*bskyPostRef\.uri\s*\]\s*:\s*\[\s*\]/ );
+	} );
+
+	it( 'attributes the page to the resolved author DID', () => {
+		expect( page ).toMatch( /authorDids:\s*\[\s*authorDid\s*\]/ );
+		expect( page ).toMatch( /meDid:\s*authorDid/ );
+	} );
+
+	it( 'keeps the existing site.standard link rel tags — the meta tags are additive', () => {
+		expect( page ).toMatch( /<link\s+rel="site\.standard\.document"/ );
+		expect( page ).toMatch( /<link\s+rel="site\.standard\.publication"/ );
+	} );
+} );

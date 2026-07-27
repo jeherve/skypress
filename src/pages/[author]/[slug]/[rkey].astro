@@ -9,6 +9,8 @@ import { canonicalArticleUrl } from '../../../lib/publish/records';
 import { deriveExcerpt } from '../../../lib/publish/excerpt';
 import { themeStyleBlock } from '../../../lib/publish/themes';
 import { buildMetaTags } from '../../../lib/seo/meta';
+import { buildAtTags } from '../../../lib/seo/at-tags';
+import type { AtTag } from '../../../lib/seo/at-tags';
 import ErrorScene from '../../../components/ErrorScene.astro';
 import PostActions from '../../../components/PostActions.tsx';
 import RecordJsonViewer from '../../../components/RecordJsonViewer.tsx';
@@ -39,6 +41,7 @@ const ctx = result.ok ? result.context : null;
 // Everything the happy-path template needs; populated only when there's no error.
 const publication = ctx?.publication ?? null;
 let metaTags: ReturnType< typeof buildMetaTags > = [];
+let atTags: AtTag[] = [];
 let title = '';
 let description = '';
 let canonical = '';
@@ -116,6 +119,16 @@ if ( ctx && publication ) {
 		imageAlt: publication.name,
 		...ogDimensions,
 	} );
+
+	// AT Tags (Decision 0025) — additive to the `<link rel="site.standard.*">` tags
+	// above. The document is what this page exists for; the publication and the
+	// companion Bluesky post are auxiliary.
+	atTags = buildAtTags( {
+		canonical: [ docUri ],
+		alternate: [ publication.uri, ...( bskyPostRef ? [ bskyPostRef.uri ] : [] ) ],
+		authorDids: [ authorDid ],
+		meDid: authorDid,
+	} );
 }
 
 if ( error ) {
@@ -132,6 +145,9 @@ if ( error ) {
 		{/* standard.site indexing tags (brief §3) — Bluesky cards + AppView pickup */}
 		<link rel="site.standard.document" href={docUri} />
 		<link rel="site.standard.publication" href={publication!.uri} />
+		{atTags.map( ( tag ) => (
+			<meta name={tag.name} content={tag.content} />
+		) )}
 		<link rel="alternate" type="application/rss+xml" title={`${ publication!.name } — RSS`} href={feedHref} />
 		<link rel="canonical" href={canonical} />
 		{metaTags.map( ( tag ) =>

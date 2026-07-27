@@ -144,6 +144,10 @@ describe( 'document page AT Tags', () => {
 			/import\s*\{\s*buildAtTags\s*\}\s*from\s*'[^']*lib\/seo\/at-tags'/
 		);
 		expect( page ).toMatch( /buildAtTags\(/ );
+		// Both halves are needed on THIS page: the <meta> markup below appears twice
+		// (the atTags render and the unrelated metaTags render), so on its own it would
+		// stay green if the atTags block were deleted. The sibling pages render it once.
+		expect( page ).toMatch( /atTags\.map/ );
 		expect( page ).toMatch( /<meta\s+name=\{tag\.name\}\s+content=\{tag\.content\}/ );
 	} );
 

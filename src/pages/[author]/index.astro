@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import Logo from '../../components/Logo.astro';
 import { resolveAuthorContext } from '../../lib/reader/read-context';
+import { buildAtTags } from '../../lib/seo/at-tags';
 import { detectBioSegments } from '../../lib/reader/rich-text';
 import CreatePublicationCta from '../../components/CreatePublicationCta.tsx';
 import ProviderLogo from '../../components/ProviderLogo.astro';
@@ -26,6 +27,17 @@ const authorName = profile?.displayName ?? `@${ handle }`;
 const initial = authorName.replace( /^@/, '' ).charAt( 0 ).toUpperCase();
 const bioSegments = profile?.description ? detectBioSegments( profile.description ) : [];
 
+// AT Tags (Decision 0025). This page declares no at:canonical — it is an index of the
+// writer's publications, so no single record's deletion would make it stop existing. The
+// profile record only decorates it, which is what at:alternate is for.
+const atTags = profile
+	? buildAtTags( {
+			alternate: profile.exists ? [ `at://${ did }/app.bsky.actor.profile/self` ] : [],
+			authorDids: [ did ],
+			meDid: did,
+	  } )
+	: [];
+
 if ( error ) {
 	Astro.response.status = error.status;
 }
@@ -36,6 +48,12 @@ if ( error ) {
 		<ErrorScene eyebrow={error.eyebrow} heading={error.heading} subline={error.subline} />
 	) : (
 		<Base title={`${ authorName } — SkyPress`} description={profile!.description ?? undefined}>
+			<Fragment slot="head">
+				{atTags.map( ( tag ) => (
+					<meta name={tag.name} content={tag.content} />
+				) )}
+			</Fragment>
+
 			<header class="masthead">
 				<a href="/"><Logo /></a>
 			</header>

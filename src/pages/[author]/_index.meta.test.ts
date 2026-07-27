@@ -24,3 +24,28 @@ describe( 'writer page error wiring', () => {
 		expect( page ).not.toMatch( /new Response\(\s*`Could not resolve/ );
 	} );
 } );
+
+describe( 'writer page AT Tags', () => {
+	it( 'builds the tags through the shared builder and renders them in a head fragment', () => {
+		expect( page ).toMatch(
+			/import\s*\{\s*buildAtTags\s*\}\s*from\s*'[^']*lib\/seo\/at-tags'/
+		);
+		expect( page ).toMatch( /buildAtTags\(/ );
+		expect( page ).toMatch( /<Fragment slot="head">/ );
+		expect( page ).toMatch( /<meta\s+name=\{tag\.name\}\s+content=\{tag\.content\}/ );
+	} );
+
+	it( 'declares the profile record as an alternate, gated on the record existing', () => {
+		expect( page ).toMatch( /profile\.exists\s*\?/ );
+		expect( page ).toMatch( /app\.bsky\.actor\.profile\/self/ );
+	} );
+
+	it( 'declares no canonical — no single record makes this index page exist', () => {
+		expect( page ).not.toMatch( /canonical\s*:/ );
+	} );
+
+	it( 'attributes the page to the resolved author DID', () => {
+		expect( page ).toMatch( /authorDids:\s*\[\s*did\s*\]/ );
+		expect( page ).toMatch( /meDid:\s*did\b/ );
+	} );
+} );

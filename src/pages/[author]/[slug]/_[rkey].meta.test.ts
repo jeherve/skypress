@@ -144,7 +144,7 @@ describe( 'document page AT Tags', () => {
 			/import\s*\{\s*buildAtTags\s*\}\s*from\s*'[^']*lib\/seo\/at-tags'/
 		);
 		expect( page ).toMatch( /buildAtTags\(/ );
-		expect( page ).toMatch( /atTags\.map/ );
+		expect( page ).toMatch( /<meta\s+name=\{tag\.name\}\s+content=\{tag\.content\}/ );
 	} );
 
 	it( 'declares the document as canonical, the publication as an alternate', () => {
@@ -158,7 +158,7 @@ describe( 'document page AT Tags', () => {
 
 	it( 'attributes the page to the resolved author DID', () => {
 		expect( page ).toMatch( /authorDids:\s*\[\s*authorDid\s*\]/ );
-		expect( page ).toMatch( /meDid:\s*authorDid/ );
+		expect( page ).toMatch( /meDid:\s*authorDid\b/ );
 	} );
 
 	it( 'keeps the existing site.standard link rel tags — the meta tags are additive', () => {

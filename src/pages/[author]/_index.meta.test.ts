@@ -41,7 +41,8 @@ describe( 'writer page AT Tags', () => {
 	} );
 
 	it( 'declares no canonical — no single record makes this index page exist', () => {
-		expect( page ).not.toMatch( /canonical\s*:/ );
+		expect( page ).not.toMatch( /canonical\s*:\s*\[/ ); // not passed to the builder
+		expect( page ).not.toMatch( /name="at:canonical"/ ); // not hand-rolled either
 	} );
 
 	it( 'attributes the page to the resolved author DID', () => {

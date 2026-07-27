@@ -8,10 +8,11 @@
 
 ## Context
 
-The article and publication pages carry `<link rel="site.standard.document">` and
-`<link rel="site.standard.publication">` tags pointing at the AT-URIs they were rendered
-from. A `<link rel>` with an unregistered rel value isn't technically valid HTML, and the
-network has converged on a different mechanism: the
+The article page carries `<link rel="site.standard.document">` and
+`<link rel="site.standard.publication">` tags, the publication page just the latter, each
+pointing at the AT-URI the page was rendered from. A `<link rel>` with an unregistered
+rel value isn't technically valid HTML, and the network has converged on a different
+mechanism: the
 [AT Tags](https://tangled.org/chrisshank.com/at-tags/) proposal, which maps a page to its
 records through `<meta name="at:*">` tags.
 

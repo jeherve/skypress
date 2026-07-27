@@ -19,9 +19,12 @@ export interface ActorProfile {
 	avatar: string | null;
 	banner: string | null;
 	/**
-	 * Whether an `app.bsky.actor.profile/self` record exists in the repo. The four
-	 * fields above are all-null both for a missing record and for an empty one; the
+	 * Whether an `app.bsky.actor.profile/self` record was *confirmed* in the repo. The
+	 * four fields above are all-null both for a missing record and for an empty one; the
 	 * author page needs to tell those apart before declaring the record as an AT tag.
+	 * False also covers "couldn't ask" — `getRecord` returns null for an unreachable or
+	 * erroring PDS as much as for a missing record — and omitting the tag is the safe
+	 * reading of an unconfirmed record either way.
 	 */
 	exists: boolean;
 }

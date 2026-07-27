@@ -78,7 +78,7 @@ describe( 'publication page AT Tags', () => {
 	} );
 
 	it( 'does not tag each article it lists', () => {
-		expect( page ).not.toMatch( /alternate:/ );
+		expect( page ).not.toMatch( /alternate\s*:\s*\[/ );
 	} );
 
 	it( 'keeps the existing site.standard link rel tag — the meta tags are additive', () => {

@@ -3,6 +3,7 @@ import Base from '../../../layouts/Base.astro';
 import PublicationFooter from '../../../components/PublicationFooter.astro';
 import SubscribeButton from '../../../components/SubscribeButton.tsx';
 import { resolvePublicationContext } from '../../../lib/reader/read-context';
+import { buildAtTags } from '../../../lib/seo/at-tags';
 import { formatLongDate } from '../../../lib/reader/dates';
 import { themeStyleBlock } from '../../../lib/publish/themes';
 import ErrorScene from '../../../components/ErrorScene.astro';
@@ -19,6 +20,7 @@ const error = result.ok ? null : result.error;
 const ctx = result.ok ? result.context : null;
 
 const handle = ctx?.author.handle ?? '';
+const did = ctx?.author.did ?? '';
 const publication = ctx?.publication ?? null;
 const profile = ctx?.profile ?? null;
 
@@ -34,6 +36,12 @@ const authorName = profile?.displayName ?? `@${ handle }`;
 const initial = publication?.name.charAt( 0 ).toUpperCase() ?? '';
 const feedHref = `/${ author }/${ slug }/rss.xml`;
 const themeStyle = publication ? themeStyleBlock( publication.basicTheme ) : '';
+
+// AT Tags (Decision 0025) — additive to the `<link rel>` tag in the head below.
+// Only the publication record itself; the articles it lists aren't tagged.
+const atTags = publication
+	? buildAtTags( { canonical: [ publication.uri ], authorDids: [ did ], meDid: did } )
+	: [];
 
 if ( error ) {
 	Astro.response.status = error.status;
@@ -52,6 +60,9 @@ if ( error ) {
 		>
 			<Fragment slot="head">
 				<link rel="site.standard.publication" href={publication!.uri} />
+				{atTags.map( ( tag ) => (
+					<meta name={tag.name} content={tag.content} />
+				) )}
 				<link rel="alternate" type="application/rss+xml" title={`${ publication!.name } — RSS`} href={feedHref} />
 				{themeStyle && <Fragment set:html={themeStyle} />}
 			</Fragment>

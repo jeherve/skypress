@@ -58,3 +58,30 @@ describe( 'publication page focuses on the publication', () => {
 		expect( page ).not.toMatch( /publishedAt\?\.slice\(\s*0,\s*10\s*\)/ );
 	} );
 } );
+
+describe( 'publication page AT Tags', () => {
+	it( 'builds the tags through the shared builder and renders them', () => {
+		expect( page ).toMatch(
+			/import\s*\{\s*buildAtTags\s*\}\s*from\s*'[^']*lib\/seo\/at-tags'/
+		);
+		expect( page ).toMatch( /buildAtTags\(/ );
+		expect( page ).toMatch( /<meta\s+name=\{tag\.name\}\s+content=\{tag\.content\}/ );
+	} );
+
+	it( 'declares the publication record as canonical', () => {
+		expect( page ).toMatch( /canonical:\s*\[\s*publication\.uri\s*\]/ );
+	} );
+
+	it( 'attributes the page to the resolved author DID', () => {
+		expect( page ).toMatch( /authorDids:\s*\[\s*did\s*\]/ );
+		expect( page ).toMatch( /meDid:\s*did\b/ );
+	} );
+
+	it( 'does not tag each article it lists', () => {
+		expect( page ).not.toMatch( /alternate:/ );
+	} );
+
+	it( 'keeps the existing site.standard link rel tag — the meta tags are additive', () => {
+		expect( page ).toMatch( /<link\s+rel="site\.standard\.publication"/ );
+	} );
+} );

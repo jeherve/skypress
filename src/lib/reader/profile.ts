@@ -18,6 +18,12 @@ export interface ActorProfile {
 	description: string | null;
 	avatar: string | null;
 	banner: string | null;
+	/**
+	 * Whether an `app.bsky.actor.profile/self` record exists in the repo. The four
+	 * fields above are all-null both for a missing record and for an empty one; the
+	 * author page needs to tell those apart before declaring the record as an AT tag.
+	 */
+	exists: boolean;
 }
 
 interface RawActorProfile {
@@ -45,5 +51,6 @@ export async function fetchActorProfile( pdsUrl: string, did: string ): Promise<
 		description: value.description?.trim() || null,
 		avatar: blobUrl( pdsUrl, did, value.avatar ),
 		banner: blobUrl( pdsUrl, did, value.banner ),
+		exists: record !== null,
 	};
 }

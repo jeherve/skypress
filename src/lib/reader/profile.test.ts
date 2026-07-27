@@ -36,9 +36,10 @@ describe( 'fetchActorProfile', () => {
 		expect( profile.description ).toBe( 'Writer & gardener' ); // trimmed
 		expect( profile.avatar ).toContain( 'cid=bafyavatar' );
 		expect( profile.banner ).toContain( 'cid=bafybanner' );
+		expect( profile.exists ).toBe( true );
 	} );
 
-	it( 'returns all-null when the profile record is missing', async () => {
+	it( 'returns all-null and exists:false when the profile record is missing', async () => {
 		mockedGetRecord.mockResolvedValue( null );
 		const profile = await fetchActorProfile( PDS, DID );
 		expect( profile ).toEqual( {
@@ -46,6 +47,7 @@ describe( 'fetchActorProfile', () => {
 			description: null,
 			avatar: null,
 			banner: null,
+			exists: false,
 		} );
 	} );
 
@@ -60,5 +62,14 @@ describe( 'fetchActorProfile', () => {
 		expect( profile.description ).toBeNull();
 		expect( profile.avatar ).toBeNull();
 		expect( profile.banner ).toBeNull();
+	} );
+
+	it( 'reports exists:true for a record that is present but empty', async () => {
+		// An empty record is still a record — the author page declares it as an
+		// at:alternate, so "all fields null" must not be read as "no record".
+		mockedGetRecord.mockResolvedValue( { uri: 'x', cid: 'y', value: {} } );
+		const profile = await fetchActorProfile( PDS, DID );
+		expect( profile.exists ).toBe( true );
+		expect( profile.displayName ).toBeNull();
 	} );
 } );

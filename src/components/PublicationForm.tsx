@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type SubmitEvent } from 'react';
 import type { Agent } from '@atproto/api';
 import {
 	createPublication,
@@ -114,7 +114,7 @@ export default function PublicationForm( {
 		}
 	}
 
-	async function onSubmit( event: FormEvent ) {
+	async function onSubmit( event: SubmitEvent ) {
 		event.preventDefault();
 		if ( ! name.trim() ) {
 			setError( 'Give your publication a name.' );

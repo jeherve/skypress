@@ -12,7 +12,7 @@ function mount( props: Record< string, unknown > ) {
 	return container;
 }
 
-// React 18 tracks a controlled input's value via a private setter; assigning `.value`
+// React tracks a controlled input's value via a private setter; assigning `.value`
 // directly then dispatching `input` is invisible to React and onChange never fires. Set
 // through the native prototype setter so React's tracker sees the change (standard idiom).
 const setInputValue = ( input: HTMLInputElement, value: string ) => {

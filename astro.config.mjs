@@ -17,7 +17,6 @@ export default defineConfig( {
 	integrations: [ react() ],
 	vite: {
 		resolve: {
-			// React 18 is required by the @wordpress/* packages (Decision 0001).
 			// Force a single shared instance of React and of every @wordpress store
 			// singleton. core-data/notices/date are installed as multiple nested copies
 			// (no hoisted top-level one); without deduping, each copy registers its store

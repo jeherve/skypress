@@ -31,7 +31,7 @@ function mount( props: Record< string, unknown > ) {
 	return container;
 }
 
-// React 18 tracks a controlled value via a prototype setter; a direct `el.value = …`
+// React tracks a controlled value via a prototype setter; a direct `el.value = …`
 // is invisible to it, so set through the native setter to make onChange fire.
 function setValue( el: HTMLTextAreaElement, val: string ) {
 	const proto = Object.getPrototypeOf( el );

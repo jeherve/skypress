@@ -1,6 +1,8 @@
 # 0001 — Framework & application stack
 
-- **Status:** Accepted
+- **Status:** Accepted — **React 18 lock superseded by Decision 0026** (SkyPress now runs
+  React 19). The rest of this decision (Astro, islands, the `client:only` editor, light
+  reading pages) still holds. Read below for why React 18 was originally required.
 - **Date:** 2026-06-08
 - **Scope:** Project-wide (SP0 and all later sub-projects inherit this)
 

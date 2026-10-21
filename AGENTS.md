@@ -19,8 +19,11 @@ Read the relevant `docs/decisions/*` and `docs/specs/*` before working in an are
 
 ## Hard constraints (learned the hard way — see decisions)
 
-1. **React 18 only.** `@wordpress/block-editor@15.x` peer-depends on `react@^18`. Do not
-   introduce React 19. (Decision 0001)
+1. **One React 19 instance.** The editor island and the app must share a single copy of
+   React; `react`/`react-dom` are pinned (and overridden) at the same exact version. The
+   current `@wordpress` line peers on `react@^18 || ^19`. Before bumping `@wordpress`,
+   check its React peer range still includes 19. (Decision 0026, superseding the React 18
+   lock in Decision 0001.)
 2. **SkyPress depends on `@wordpress/block-editor` and friends directly** at the current
    release line; there is **no `@wordpress/*` `overrides` map** (only `react`/`react-dom`
    stay pinned). Depending directly, the tree resolves to a single coherent copy of every

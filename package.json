@@ -39,23 +39,23 @@
     "@wordpress/rich-text": "8.0.0",
     "astro": "6.4.4",
     "highlight.js": "^11.11.1",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "sanitize-html": "^2.17.4"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@types/node": "25.9.2",
-    "@types/react": "18.3.12",
-    "@types/react-dom": "18.3.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "@types/sanitize-html": "^2.16.1",
     "jsdom": "25.0.1",
     "typescript": "5.7.2",
     "vitest": "2.1.8"
   },
   "overrides": {
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
-  "comment:overrides": "React stays on 18.3.1 (Decision 0001) and we force a single copy of each @wordpress store singleton. The whole-tree pin to isolated-block-editor@2.30.0 bundled versions is gone: we now depend on @wordpress/block-editor directly at the current release line, so the tree resolves coherently without the old override map. (Decision 0021.)"
+  "comment:overrides": "react/react-dom are overridden to the same exact version as the direct dependency so the editor island and the app always share one React instance (Decision 0026). There is no @wordpress/* overrides map: we depend on the @wordpress packages directly at their current line and the tree resolves coherently on its own (Decision 0021)."
 }

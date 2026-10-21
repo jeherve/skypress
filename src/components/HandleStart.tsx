@@ -41,7 +41,7 @@ export default function HandleStart() {
 		return () => clearTimeout( timer );
 	}, [ value ] );
 
-	async function onSubmit( event: React.FormEvent ) {
+	async function onSubmit( event: React.SubmitEvent ) {
 		event.preventDefault();
 		if ( ! isValidAccountInput( value ) ) {
 			setError( 'Enter a handle (alice.bsky.social), a DID, or a PDS URL.' );

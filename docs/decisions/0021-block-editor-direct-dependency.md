@@ -164,7 +164,8 @@ classes).
   This retires the maintenance liability 0003 named. Two standing constraints survive the
   change:
   - **Keep `react` / `react-dom` pinned at `18.3.1`** (Decision 0001 — block-editor's
-    React peer is `^18`; do not introduce React 19).
+    React peer is `^18`; do not introduce React 19). *Superseded by Decision 0026: the
+    current `@wordpress` line accepts React 19, and SkyPress now runs it.*
   - **Keep `moment` / `moment-timezone` EXTERNAL in `vitest.config.ts`** (see above) even
     while the Cloudflare build inlines `moment`.
 - **The reader/render split (Decision 0003, Finding 1) is unchanged and still

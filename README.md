@@ -151,8 +151,9 @@ astro.config.mjs · wrangler.toml
 
 ## Notes if you fork
 
-- **React 18 only.** `@wordpress/block-editor@15.x` peer-depends on `react@^18`; React 19
-  will break the editor.
+- **One copy of React 19.** The editor and the rest of the app must share a single React
+  instance, so `react`/`react-dom` are pinned to one exact version. The `@wordpress`
+  packages accept React 18 or 19.
 - **`@wordpress/*` is depended on directly** at the current release line — there's no
   `@wordpress/*` `overrides` map (only `react`/`react-dom` stay pinned). The tree resolves
   to a single coherent copy of every data registry on its own, so upgrading is a normal

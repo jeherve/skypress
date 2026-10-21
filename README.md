@@ -91,6 +91,17 @@ deployed Worker. Verify:
 2. `https://yourdomain.example/editor` → sign in → publish → open the resulting
    `https://yourdomain.example/@<handle>/<rkey>`.
 
+### Deploying from GitHub Actions
+
+`.github/workflows/ci.yml` runs `check`, `test` and `build` on every pull request and push
+to `trunk`. A push to `trunk` that passes also deploys, once the repo has:
+
+- a repository **variable** `CLOUDFLARE_ACCOUNT_ID` (the deploy job is skipped without it,
+  so forks don't fail);
+- a `CLOUDFLARE_API_TOKEN` **secret** on the `production` environment (a Cloudflare API
+  token built from the "Edit Cloudflare Workers" template);
+- optionally a `PUBLIC_SITE_URL` variable, if you don't serve from `https://skypress.blog`.
+
 Use the **apex** origin you set in `PUBLIC_SITE_URL` (don't mix `www`), since the OAuth
 `client_id` is origin-specific. Detailed notes + gotchas (e.g. the editor's canonical
 trailing-slash path) live in [`docs/specs/sp7-deploy.md`](./docs/specs/sp7-deploy.md).

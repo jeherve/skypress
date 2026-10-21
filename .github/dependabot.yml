@@ -1,0 +1,28 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # The editor needs one coherent @wordpress line; bump it as a unit.
+      wordpress:
+        patterns: ['@wordpress/*']
+      astro:
+        patterns: ['astro', '@astrojs/*']
+      atproto:
+        patterns: ['@atproto/*']
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # react/react-dom are pinned in both dependencies and overrides (Decision 0026).
+      # Dependabot only updates the former, which npm ci then rejects; bump by hand.
+      - dependency-name: react
+      - dependency-name: react-dom
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

@@ -16,7 +16,7 @@ This guide is for developers who want to **run their own instance**.
 
 ## Prerequisites
 
-- **Node ≥ 20** and npm.
+- **Node ≥ 22.13** and npm.
 - A **Cloudflare account** with a **domain managed in Cloudflare** (for production).
 - An **AT Protocol / Bluesky identity** to sign in and test publishing.
 

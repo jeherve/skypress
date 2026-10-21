@@ -27,10 +27,16 @@ describe( 'site footer links', () => {
 		);
 	} );
 
-	it( 'links the SkyPress source repo on tangled.org with an accessible label and icon', () => {
-		expect( footer ).toMatch(
-			/href=["']https:\/\/tangled\.org\/jeremy\.herve\.bzh\/skypress["'][\s\S]*?aria-label=[\s\S]*?<svg/
-		);
+	it( 'no longer links a tangled.org source repo', () => {
+		expect( footer ).not.toMatch( /tangled/i );
+	} );
+} );
+
+describe( 'source repository link', () => {
+	it( 'points the lexicon page at the GitHub repo', () => {
+		const lexicon = read( '../../pages/lexicon.astro' );
+		expect( lexicon ).toMatch( /href="https:\/\/github\.com\/jeherve\/skypress"/ );
+		expect( lexicon ).not.toMatch( /tangled\.org\/jeremy\.herve\.bzh/ );
 	} );
 } );
 

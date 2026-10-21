@@ -372,6 +372,30 @@ if ( error ) {
 		border-radius: var(--radius);
 		box-shadow: var(--shadow);
 	}
+	.reader__article :global(.wp-block-gallery) {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+		gap: 1rem;
+		margin: 1.8rem 0;
+	}
+	.reader__article :global(.wp-block-gallery .wp-block-image) {
+		margin: 0;
+	}
+	.reader__article :global(.wp-block-gallery.is-cropped img) {
+		width: 100%;
+		aspect-ratio: 4 / 3;
+		object-fit: cover;
+	}
+	.reader__article :global(.wp-block-gallery figcaption) {
+		margin-top: 0.5rem;
+		font-size: 0.9rem;
+		color: var(--muted);
+		text-align: center;
+	}
+	.reader__article :global(.wp-block-gallery .blocks-gallery-caption) {
+		grid-column: 1 / -1;
+		margin-top: 0;
+	}
 	.reader__article :global(pre) {
 		background: var(--ink);
 		color: var(--paper);

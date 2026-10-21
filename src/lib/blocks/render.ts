@@ -43,8 +43,10 @@ function renderBlock( node: BlockNode ): string {
 			return `<${ tag } class="wp-block-list">${ inner() }</${ tag }>`;
 		}
 
-		case 'core/list-item':
-			return `<li>${ attr( node, 'content' ) }</li>`;
+		case 'core/list-item': {
+			const nested = inner();
+			return `<li>${ attr( node, 'content' ) }${ nested ? `\n${ nested }` : '' }</li>`;
+		}
 
 		case 'core/quote': {
 			const citation = attr( node, 'citation' );
@@ -71,8 +73,23 @@ function renderBlock( node: BlockNode ): string {
 				return '';
 			}
 			const caption = attr( node, 'caption' );
-			const fig = caption ? `<figcaption>${ caption }</figcaption>` : '';
+			const fig = caption ? `<figcaption class="wp-element-caption">${ caption }</figcaption>` : '';
 			return `<figure class="wp-block-image"><img src="${ url }" alt="${ alt }"/>${ fig }</figure>`;
+		}
+
+		case 'core/gallery': {
+			const columns = node.attributes?.columns;
+			const classes = [
+				'wp-block-gallery',
+				'has-nested-images',
+				columns ? `columns-${ Number( columns ) }` : 'columns-default',
+				node.attributes?.imageCrop === false ? '' : 'is-cropped',
+			].filter( Boolean ).join( ' ' );
+			const caption = attr( node, 'caption' );
+			const fig = caption
+				? `<figcaption class="blocks-gallery-caption wp-element-caption">${ caption }</figcaption>`
+				: '';
+			return `<figure class="${ classes }">${ inner() }${ fig }</figure>`;
 		}
 
 		case 'core/embed': {

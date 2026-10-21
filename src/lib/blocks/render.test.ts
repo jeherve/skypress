@@ -71,6 +71,45 @@ describe( 'renderBlocks — fidelity vs @wordpress/blocks.serialize()', () => {
 		expect( actual ).toBe( expected );
 	} );
 
+	it( 'reproduces nested lists inside list items', () => {
+		const tree = [
+			createBlock( 'core/list', {}, [
+				createBlock( 'core/list-item', { content: 'First' } ),
+				createBlock( 'core/list-item', { content: 'Second' }, [
+					createBlock( 'core/list', { ordered: true }, [
+						createBlock( 'core/list-item', { content: 'Nested one' } ),
+						createBlock( 'core/list-item', { content: 'Nested two' } ),
+					] ),
+				] ),
+			] ),
+		];
+
+		const expected = normalize( stripDelimiters( serializeBlocks( tree ) ) );
+		const actual = normalize( renderBlocks( tree ) );
+
+		expect( actual ).toContain( 'Nested two' );
+		expect( actual ).toBe( expected );
+	} );
+
+	it( 'reproduces a gallery of captioned images', () => {
+		const tree = [
+			createBlock( 'core/gallery', { caption: 'Three screens' }, [
+				createBlock( 'core/image', {
+					url: 'https://example.com/a.png',
+					alt: 'First screen',
+					caption: 'Writing',
+				} ),
+				createBlock( 'core/image', { url: 'https://example.com/b.png', alt: 'Second screen' } ),
+			] ),
+		];
+
+		const expected = normalize( stripDelimiters( serializeBlocks( tree ) ) );
+		const actual = normalize( renderBlocks( tree ) );
+
+		expect( actual ).toContain( 'https://example.com/b.png' );
+		expect( actual ).toBe( expected );
+	} );
+
 	it( 'renders an ordered list as <ol>', () => {
 		const tree = [
 			createBlock( 'core/list', { ordered: true }, [

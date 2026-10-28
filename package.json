@@ -18,8 +18,8 @@
     "deploy": "astro build && wrangler deploy"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^13.6.1",
-    "@astrojs/react": "5.0.7",
+    "@astrojs/cloudflare": "^14.4.2",
+    "@astrojs/react": "7.1.1",
     "@atproto/api": "^0.20.9",
     "@atproto/common-web": "^0.5.0",
     "@atproto/oauth-client-browser": "^0.4.1",
@@ -37,7 +37,7 @@
     "@wordpress/icons": "19.0.0",
     "@wordpress/keyboard-shortcuts": "6.0.0",
     "@wordpress/rich-text": "8.0.0",
-    "astro": "6.4.4",
+    "astro": "7.4.2",
     "highlight.js": "^11.11.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",
